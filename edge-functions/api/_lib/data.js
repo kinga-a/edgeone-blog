@@ -32,6 +32,12 @@ export const DEFAULT_SITE_CONFIG = {
     wechat: '',
     email: '',
   },
+  backup: {
+    webdavUrl: '',
+    webdavUsername: '',
+    webdavPassword: '',
+    webdavPath: '',
+  },
   updatedAt: '',
 };
 
@@ -57,7 +63,7 @@ export async function saveSiteConfig(env, patch) {
  * 文章实体：
  * {
  *   id, slug, title, summary, content, coverKey, categoryId,
- *   tags: [tagId], status: draft|published, author,
+ *   tags: [tagId], status: draft|published, visibility: public|private, author,
  *   createdAt, updatedAt, publishedAt, readingTime
  * }
  */
@@ -84,7 +90,7 @@ export async function getPostByIdOrSlug(env, value) {
   return null;
 }
 
-/** 获取全部文章摘要列表（含草稿），按 publishedAt 倒序 */
+/** 获取全部文章摘要列表（含草稿、私人），按 publishedAt 倒序 */
 export async function getPostList(env) {
   const kv = getKv(env);
   const list = (await kvGetJson(kv, Keys.postList)) || [];
@@ -93,6 +99,17 @@ export async function getPostList(env) {
     const tb = b.publishedAt || b.createdAt || '';
     return ta < tb ? 1 : ta > tb ? -1 : 0;
   });
+}
+
+/** 前台可见的文章摘要列表：已发布且公开（public） */
+export async function getPublicPosts(env) {
+  const list = await getPostList(env);
+  return list.filter((p) => p.status === 'published' && (p.visibility || 'public') === 'public');
+}
+
+/** 判断文章当前是否对访客可见（已发布且公开） */
+export function isPostPubliclyVisible(post) {
+  return !!post && post.status === 'published' && (post.visibility || 'public') === 'public';
 }
 
 /** 文章摘要结构（不含正文） */
@@ -106,6 +123,7 @@ function toSummary(post, config) {
     categoryId: post.categoryId || '',
     tags: post.tags || [],
     status: post.status || 'draft',
+    visibility: post.visibility || 'public',
     author: post.author || config.author || '',
     createdAt: post.createdAt,
     updatedAt: post.updatedAt,
@@ -119,16 +137,18 @@ export async function createPost(env, input) {
   const kv = getKv(env);
   const config = await getSiteConfig(env);
   const id = input.id || `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
-  const baseSlug = slugify(input.slug || input.title);
+  // slug 留白（含纯空白）时根据标题自动生成
+  const baseSlug = slugify(String(input.slug || '').trim() || input.title);
   const now = nowIso();
   const status = input.status === 'published' ? 'published' : 'draft';
+  const visibility = input.visibility === 'private' ? 'private' : 'public';
 
   // slug 冲突处理：追加短随机后缀
-  let slug = baseSlug;
+  let slug = baseSlug || id;
   const list = (await kvGetJson(kv, Keys.postList)) || [];
   const existingSlugs = new Set(list.map((p) => p.slug));
   if (existingSlugs.has(slug)) {
-    slug = `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
+    slug = `${baseSlug || 'post'}-${Math.random().toString(36).slice(2, 6)}`;
   }
 
   const post = {
@@ -141,6 +161,7 @@ export async function createPost(env, input) {
     categoryId: input.categoryId || '',
     tags: Array.isArray(input.tags) ? [...new Set(input.tags)] : [],
     status,
+    visibility,
     author: String(input.author || config.author || '').trim(),
     createdAt: now,
     updatedAt: now,
@@ -168,8 +189,12 @@ export async function updatePost(env, id, input) {
     if (input[key] !== undefined) next[key] = input[key];
   }
   if (input.tags !== undefined) next.tags = [...new Set(input.tags)];
-  if (input.slug !== undefined && String(input.slug).trim()) {
-    next.slug = slugify(input.slug);
+  if (input.slug !== undefined) {
+    const trimmedSlug = String(input.slug).trim();
+    if (trimmedSlug) next.slug = slugify(trimmedSlug) || next.slug;
+  }
+  if (input.visibility !== undefined) {
+    next.visibility = input.visibility === 'private' ? 'private' : 'public';
   }
   if (input.status !== undefined) {
     const newStatus = input.status === 'published' ? 'published' : 'draft';
@@ -225,24 +250,23 @@ export async function postDetailView(env, post, config) {
   };
 }
 
-/** 上一篇 / 下一篇（按 publishedAt 相邻） */
+/** 上一篇 / 下一篇（按 publishedAt 相邻，仅公开文章） */
 export async function adjacentPosts(env, post) {
-  const list = await getPostList(env);
-  const published = list.filter((p) => p.status === 'published');
-  const idx = published.findIndex((p) => p.id === post.id);
+  const list = await getPublicPosts(env);
+  const idx = list.findIndex((p) => p.id === post.id);
   if (idx === -1) return { prev: null, next: null };
   return {
-    prev: idx < published.length - 1 ? published[idx + 1] : null,
-    next: idx > 0 ? published[idx - 1] : null,
+    prev: idx < list.length - 1 ? list[idx + 1] : null,
+    next: idx > 0 ? list[idx - 1] : null,
   };
 }
 
-/** 相关文章：同分类或共享标签，最多 limit 篇 */
+/** 相关文章：同分类或共享标签，最多 limit 篇（仅公开文章） */
 export async function relatedPosts(env, post, limit = 5) {
-  const list = await getPostList(env);
+  const list = await getPublicPosts(env);
   const tagSet = new Set(post.tags || []);
   const scored = list
-    .filter((p) => p.status === 'published' && p.id !== post.id)
+    .filter((p) => p.id !== post.id)
     .map((p) => {
       let score = 0;
       if (p.categoryId && p.categoryId === post.categoryId) score += 2;
@@ -269,12 +293,11 @@ export async function getCategories(env) {
   return list.sort((a, b) => a.name.localeCompare(b.name, 'zh'));
 }
 
-/** 分类附带文章数 */
+/** 分类附带文章数（按前台可见的公开文章统计） */
 export async function getCategoriesWithCounts(env) {
-  const [categories, posts] = await Promise.all([getCategories(env), getPostList(env)]);
-  const published = posts.filter((p) => p.status === 'published');
+  const [categories, posts] = await Promise.all([getCategories(env), getPublicPosts(env)]);
   const countMap = {};
-  for (const p of published) {
+  for (const p of posts) {
     if (p.categoryId) countMap[p.categoryId] = (countMap[p.categoryId] || 0) + 1;
   }
   return categories.map((c) => ({ ...c, postCount: countMap[c.id] || 0 }));
@@ -349,12 +372,11 @@ export async function getTagsByIds(env, ids) {
   return tags.filter((t) => ids.includes(t.id));
 }
 
-/** 标签附带文章数 */
+/** 标签附带文章数（按前台可见的公开文章统计） */
 export async function getTagsWithCounts(env) {
-  const [tags, posts] = await Promise.all([getTags(env), getPostList(env)]);
-  const published = posts.filter((p) => p.status === 'published');
+  const [tags, posts] = await Promise.all([getTags(env), getPublicPosts(env)]);
   const countMap = {};
-  for (const p of published) {
+  for (const p of posts) {
     for (const t of p.tags || []) countMap[t] = (countMap[t] || 0) + 1;
   }
   return tags.map((t) => ({ ...t, postCount: countMap[t.id] || 0 }));
@@ -441,6 +463,7 @@ export async function createComment(env, input) {
   const post = await getPostByIdOrSlug(env, input.postId || input.postSlug);
   if (!post) throw new Error('文章不存在');
   if (post.status !== 'published') throw new Error('文章未发布');
+  if ((post.visibility || 'public') === 'private') throw new Error('该文章不接受评论');
   if (config.commentEnabled === false) throw new Error('评论已关闭');
 
   const id = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
