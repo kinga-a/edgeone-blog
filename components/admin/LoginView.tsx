@@ -1,6 +1,6 @@
 'use client';
 
-/** 管理员登录 / 首次初始化 */
+/** 管理员登录 / 首次初始化（支持 TOTP 两步验证） */
 import { useState } from 'react';
 import { Btn, Field, Input, useToast } from './ui';
 import { api } from '@/lib/api';
@@ -10,6 +10,8 @@ export default function LoginView({ onLogin }: { onLogin: () => void }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
+  const [totp, setTotp] = useState('');
+  const [totpRequired, setTotpRequired] = useState(false);
   const [busy, setBusy] = useState(false);
   const toast = useToast();
 
@@ -37,7 +39,13 @@ export default function LoginView({ onLogin }: { onLogin: () => void }) {
         setBusy(false);
         return;
       }
-      await api.login(username, password);
+      const d = await api.login(username, password, totpRequired ? totp : undefined);
+      if (d.totpRequired) {
+        setTotpRequired(true);
+        toast('请输入动态验证码完成登录');
+        setBusy(false);
+        return;
+      }
       toast('登录成功');
       onLogin();
     } catch (e) {
@@ -53,26 +61,36 @@ export default function LoginView({ onLogin }: { onLogin: () => void }) {
           <div className="text-center mb-6">
             <div className="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white text-xl font-bold">B</div>
             <h1 className="mt-4 text-lg font-bold text-slate-900 dark:text-slate-100">博客后台管理</h1>
-            <p className="mt-1 text-xs text-slate-400">{mode === 'login' ? '登录以继续' : '首次部署：创建管理员账号'}</p>
+            <p className="mt-1 text-xs text-slate-400">
+              {totpRequired ? '请输入身份验证器中的 6 位动态验证码' : mode === 'login' ? '登录以继续' : '首次部署：创建管理员账号'}
+            </p>
           </div>
           <div className="space-y-4">
             <Field label="用户名">
-              <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="管理员用户名" autoFocus />
+              <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="管理员用户名" autoFocus disabled={totpRequired} />
             </Field>
             <Field label="密码">
-              <Input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="密码" />
+              <Input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="密码" disabled={totpRequired} />
             </Field>
-            {mode === 'setup' && (
+            {totpRequired ? (
+              <Field label="动态验证码">
+                <Input value={totp} onChange={(e) => setTotp(e.target.value)} placeholder="6 位验证码" inputMode="numeric" autoFocus />
+              </Field>
+            ) : mode === 'setup' ? (
               <Field label="确认密码">
                 <Input value={password2} onChange={(e) => setPassword2(e.target.value)} type="password" placeholder="再次输入密码" />
               </Field>
-            )}
+            ) : null}
             <Btn onClick={submit} disabled={busy} className="w-full">
-              {busy ? '处理中…' : mode === 'login' ? '登 录' : '创建管理员'}
+              {busy ? '处理中…' : totpRequired ? '验证并登录' : mode === 'login' ? '登 录' : '创建管理员'}
             </Btn>
           </div>
           <p className="mt-5 text-center text-xs text-slate-400">
-            {mode === 'login' ? (
+            {totpRequired ? (
+              <button className="text-brand-600 dark:text-brand-400 hover:underline" onClick={() => { setTotpRequired(false); setTotp(''); }}>
+                返回上一步
+              </button>
+            ) : mode === 'login' ? (
               <>
                 还没有管理员账号？
                 <button className="text-brand-600 dark:text-brand-400 hover:underline ml-1" onClick={() => setMode('setup')}>

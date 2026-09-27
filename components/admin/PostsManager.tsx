@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Btn, Card, Empty, Loading, Table, Td, Th, Badge, useToast, Field, Input, Textarea, Select } from './ui';
 import { api } from '@/lib/api';
 import type { Category, Post, PostSummary, Tag } from '@/lib/types';
-import { fmtDate, mediaUrl } from '@/lib/utils';
+import { fmtDate, mediaUrl, slugify } from '@/lib/utils';
 import MarkdownView from '../MarkdownView';
 
 export default function PostsManager({ route, navigate }: { route: string; navigate: (k: string) => void }) {
@@ -31,7 +31,7 @@ function PostsList({ navigate }: { navigate: (k: string) => void }) {
 
   const load = useCallback((p: number, s: string) => {
     setLoading(true);
-    api.listPosts({ page: p, pageSize: 15, status: s || undefined })
+    api.listPosts({ page: p, pageSize: 15, status: s || undefined, scope: 'admin' })
       .then((d) => {
         if (d?.ok) {
           setItems(d.items);
@@ -94,7 +94,12 @@ function PostsList({ navigate }: { navigate: (k: string) => void }) {
                     <div className="font-medium text-slate-800 dark:text-slate-200 max-w-72 truncate">{p.title}</div>
                     <div className="text-xs text-slate-400 truncate max-w-72">/{p.slug}/</div>
                   </Td>
-                  <Td><Badge tone={p.status === 'published' ? 'green' : 'gray'}>{p.status === 'published' ? '已发布' : '草稿'}</Badge></Td>
+                  <Td>
+                    <span className="inline-flex items-center gap-1.5">
+                      <Badge tone={p.status === 'published' ? 'green' : 'gray'}>{p.status === 'published' ? '已发布' : '草稿'}</Badge>
+                      {(p.visibility || 'public') === 'private' && <Badge tone="yellow">私人</Badge>}
+                    </span>
+                  </Td>
                   <Td className="text-slate-500 dark:text-slate-400">{p.categoryName || '—'}</Td>
                   <Td className="text-slate-500 dark:text-slate-400 whitespace-nowrap">{fmtDate(p.publishedAt || p.createdAt)}</Td>
                   <Td className="text-slate-500 dark:text-slate-400">{p.readingTime || 1} 分钟</Td>
@@ -102,7 +107,7 @@ function PostsList({ navigate }: { navigate: (k: string) => void }) {
                     {p.status === 'published' && (
                       <a href={`/posts/${p.slug}/`} target="_blank" rel="noopener noreferrer" className="mr-3 text-sm text-brand-600 dark:text-brand-400 hover:underline">查看</a>
                     )}
-                    <button className="mr-3 text-sm text-brand-600 dark:text-brand-400 hover:underline" onClick={() => navigate(`posts/${p.id}`)}>编辑</button>
+                    <button className="mr-3 text-sm text-brand-600 dark:text-brand-400 hover:underline" onClick={() => navigate(`posts/edit/${p.id}`)}>编辑</button>
                     <button className="text-sm text-rose-500 hover:underline" onClick={() => remove(p.id)}>删除</button>
                   </Td>
                 </tr>
@@ -133,6 +138,7 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
   const [summary, setSummary] = useState('');
   const [content, setContent] = useState('');
   const [status, setStatus] = useState<'draft' | 'published'>('draft');
+  const [visibility, setVisibility] = useState<'public' | 'private'>('public');
   const [categoryId, setCategoryId] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
@@ -157,6 +163,7 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
         setSummary(p.summary);
         setContent(p.content);
         setStatus(p.status);
+        setVisibility(p.visibility || 'public');
         setCategoryId(p.categoryId || '');
         setTags(p.tags || []);
         setCoverKey(p.coverKey || '');
@@ -181,16 +188,18 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
     if (!title.trim()) { toast('请填写文章标题', 'error'); return; }
     if (!content.trim()) { toast('请填写文章正文', 'error'); return; }
     setBusy(true);
+    // slug 留白（含纯空白）时根据标题自动生成
+    const finalSlug = slug.trim() ? slugify(slug) : slugify(title);
     const body = {
-      title, slug, summary, content, status, categoryId,
+      title, slug: finalSlug, summary, content, status, visibility, categoryId,
       tags: tags.map((t) => t.trim()).filter(Boolean),
       coverKey,
     };
     try {
       if (mode === 'new') {
         const d = await api.createPost(body);
-        toast('文章已创建');
-        navigate(`posts/${d.post.id}`);
+        toast(`文章已创建，别名：/${d.post.slug}/`);
+        navigate(`posts/edit/${d.post.id}`);
       } else {
         await api.updatePost(postId!, body);
         toast('文章已保存');
@@ -232,12 +241,20 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
             <Field label="URL 别名（slug）" hint="留空则根据标题自动生成">
               <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="my-first-post" />
             </Field>
-            <Field label="状态">
-              <Select value={status} onChange={(e) => setStatus(e.target.value as 'draft' | 'published')}>
-                <option value="draft">草稿</option>
-                <option value="published">发布</option>
-              </Select>
-            </Field>
+            <div className="space-y-4">
+              <Field label="状态">
+                <Select value={status} onChange={(e) => setStatus(e.target.value as 'draft' | 'published')}>
+                  <option value="draft">草稿</option>
+                  <option value="published">发布</option>
+                </Select>
+              </Field>
+              <Field label="可见性" hint="私人文章仅管理员登录后可见">
+                <Select value={visibility} onChange={(e) => setVisibility(e.target.value as 'public' | 'private')}>
+                  <option value="public">公开</option>
+                  <option value="private">私人</option>
+                </Select>
+              </Field>
+            </div>
           </div>
           <Field label="摘要" hint="用于列表页与 SEO 描述">
             <Textarea value={summary} onChange={(e) => setSummary(e.target.value)} rows={2} className="!font-sans" placeholder="一句话概括文章内容" />
