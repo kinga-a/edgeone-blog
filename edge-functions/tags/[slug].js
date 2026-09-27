@@ -1,13 +1,12 @@
-import { getTags, getPostList } from '../api/_lib/data.js';
+import { getTags, getPublicPosts } from '../api/_lib/data.js';
 import { renderListPage } from '../api/_lib/render-html.js';
 
-/** GET /tags/:slug — 标签归档页（服务端渲染） */
+/** GET /tags/:slug — 标签归档页（服务端渲染，仅公开文章） */
 export async function onRequestGet({ request, env, params }) {
   const tags = await getTags(env);
   const tag = tags.find((t) => t.slug === params.slug);
   if (!tag) return new Response('标签不存在', { status: 404 });
-  const posts = (await getPostList(env))
-    .filter((p) => p.status === 'published' && (p.tags || []).includes(tag.id));
+  const posts = (await getPublicPosts(env)).filter((p) => (p.tags || []).includes(tag.id));
   const html = await renderListPage(env, {
     type: 'tags',
     slug: tag.slug,
@@ -20,5 +19,3 @@ export async function onRequestGet({ request, env, params }) {
     headers: { 'content-type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=600' },
   });
 }
-
-export const onRequest = onRequestGet;

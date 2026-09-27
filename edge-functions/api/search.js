@@ -1,9 +1,9 @@
 import { json, publicHeaders, parseSearchParams } from './_lib/response.js';
-import { getPostList, getCategories, getTags } from './_lib/data.js';
+import { getPublicPosts, getCategories, getTags } from './_lib/data.js';
 
 /**
  * GET /api/search?q=xxx — 全文搜索（标题/摘要/正文关键词）
- * 返回文章列表（仅已发布），附带匹配片段。
+ * 返回文章列表（仅已发布且公开），附带匹配片段。
  */
 export async function onRequestGet({ request, env }) {
   const params = parseSearchParams(request.url);
@@ -11,7 +11,7 @@ export async function onRequestGet({ request, env }) {
   if (!q) return json({ ok: true, items: [], total: 0, q: '' }, { headers: publicHeaders() });
 
   const [posts, categories, tags] = await Promise.all([
-    getPostList(env),
+    getPublicPosts(env),
     getCategories(env),
     getTags(env),
   ]);
@@ -20,7 +20,6 @@ export async function onRequestGet({ request, env }) {
   const tagMap = new Map(tags.map((t) => [t.id, t]));
 
   const items = posts
-    .filter((p) => p.status === 'published')
     .map((p) => {
       let score = 0;
       if (p.title.toLowerCase().includes(q)) score += 10;
@@ -38,5 +37,3 @@ export async function onRequestGet({ request, env }) {
 
   return json({ ok: true, items, total: items.length, q: params.q }, { headers: publicHeaders() });
 }
-
-export const onRequest = onRequestGet;

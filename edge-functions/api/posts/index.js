@@ -1,10 +1,12 @@
 import { json, fail, readJson, parseSearchParams, intParam, publicHeaders } from '../_lib/response.js';
-import { getPostList, createPost, getCategories, getTags, ensureTagByName } from '../_lib/data.js';
+import { getPostList, getPublicPosts, createPost, getCategories, getTags, ensureTagByName } from '../_lib/data.js';
 import { requireAdmin } from '../_lib/auth.js';
 
 /**
- * GET /api/posts — 文章列表（公开）
- * 参数：page, pageSize, category, tag, status, q, sort
+ * GET /api/posts — 文章列表
+ * 参数：page, pageSize, category, tag, status, q, sort, scope
+ * 前台请求（无 scope=admin）始终只返回「已发布 + 公开」文章；
+ * 后台请求（scope=admin 且已登录）返回全量（含草稿与私人文章）。
  * POST /api/posts — 新建文章（管理员）
  */
 export async function onRequestGet({ request, env }) {
@@ -16,7 +18,9 @@ export async function onRequestGet({ request, env }) {
   const status = params.status || '';
   const q = (params.q || '').trim().toLowerCase();
 
-  let list = await getPostList(env);
+  const admin = await requireAdmin(request, env).catch(() => ({ ok: false }));
+  const adminScope = params.scope === 'admin' && admin.ok;
+  let list = adminScope ? await getPostList(env) : await getPublicPosts(env);
   if (status) list = list.filter((p) => p.status === status);
   if (categoryId) list = list.filter((p) => p.categoryId === categoryId);
   if (tagId) list = list.filter((p) => (p.tags || []).includes(tagId));
@@ -66,5 +70,3 @@ export async function onRequestPost({ request, env }) {
     return fail(400, e.message || '创建文章失败');
   }
 }
-
-export const onRequest = onRequestPost;

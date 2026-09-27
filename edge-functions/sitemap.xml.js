@@ -1,12 +1,12 @@
-import { getSiteConfig, getPostList, getCategories, getTags } from './api/_lib/data.js';
+import { getSiteConfig, getPublicPosts, getCategories, getTags } from './api/_lib/data.js';
 import { siteOrigin } from './api/_lib/render-html.js';
 import { escapeHtml } from './api/_lib/shell-escape.js';
 
-/** GET /sitemap.xml — 站点地图（含全部已发布文章、分类、标签、静态页面） */
+/** GET /sitemap.xml — 站点地图（含全部已发布的公开文章、分类、标签、静态页面） */
 export async function onRequestGet({ request, env }) {
   const [config, posts, categories, tags] = await Promise.all([
     getSiteConfig(env),
-    getPostList(env),
+    getPublicPosts(env),
     getCategories(env),
     getTags(env),
   ]);
@@ -37,5 +37,3 @@ ${urls.join('\n')}
     headers: { 'content-type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=3600' },
   });
 }
-
-export const onRequest = onRequestGet;

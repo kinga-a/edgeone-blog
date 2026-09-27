@@ -1,15 +1,17 @@
 import { json, fail, readJson, publicHeaders } from '../_lib/response.js';
-import { getPostByIdOrSlug, updatePost, deletePost, postDetailView, getSiteConfig } from '../_lib/data.js';
+import { getPostByIdOrSlug, updatePost, deletePost, postDetailView, getSiteConfig, isPostPubliclyVisible } from '../_lib/data.js';
 import { requireAdmin } from '../_lib/auth.js';
 
 /**
- * GET /api/posts/:id — 文章详情（公开，id 或 slug）
+ * GET /api/posts/:id — 文章详情（id 或 slug；私人文章仅管理员可见）
  * PUT /api/posts/:id — 更新文章（管理员）
  * DELETE /api/posts/:id — 删除文章（管理员）
  */
 export async function onRequestGet({ request, env, params }) {
   const post = await getPostByIdOrSlug(env, params.id);
   if (!post) return fail(404, '文章不存在');
+  const admin = await requireAdmin(request, env).catch(() => ({ ok: false }));
+  if (!admin.ok && !isPostPubliclyVisible(post)) return fail(404, '文章不存在或未发布');
   const config = await getSiteConfig(env);
   const detail = await postDetailView(env, post, config);
   return json({ ok: true, post: detail }, { headers: publicHeaders() });

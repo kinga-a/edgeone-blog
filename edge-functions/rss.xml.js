@@ -1,13 +1,11 @@
-import { getSiteConfig, getPostList } from './api/_lib/data.js';
+import { getSiteConfig, getPublicPosts } from './api/_lib/data.js';
 import { siteOrigin } from './api/_lib/render-html.js';
 
-/** GET /rss.xml — RSS 2.0 订阅源 */
+/** GET /rss.xml — RSS 2.0 订阅源（仅公开文章） */
 export async function onRequestGet({ request, env }) {
-  const [config, posts] = await Promise.all([getSiteConfig(env), getPostList(env)]);
+  const [config, posts] = await Promise.all([getSiteConfig(env), getPublicPosts(env)]);
   const origin = siteOrigin(config, request);
-  const published = posts
-    .filter((p) => p.status === 'published')
-    .sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1));
+  const published = [...posts].sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1));
 
   const escape = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -40,5 +38,3 @@ ${items}
     headers: { 'content-type': 'application/rss+xml; charset=utf-8', 'Cache-Control': 'public, max-age=300' },
   });
 }
-
-export const onRequest = onRequestGet;

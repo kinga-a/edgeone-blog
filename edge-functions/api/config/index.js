@@ -2,9 +2,13 @@ import { json, fail, readJson, publicHeaders } from '../_lib/response.js';
 import { getSiteConfig, saveSiteConfig } from '../_lib/data.js';
 import { requireAdmin } from '../_lib/auth.js';
 
-/** GET /api/config — 公开站点配置 */
-export async function onRequestGet({ env }) {
+/** GET /api/config — 公开站点配置（未登录时隐藏备份配置中的密码） */
+export async function onRequestGet({ request, env }) {
+  const admin = await requireAdmin(request, env).catch(() => ({ ok: false }));
   const config = await getSiteConfig(env);
+  if (!admin.ok && config.backup) {
+    config.backup = { ...config.backup, webdavPassword: '' };
+  }
   return json({ ok: true, config }, { headers: publicHeaders() });
 }
 
