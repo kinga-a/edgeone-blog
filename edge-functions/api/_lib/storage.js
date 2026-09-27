@@ -27,9 +27,11 @@ export async function blobGet(key, options) {
   return store().get(key, options);
 }
 
-/** 读取对象并附带响应头（用于代理媒体文件时回传 Content-Type 等） */
-export async function blobGetWithHeaders(key) {
-  return store().getWithHeaders(key);
+/** 读取对象并附带响应头（用于代理媒体文件时回传 Content-Type 等）
+ * 默认使用 strong 一致性（绕过边缘缓存域直读源站），
+ * 避免刚上传的文件因最终一致性在短时间窗口内读不到。 */
+export async function blobGetWithHeaders(key, options) {
+  return store().getWithHeaders(key, { consistency: 'strong', ...(options || {}) });
 }
 
 /** 删除对象 */
