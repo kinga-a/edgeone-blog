@@ -1,6 +1,9 @@
 /** 文章状态 */
 export type PostStatus = 'draft' | 'published';
 
+/** 文章可见性：public=公开，private=私人（仅管理员登录可见） */
+export type PostVisibility = 'public' | 'private';
+
 /** 文章摘要（列表用，不含正文） */
 export interface PostSummary {
   id: string;
@@ -11,6 +14,7 @@ export interface PostSummary {
   categoryId: string;
   tags: string[];
   status: PostStatus;
+  visibility?: PostVisibility;
   author: string;
   createdAt: string;
   updatedAt: string;
@@ -87,6 +91,7 @@ export interface SiteConfig {
   commentModeration: boolean;
   seo: { ogImage?: string; twitterHandle?: string; googleSiteVerification?: string };
   social: { github?: string; twitter?: string; wechat?: string; email?: string };
+  backup?: { webdavUrl?: string; webdavUsername?: string; webdavPassword?: string; webdavPath?: string };
   updatedAt: string;
 }
 

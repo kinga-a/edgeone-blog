@@ -33,10 +33,13 @@ export const api = {
   // ---- 认证 ----
   setup: (username: string, password: string) =>
     request<{ ok: true }>('/api/auth/setup', { method: 'POST', body: JSON.stringify({ username, password }) }),
-  login: (username: string, password: string) =>
-    request<{ ok: true; username: string }>('/api/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }),
+  login: (username: string, password: string, totp?: string) =>
+    request<{ ok: true; username: string; totpRequired?: boolean }>('/api/auth/login', { method: 'POST', body: JSON.stringify({ username, password, totp }) }),
   logout: () => request<{ ok: true }>('/api/auth/logout', { method: 'POST' }),
-  me: () => request<{ ok: boolean; username: string | null }>('/api/auth/me'),
+  me: () => request<{ ok: boolean; username: string | null; totpEnabled?: boolean }>('/api/auth/me'),
+  // TOTP 二次验证管理
+  totpAction: (action: 'setup' | 'verify' | 'disable', code?: string) =>
+    request<{ ok: true; secret?: string; uri?: string; enabled?: boolean }>('/api/auth/totp', { method: 'POST', body: JSON.stringify({ action, code }) }),
 
   // ---- 文章 ----
   listPosts: (params: Record<string, string | number | undefined>) => {
@@ -104,6 +107,33 @@ export const api = {
   getStats: () => request<{ ok: true; stats: AdminStats }>('/api/stats'),
   trackVisit: () => request<{ ok: true; stats: unknown }>('/api/stats/track', { method: 'POST', body: JSON.stringify({ type: 'visit' }) }),
   search: (q: string) => request<{ ok: true; items: PostSummary[]; total: number; q: string }>(`/api/search?q=${encodeURIComponent(q)}`),
+
+  // ---- 备份 ----
+  /** 全量导出：直接下载 JSON 备份文件 */
+  exportBackup: async () => {
+    const res = await fetch('/api/backup/export', { credentials: 'same-origin' });
+    if (!res.ok) {
+      let msg = `备份导出失败 (${res.status})`;
+      try { const d = await res.json(); if (d?.error) msg = d.error; } catch { /* ignore */ }
+      throw new Error(msg);
+    }
+    const blob = await res.blob();
+    const disposition = res.headers.get('content-disposition') || '';
+    const match = /filename="?([^"]+)"?/.exec(disposition);
+    const filename = match ? match[1] : `edgeone-blog-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    return { ok: true as const };
+  },
+  /** 推送备份到 WebDAV */
+  backupToWebdav: () =>
+    request<{ ok: true; count: number; url: string }>('/api/backup/webdav', { method: 'POST', body: JSON.stringify({}) }),
 };
 
 export type { PostStatus };
