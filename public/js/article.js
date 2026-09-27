@@ -113,6 +113,25 @@
     }
   };
 
+  /* ---------- 代码高亮（highlight.js CDN，懒加载） ---------- */
+  (function () {
+    var codes = document.querySelectorAll('.article-body pre.code-block code');
+    if (!codes.length) return;
+    function applyHighlight() {
+      if (!window.hljs) return;
+      for (var k = 0; k < codes.length; k++) {
+        try { window.hljs.highlightElement(codes[k]); } catch (e) {}
+      }
+    }
+    if (window.hljs) { applyHighlight(); return; }
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js';
+    s.async = true;
+    s.onload = applyHighlight;
+    s.onerror = function () {};
+    document.head.appendChild(s);
+  })();
+
   /* ---------- 目录滚动高亮 ---------- */
   (function () {
     var links = document.querySelectorAll('.toc-list a');
