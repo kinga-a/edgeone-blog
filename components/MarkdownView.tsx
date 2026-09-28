@@ -4,6 +4,24 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { renderMarkdown } from '@/lib/markdown';
 
+/** 剪贴板兜底（旧 Safari / 非安全上下文） */
+function execCopy(text: string) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.top = '0';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  } catch {
+    /* ignore */
+  }
+}
+
 export default function MarkdownView({ content, className }: { content: string; className?: string }) {
   const html = useMemo(() => renderMarkdown(content || ''), [content]);
   const ref = useRef<HTMLDivElement>(null);
@@ -38,12 +56,17 @@ export default function MarkdownView({ content, className }: { content: string; 
       copyBtn.className = 'code-copy-btn';
       copyBtn.textContent = '复制';
       copyBtn.addEventListener('click', () => {
-        if (!navigator.clipboard) return;
-        navigator.clipboard.writeText(raw).then(() => {
+        const done = () => {
           copyBtn.textContent = '已复制';
           copyBtn.classList.add('copied');
           setTimeout(() => { copyBtn.textContent = '复制'; copyBtn.classList.remove('copied'); }, 1600);
-        }).catch(() => {});
+        };
+        if (navigator.clipboard?.writeText) {
+          navigator.clipboard.writeText(raw).then(done).catch(() => { execCopy(raw); done(); });
+        } else {
+          execCopy(raw);
+          done();
+        }
       });
       head.appendChild(langLabel);
       head.appendChild(copyBtn);

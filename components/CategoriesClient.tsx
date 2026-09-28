@@ -24,7 +24,16 @@ export default function CategoriesClient() {
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-10">
       <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-slate-100 mb-6">分类</h1>
       {loading ? (
-        <div className="text-center py-16 text-slate-400">加载中…</div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="p-5 rounded-2xl border border-slate-200 dark:border-slate-700/60">
+              <div className="skeleton h-8 w-8 rounded-lg mb-3" aria-hidden="true" />
+              <div className="skeleton h-5 w-2/3 rounded mb-2" aria-hidden="true" />
+              <div className="skeleton h-4 w-full rounded" aria-hidden="true" />
+              <div className="skeleton h-4 w-1/3 rounded mt-3" aria-hidden="true" />
+            </div>
+          ))}
+        </div>
       ) : categories.length ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {categories.map((c) => (

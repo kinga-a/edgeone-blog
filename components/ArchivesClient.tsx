@@ -37,7 +37,17 @@ export default function ArchivesClient() {
       <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-slate-100 mb-2">归档</h1>
       <p className="text-sm text-slate-500 dark:text-slate-400 mb-8">共 {posts.length} 篇文章</p>
       {loading ? (
-        <div className="text-center py-16 text-slate-400">加载中…</div>
+        <div className="space-y-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <div className="skeleton h-5 w-24 rounded" aria-hidden="true" />
+              <div className="space-y-2 border-l-2 border-slate-200 dark:border-slate-700 ml-2 pl-6">
+                <div className="skeleton h-4 w-3/4 rounded" aria-hidden="true" />
+                <div className="skeleton h-4 w-1/2 rounded" aria-hidden="true" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : groups.length ? (
         <div className="space-y-8">
           {groups.map(([month, items]) => (

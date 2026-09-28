@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import PostCard from './PostCard';
 import Pagination from './Pagination';
+import { PostCardSkeleton } from './Skeleton';
 import type { Category, PostSummary, Tag } from '@/lib/types';
 import { api } from '@/lib/api';
 
@@ -79,7 +80,7 @@ export default function PostsClient() {
             placeholder="搜索文章…"
             className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:border-brand-500"
           />
-          <button onClick={submitSearch} className="px-4 py-2 rounded-xl bg-brand-600 text-white text-sm hover:bg-brand-700 transition-colors">
+          <button onClick={submitSearch} className="px-4 py-2 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition-colors">
             搜索
           </button>
         </div>
@@ -146,7 +147,9 @@ export default function PostsClient() {
       )}
 
       {loading ? (
-        <div className="text-center py-16 text-slate-400">加载中…</div>
+        <div className="grid gap-5 sm:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, i) => <PostCardSkeleton key={i} />)}
+        </div>
       ) : items.length ? (
         <>
           <div className="grid gap-5 sm:grid-cols-2">
@@ -155,7 +158,14 @@ export default function PostsClient() {
           <Pagination page={page} totalPages={totalPages} buildHref={buildHref} />
         </>
       ) : (
-        <div className="text-center py-16 text-slate-400">没有找到匹配的文章</div>
+        <div className="text-center py-16 text-slate-400">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" className="mx-auto mb-4 opacity-50" aria-hidden="true">
+            <path d="M6 3h12a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M9 8h6M9 12h6M9 16h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          <p>没有找到匹配的文章</p>
+          <p className="mt-1 text-sm text-slate-400/70">换个关键词或筛选条件试试</p>
+        </div>
       )}
     </div>
   );

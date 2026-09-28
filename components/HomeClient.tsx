@@ -93,7 +93,39 @@ export default function HomeClient() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 py-20 text-center text-slate-400">加载中…</div>
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 pb-10">
+        {/* 刊头骨架 */}
+        <div className="py-12">
+          <div className="skeleton h-3 w-24 rounded mb-6" aria-hidden="true" />
+          <div className="skeleton h-10 w-2/3 rounded mb-3" aria-hidden="true" />
+          <div className="skeleton h-5 w-1/2 rounded mb-4" aria-hidden="true" />
+          <div className="skeleton h-4 w-3/5 rounded mb-2" aria-hidden="true" />
+          <div className="skeleton h-4 w-2/5 rounded" aria-hidden="true" />
+        </div>
+        {/* 精选骨架 */}
+        <div className="featured-section">
+          <div className="article-card">
+            <div className="skeleton card-cover w-full" aria-hidden="true" />
+            <div className="card-body">
+              <div className="skeleton h-3 w-28 rounded" aria-hidden="true" />
+              <div className="skeleton h-6 w-4/5 rounded" aria-hidden="true" />
+              <div className="skeleton h-4 w-full rounded" aria-hidden="true" />
+              <div className="skeleton h-4 w-2/3 rounded" aria-hidden="true" />
+            </div>
+          </div>
+          <div className="featured-side">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="featured-small">
+                <div className="skeleton w-[100px] aspect-square rounded-[10px] shrink-0" aria-hidden="true" />
+                <div className="card-info flex-1">
+                  <div className="skeleton h-3 w-24 rounded" aria-hidden="true" />
+                  <div className="skeleton h-4 w-4/5 rounded" aria-hidden="true" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     );
   }
 

@@ -4,6 +4,7 @@ import ThemeProvider from '@/components/ThemeProvider';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BackToTop from '@/components/BackToTop';
+import PageTransition from '@/components/PageTransition';
 
 export const metadata: Metadata = {
   title: {
@@ -34,7 +35,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen flex flex-col">
         <ThemeProvider>
           <Header />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1">
+            <PageTransition>{children}</PageTransition>
+          </main>
           <Footer />
           <BackToTop />
         </ThemeProvider>

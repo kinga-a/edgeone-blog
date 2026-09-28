@@ -79,10 +79,20 @@ export default function Header() {
           </Link>
           <button
             onClick={toggle}
-            aria-label="切换主题"
+            aria-label={dark ? '切换到浅色模式' : '切换到暗色模式'}
+            title={dark ? '切换到浅色模式' : '切换到暗色模式'}
             className="ml-0.5 w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
-            {dark ? '☀️' : '🌙'}
+            {dark ? (
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <circle cx="10" cy="10" r="4.5" stroke="currentColor" strokeWidth="1.6" />
+                <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.3 4.3l1.4 1.4M14.3 14.3l1.4 1.4M15.7 4.3l-1.4 1.4M5.7 14.3l-1.4 1.4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M14.2 6.2a5 5 0 1 0 0 7.6 6.5 6.5 0 0 1-9.4-8.2A6 6 0 0 0 14.2 6.2z" fill="currentColor" />
+              </svg>
+            )}
           </button>
         </nav>
 
@@ -98,7 +108,7 @@ export default function Header() {
       </div>
 
       {open && (
-        <nav className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-2 space-y-1">
+        <nav className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-2 space-y-1 fade-in-up">
           {NAV.map((n) => (
             <Link
               key={n.href}
@@ -117,15 +127,29 @@ export default function Header() {
           <Link
             href="/search/"
             onClick={() => setOpen(false)}
-            className="block px-3 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300"
           >
-            🔍 搜索
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.6" />
+              <path d="M14 14l4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            </svg>
+            搜索
           </Link>
           <button
             onClick={toggle}
-            className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300"
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300"
           >
-            {dark ? '☀️ 浅色模式' : '🌙 暗色模式'}
+            {dark ? (
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <circle cx="10" cy="10" r="4.5" stroke="currentColor" strokeWidth="1.6" />
+                <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.3 4.3l1.4 1.4M14.3 14.3l1.4 1.4M15.7 4.3l-1.4 1.4M5.7 14.3l-1.4 1.4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+            ) : (
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M14.2 6.2a5 5 0 1 0 0 7.6 6.5 6.5 0 0 1-9.4-8.2A6 6 0 0 0 14.2 6.2z" fill="currentColor" />
+              </svg>
+            )}
+            {dark ? '浅色模式' : '暗色模式'}
           </button>
         </nav>
       )}

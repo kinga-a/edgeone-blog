@@ -59,7 +59,13 @@ export default function SettingsView() {
     })();
   }, []);
 
-  if (!config) return <div className="py-14 text-center text-sm text-slate-400">加载中…</div>;
+  if (!config) return (
+    <div className="py-10 space-y-3" aria-hidden="true">
+      <div className="skeleton h-6 w-1/3 rounded" />
+      <div className="skeleton h-4 w-2/3 rounded" />
+      <div className="skeleton h-4 w-1/2 rounded" />
+    </div>
+  );
 
   const set = (patch: Partial<SiteConfig>) => setConfig({ ...config, ...patch });
   const setNested = <K extends 'seo' | 'social'>(key: K, patch: Partial<SiteConfig[K]>) =>

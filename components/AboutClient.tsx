@@ -39,7 +39,13 @@ export default function AboutClient() {
           )}
         </>
       ) : (
-        <div className="text-center py-16 text-slate-400">加载中…</div>
+        <div className="mt-8 space-y-3">
+          <div className="skeleton h-6 w-2/3 rounded" aria-hidden="true" />
+          <div className="skeleton h-4 w-full rounded" aria-hidden="true" />
+          <div className="skeleton h-4 w-11/12 rounded" aria-hidden="true" />
+          <div className="skeleton h-4 w-4/5 rounded" aria-hidden="true" />
+          <div className="skeleton h-4 w-3/4 rounded" aria-hidden="true" />
+        </div>
       )}
     </div>
   );

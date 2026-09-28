@@ -26,7 +26,11 @@ export default function TagsClient() {
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-10">
       <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-slate-100 mb-6">标签</h1>
       {loading ? (
-        <div className="text-center py-16 text-slate-400">加载中…</div>
+        <div className="flex flex-wrap gap-3 items-center">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div key={i} className="skeleton h-7 w-20 rounded-full" aria-hidden="true" />
+          ))}
+        </div>
       ) : tags.length ? (
         <div className="flex flex-wrap gap-3 items-center">
           {tags.map((t) => {

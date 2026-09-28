@@ -80,7 +80,17 @@ export default function SearchClient() {
           ))}
         </ul>
       ) : (
-        searched && !loading && <div className="text-center py-16 text-slate-400">没有找到匹配的文章</div>
+        searched && !loading && (
+          <div className="text-center py-16 text-slate-400">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" className="mx-auto mb-4 opacity-50" aria-hidden="true">
+              <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M15.5 15.5L20 20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M8 10.5h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            <p>没有找到匹配的文章</p>
+            <p className="mt-1 text-sm text-slate-400/70">换个关键词试试</p>
+          </div>
+        )
       )}
     </div>
   );

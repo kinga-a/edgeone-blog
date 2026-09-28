@@ -107,7 +107,12 @@ export default function MediaManager() {
                 <tr key={m.uid} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
                   <Td>
                     {m.type === 'attachment' ? (
-                      <div className="w-16 h-10 rounded bg-slate-100 dark:bg-slate-700/50 flex items-center justify-center text-xs text-slate-400">📄</div>
+                      <div className="w-16 h-10 rounded bg-slate-100 dark:bg-slate-700/50 flex items-center justify-center text-slate-400">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M6 3h12a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="currentColor" strokeWidth="1.5" />
+                          <path d="M9 8h6M9 12h6M9 16h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                      </div>
                     ) : (
                       /* eslint-disable-next-line @next/next/no-img-element */
                       <img src={mediaUrl(m.key)} alt={m.name} loading="lazy" className="w-16 h-10 rounded object-cover bg-slate-100 dark:bg-slate-700/50" />

@@ -544,10 +544,12 @@ a:hover .card-title { color: var(--t-brand-600); }
   font-weight: 600;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   color: var(--t-brand-600);
+  border: 1px solid rgba(154, 67, 24, 0.35); /* Safari < 15.4 兜底 */
   border: 1px solid color-mix(in srgb, var(--t-brand-600) 35%, transparent);
 }
 .dark .category-card-icon {
   color: var(--t-brand-400);
+  border-color: rgba(224, 138, 90, 0.4); /* Safari < 15.4 兜底 */
   border-color: color-mix(in srgb, var(--t-brand-400) 40%, transparent);
 }
 .category-card-name {
@@ -660,4 +662,81 @@ a:hover .card-title { color: var(--t-brand-600); }
 }
 .fade-in-up {
   animation: fade-in-up 0.35s ease both;
+}
+
+/* ========== 页面切换过渡（克制淡入） ========== */
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.page-enter {
+  animation: page-enter 0.28s ease both;
+}
+
+/* ========== 骨架屏（克制微光，纸墨灰底） ========== */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--t-slate-100);
+}
+.dark .skeleton { background: var(--t-slate-800); }
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+}
+.dark .skeleton::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+}
+@keyframes skeleton-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* 尊重系统减弱动画（无障碍） */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after,
+  .fade-in-up,
+  .page-enter {
+    animation: none;
+  }
+  html { scroll-behavior: auto; }
+}
+
+/* ========== 浏览器适配（Chrome / Safari / iOS） ========== */
+/* iOS Safari 点击高亮去除 */
+html { -webkit-tap-highlight-color: transparent; }
+
+/* Safari 14–15.3 需 -webkit- 前缀的 backdrop-filter */
+@supports (-webkit-backdrop-filter: blur(1px)) {
+  .backdrop-blur-md { -webkit-backdrop-filter: blur(12px); }
+  .backdrop-blur-sm { -webkit-backdrop-filter: blur(8px); }
+}
+
+/* 视口高度 dvh：适配 iOS Safari 地址栏（不支持时回退 vh） */
+@supports (min-height: 100dvh) {
+  .min-h-screen { min-height: 100dvh; }
+}
+
+/* Firefox 滚动条（顺手兼容） */
+html { scrollbar-width: thin; scrollbar-color: var(--t-slate-300) transparent; }
+html.dark { scrollbar-color: var(--t-slate-700) transparent; }
+
+/* 统一键盘焦点可见样式（Chrome / Safari 一致） */
+:focus-visible {
+  outline: 2px solid var(--t-brand-600);
+  outline-offset: 2px;
+}
+.dark :focus-visible { outline-color: var(--t-brand-400); }
+:focus:not(:focus-visible) { outline: none; }
+
+/* iOS Safari：输入框字号 <16px 聚焦时会自动放大页面，统一提升到 16px 避免缩放 */
+@media (max-width: 640px) {
+  input:not([type='checkbox']):not([type='radio']),
+  textarea,
+  select {
+    font-size: 16px;
+  }
 }
