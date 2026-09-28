@@ -17,7 +17,7 @@ export default function Footer() {
   }, []);
 
   return (
-    <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+    <footer className="border-t border-slate-200 dark:border-slate-800 bg-transparent">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8 text-center">
         <div className="footer-deco">
           <span className="footer-deco-line"></span>

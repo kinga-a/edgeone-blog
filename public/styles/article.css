@@ -166,7 +166,7 @@ html.dark .theme-toggle .ico-moon, html.dark .drawer-theme .ico-moon { display: 
 /* ---------- 主体 ---------- */
 .site-main { max-width: 64rem; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
 .site-footer {
-  border-top: 1px solid var(--border); background: var(--card);
+  border-top: 1px solid var(--border); background: transparent;
   padding: 2rem 1.25rem; text-align: center;
 }
 .footer-inner { max-width: 64rem; margin: 0 auto; }
