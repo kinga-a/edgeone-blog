@@ -6,7 +6,7 @@ import { Btn, Card, Empty, Loading, Table, Td, Th, Badge, useToast, Field, Input
 import { api } from '@/lib/api';
 import type { Category, Post, PostSummary, Tag } from '@/lib/types';
 import { fmtDate, mediaUrl, slugify } from '@/lib/utils';
-import MarkdownView from '../MarkdownView';
+import VditorEditor from './VditorEditor';
 
 export default function PostsManager({ route, navigate }: { route: string; navigate: (k: string) => void }) {
   const parts = route.split('/');
@@ -146,7 +146,6 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
   const [coverUrl, setCoverUrl] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
   const [allTags, setAllTags] = useState<Tag[]>([]);
-  const [preview, setPreview] = useState(false);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(mode === 'edit');
 
@@ -264,32 +263,13 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
             <Textarea value={summary} onChange={(e) => setSummary(e.target.value)} rows={2} className="!font-sans" placeholder="一句话概括文章内容" />
           </Field>
 
-          {/* 编辑器 */}
+          {/* 编辑器（Vditor：即时渲染 + 代码高亮 + 图片上传） */}
           <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-800">
             <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40">
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">正文（Markdown）</span>
-              <div className="flex gap-1">
-                <button
-                  className={`px-2.5 py-1 rounded-md text-xs ${!preview ? 'bg-brand-600 text-white' : 'text-slate-500 dark:text-slate-400'}`}
-                  onClick={() => setPreview(false)}
-                >
-                  编辑
-                </button>
-                <button
-                  className={`px-2.5 py-1 rounded-md text-xs ${preview ? 'bg-brand-600 text-white' : 'text-slate-500 dark:text-slate-400'}`}
-                  onClick={() => setPreview(true)}
-                >
-                  预览
-                </button>
-              </div>
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">正文（Markdown · 即时渲染）</span>
+              <span className="text-xs text-slate-400">工具栏可上传图片 · 支持代码块 / 表格 / 公式</span>
             </div>
-            {preview ? (
-              <div className="p-4 max-h-[520px] overflow-y-auto">
-                <MarkdownView content={content} className="prose" />
-              </div>
-            ) : (
-              <Textarea value={content} onChange={(e) => setContent(e.target.value)} rows={18} placeholder={'# 标题\n\n支持 **加粗**、*斜体*、`代码`、```代码块```、![图片](url) 等' } />
-            )}
+            <VditorEditor value={content} onChange={setContent} cacheId={mode === 'edit' ? (postId || 'edit') : 'new'} />
           </div>
         </div>
 
