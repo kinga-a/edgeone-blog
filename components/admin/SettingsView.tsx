@@ -2,7 +2,7 @@
 
 /** 站点设置：基本信息 / SEO / 社交 / 评论策略 / TOTP 安全验证 / 备份 */
 import { useEffect, useRef, useState } from 'react';
-import { ActionBar, Btn, Card, Field, Input, SaveState, Textarea, useToast } from './ui';
+import { Btn, Card, Field, Input, SaveState, Textarea, useToast } from './ui';
 import { api } from '@/lib/api';
 import type { PostSummary, SiteConfig } from '@/lib/types';
 
@@ -225,10 +225,19 @@ export default function SettingsView() {
   };
 
   return (
-    <div className="pb-32">
-      <div className="mb-5">
-        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">站点设置</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">配置展示在首页、页脚、SEO 与订阅源中的站点信息</p>
+    <div>
+      {/* 吸顶工具栏：标题 + 保存状态 + 保存设置（滚动时始终可见） */}
+      <div className="sticky top-14 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 mb-5 bg-[#faf7f1]/95 dark:bg-[#292524]/95 backdrop-blur border-b border-slate-200/70 dark:border-slate-700/60">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">站点设置</h1>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">配置展示在首页、页脚、SEO 与订阅源中的站点信息</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="hidden sm:block"><SaveState dirty={dirty} busy={busy} savedAt={savedAt} /></span>
+            <Btn onClick={save} disabled={busy}>{busy ? '保存中…' : '保存设置'}</Btn>
+          </div>
+        </div>
       </div>
 
       <div className="space-y-5 max-w-3xl">
@@ -455,15 +464,6 @@ export default function SettingsView() {
           </div>
         </Card>
       </div>
-
-      {/* 固定底部操作栏：未保存状态提示 + 保存设置 */}
-      <ActionBar
-        left={<SaveState dirty={dirty} busy={busy} savedAt={savedAt} />}
-        primaryLabel="保存设置"
-        busyLabel="保存中…"
-        busy={busy}
-        onPrimary={save}
-      />
     </div>
   );
 }

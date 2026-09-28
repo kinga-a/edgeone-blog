@@ -17,7 +17,7 @@ export function Btn({
       onClick={onClick}
       disabled={disabled}
       className={cx(
-        'rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+        'rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap',
         size === 'sm' ? 'px-2.5 py-1.5 text-xs' : 'px-4 py-2 text-sm',
         variant === 'primary' && 'bg-brand-600 text-white hover:bg-brand-700',
         variant === 'secondary' && 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-brand-400',
@@ -146,7 +146,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       {toast && (
         <div className={cx(
-          'fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl text-sm font-medium shadow-lg fade-in-up flex items-center gap-2',
+          'fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl text-sm font-medium shadow-lg fade-in-up flex items-center gap-2',
           toast.tone === 'ok' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white',
         )}>
           <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -160,41 +160,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         </div>
       )}
     </ToastContext.Provider>
-  );
-}
-
-/* ---------- 固定底部操作栏 ---------- */
-export function ActionBar({
-  left,
-  primaryLabel,
-  onPrimary,
-  primaryDisabled,
-  busy,
-  busyLabel = '保存中…',
-  secondaryLabel,
-  onSecondary,
-}: {
-  left?: ReactNode;
-  primaryLabel: string;
-  onPrimary: () => void;
-  primaryDisabled?: boolean;
-  busy?: boolean;
-  busyLabel?: string;
-  secondaryLabel?: string;
-  onSecondary?: () => void;
-}) {
-  return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 dark:border-slate-700/60 bg-white/95 dark:bg-slate-900/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
-        <div className="min-w-0 flex-1">{left}</div>
-        <div className="flex items-center gap-2 shrink-0">
-          {secondaryLabel && onSecondary && (
-            <Btn variant="secondary" onClick={onSecondary}>{secondaryLabel}</Btn>
-          )}
-          <Btn onClick={onPrimary} disabled={primaryDisabled || busy}>{busy ? busyLabel : primaryLabel}</Btn>
-        </div>
-      </div>
-    </div>
   );
 }
 

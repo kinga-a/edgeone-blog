@@ -2,7 +2,7 @@
 
 /** 文章管理：列表 + 编辑器（Markdown 编辑/预览、封面上传、分类/标签） */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActionBar, Btn, Card, Empty, Loading, RowBtn, SaveState, Table, Td, Th, Badge, useToast, Field, Input, Textarea, Select } from './ui';
+import { Btn, Card, Empty, Loading, RowBtn, SaveState, Table, Td, Th, Badge, useToast, Field, Input, Textarea, Select } from './ui';
 import { api } from '@/lib/api';
 import type { Category, Post, PostSummary, Tag } from '@/lib/types';
 import { fmtDate, mediaUrl, slugify } from '@/lib/utils';
@@ -264,10 +264,20 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
   if (loading) return <Loading />;
 
   return (
-    <div className="pb-32">
-      <div className="mb-5">
-        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{mode === 'new' ? '新建文章' : '编辑文章'}</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">支持 Markdown 语法：标题、列表、代码块、图片、链接等</p>
+    <div>
+      {/* 吸顶工具栏：标题 + 保存状态 + 返回/保存（滚动时始终可见，无需上滑） */}
+      <div className="sticky top-14 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 mb-5 bg-[#faf7f1]/95 dark:bg-[#292524]/95 backdrop-blur border-b border-slate-200/70 dark:border-slate-700/60">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{mode === 'new' ? '新建文章' : '编辑文章'}</h1>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">支持 Markdown：标题、列表、代码块、图片、链接等</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="hidden sm:block"><SaveState dirty={dirty} busy={busy} savedAt={savedAt} /></span>
+            <Btn variant="secondary" onClick={() => navigate('posts')}>返回列表</Btn>
+            <Btn onClick={save} disabled={busy}>{busy ? (mode === 'new' ? '创建中…' : '保存中…') : mode === 'new' ? '创建' : '保存'}</Btn>
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[1fr_300px]">
@@ -379,17 +389,6 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
           </Card>
         </div>
       </div>
-
-      {/* 固定底部操作栏：状态提示 + 返回 + 保存 */}
-      <ActionBar
-        left={<SaveState dirty={dirty} busy={busy} savedAt={savedAt} />}
-        primaryLabel={mode === 'new' ? '创建' : '保存'}
-        busyLabel={mode === 'new' ? '创建中…' : '保存中…'}
-        busy={busy}
-        onPrimary={save}
-        secondaryLabel="返回列表"
-        onSecondary={() => navigate('posts')}
-      />
     </div>
   );
 }
