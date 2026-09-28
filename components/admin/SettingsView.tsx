@@ -1,7 +1,7 @@
 'use client';
 
 /** 站点设置：基本信息 / SEO / 社交 / 评论策略 / TOTP 安全验证 / 备份 */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Btn, Card, Field, Input, Textarea, useToast } from './ui';
 import { api } from '@/lib/api';
 import type { SiteConfig } from '@/lib/types';
@@ -124,6 +124,46 @@ export default function SettingsView() {
     setBackupBusy(false);
   };
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const onPickBackupFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      let payload: unknown;
+      try {
+        payload = JSON.parse(String(reader.result));
+      } catch {
+        toast('备份文件不是有效的 JSON', 'error');
+        return;
+      }
+      if (!window.confirm('将从该备份文件恢复数据：同键记录将被覆盖，备份中不存在的键保持不变，会话将保持当前登录。确定继续？')) return;
+      setBackupBusy(true);
+      try {
+        const d = await api.restoreBackup(payload);
+        toast(`恢复成功：${d.restored} 条记录已写入${d.skipped ? `（跳过会话 ${d.skipped} 条）` : ''}，建议刷新页面查看`);
+      } catch (err) {
+        toast(err instanceof Error ? err.message : '恢复失败', 'error');
+      }
+      setBackupBusy(false);
+    };
+    reader.readAsText(file);
+  };
+
+  const doRestoreWebdav = async () => {
+    if (!window.confirm('将从 WebDAV 拉取备份并恢复数据：同键记录将被覆盖，备份中不存在的键保持不变。确定继续？')) return;
+    setBackupBusy(true);
+    try {
+      const d = await api.restoreFromWebdav();
+      toast(`恢复成功：${d.restored} 条记录已写入${d.skipped ? `（跳过会话 ${d.skipped} 条）` : ''}，建议刷新页面查看`);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : '恢复失败', 'error');
+    }
+    setBackupBusy(false);
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-5">
@@ -242,7 +282,7 @@ export default function SettingsView() {
         </Card>
 
         <Card>
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">备份</h2>
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">备份与恢复</h2>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
@@ -251,8 +291,16 @@ export default function SettingsView() {
               </div>
               <Btn variant="secondary" onClick={doExport} disabled={backupBusy}>立即导出</Btn>
             </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-700 dark:text-slate-300">从文件恢复</p>
+                <p className="text-xs text-slate-400 mt-0.5">选择之前导出的 JSON 备份，合并式覆盖恢复（同键覆盖，缺失键保留）</p>
+              </div>
+              <input ref={fileInputRef} type="file" accept="application/json,.json" className="hidden" onChange={onPickBackupFile} />
+              <Btn variant="secondary" onClick={() => fileInputRef.current?.click()} disabled={backupBusy}>选择文件恢复</Btn>
+            </div>
             <div className="border-t border-slate-100 dark:border-slate-700/50 pt-4">
-              <p className="text-sm text-slate-700 dark:text-slate-300 mb-3">WebDAV 自动备份</p>
+              <p className="text-sm text-slate-700 dark:text-slate-300 mb-3">WebDAV 备份 / 恢复</p>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="WebDAV 地址" hint="完整文件 URL，如 https://dav.example.com/backup/blog.json">
                   <Input value={config.backup?.webdavUrl || ''} onChange={(e) => setBackup({ webdavUrl: e.target.value })} placeholder="https://dav.example.com/backup/blog.json" />
@@ -267,9 +315,10 @@ export default function SettingsView() {
                   <Input value={config.backup?.webdavPath || ''} onChange={(e) => setBackup({ webdavPath: e.target.value })} placeholder="/backups" />
                 </Field>
               </div>
-              <p className="text-xs text-slate-400 mt-2">保存设置后，点击「立即备份」将当前全部数据推送到 WebDAV（PUT 覆盖）</p>
-              <div className="mt-3 flex items-center gap-2">
-                <Btn onClick={doWebdav} disabled={backupBusy}>{backupBusy ? '备份中…' : '立即备份到 WebDAV'}</Btn>
+              <p className="text-xs text-slate-400 mt-2">保存设置后，点击「立即备份」将当前全部数据推送到 WebDAV（PUT 覆盖）；「从 WebDAV 恢复」拉取该文件并合并式覆盖恢复</p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <Btn onClick={doWebdav} disabled={backupBusy}>{backupBusy ? '处理中…' : '立即备份到 WebDAV'}</Btn>
+                <Btn variant="secondary" onClick={doRestoreWebdav} disabled={backupBusy}>{backupBusy ? '处理中…' : '从 WebDAV 恢复'}</Btn>
                 <Btn variant="secondary" onClick={save} disabled={busy}>保存 WebDAV 配置</Btn>
               </div>
             </div>

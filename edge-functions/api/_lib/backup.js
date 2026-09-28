@@ -44,6 +44,63 @@ export async function makeExportResponse(env) {
   });
 }
 
+/**
+ * 从备份 payload 恢复 KV 数据（合并式：同键覆盖，备份中不存在的键保持不变）。
+ * 跳过会话键 auth_session_*，避免恢复出旧登录态。
+ * 返回 { restored, skipped, count }。
+ */
+export async function restoreFromPayload(env, payload) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    throw new Error('备份文件格式无效：不是 JSON 对象');
+  }
+  if (payload.version !== 1) {
+    throw new Error(`不支持的备份版本：${String(payload.version)}（当前仅支持 version 1）`);
+  }
+  if (!payload.data || typeof payload.data !== 'object' || Array.isArray(payload.data)) {
+    throw new Error('备份数据缺失：缺少 data 字段或 data 不是对象');
+  }
+  const kv = getKv(env);
+  const entries = Object.entries(payload.data);
+  if (!entries.length) throw new Error('备份数据为空，无需恢复');
+
+  let restored = 0;
+  let skipped = 0;
+  for (const [key, value] of entries) {
+    // 跳过会话键，避免旧登录态复活
+    if (key.startsWith('auth_session_')) {
+      skipped += 1;
+      continue;
+    }
+    await kv.put(key, typeof value === 'string' ? value : JSON.stringify(value));
+    restored += 1;
+  }
+  return { ok: true, restored, skipped, count: entries.length };
+}
+
+/** 从配置的 WebDAV 拉取备份并恢复（合并式） */
+export async function restoreFromWebdav(env) {
+  const config = await getSiteConfig(env);
+  const b = config.backup || {};
+  if (!b.webdavUrl) throw new Error('未配置 WebDAV 地址');
+
+  const headers = {};
+  if (b.webdavUsername) {
+    headers.Authorization = `Basic ${utf8Base64(`${b.webdavUsername}:${b.webdavPassword || ''}`)}`;
+  }
+  const res = await fetch(b.webdavUrl, { method: 'GET', headers });
+  if (!res.ok) {
+    const detail = (await res.text().catch(() => '')).slice(0, 200);
+    throw new Error(`WebDAV 拉取失败：HTTP ${res.status}${detail ? ` ${detail}` : ''}`);
+  }
+  let payload;
+  try {
+    payload = JSON.parse(await res.text());
+  } catch {
+    throw new Error('WebDAV 上的文件不是有效的 JSON 备份');
+  }
+  return restoreFromPayload(env, payload);
+}
+
 export function utf8Base64(str) {
   const bytes = new TextEncoder().encode(str);
   let bin = '';

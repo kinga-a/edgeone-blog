@@ -496,6 +496,49 @@ await test('未登录 WebDAV 备份被拒绝', async () => {
   const r = await call('api/backup/webdav.js', 'POST', `${BASE}/api/backup/webdav`);
   assert.equal(r.status, 401);
 });
+await test('未登录恢复被拒绝', async () => {
+  const r = await call('api/backup/restore.js', 'POST', `${BASE}/api/backup/restore`, {
+    body: { version: 1, data: {} },
+  });
+  assert.equal(r.status, 401);
+});
+await test('恢复无效备份格式返回 400', async () => {
+  const r = await call('api/backup/restore.js', 'POST', `${BASE}/api/backup/restore`, {
+    body: { version: 99, data: {} },
+    cookie,
+  });
+  assert.equal(r.status, 400);
+});
+await test('管理员从文件恢复 KV 数据', async () => {
+  const r = await call('api/backup/restore.js', 'POST', `${BASE}/api/backup/restore`, {
+    body: { version: 1, data: { restore_test_key: '{"hello":1}' } },
+    cookie,
+  });
+  const d = await parse(r);
+  assert.equal(r.status, 200);
+  assert.ok(d.restored >= 1);
+  const kv = globalThis.__BLOG_KV__;
+  assert.equal(await kv.get('restore_test_key'), '{"hello":1}');
+});
+await test('恢复跳过会话键', async () => {
+  const before = await globalThis.__BLOG_KV__.get('auth_session_testtoken');
+  const r = await call('api/backup/restore.js', 'POST', `${BASE}/api/backup/restore`, {
+    body: { version: 1, data: { auth_session_testtoken: '{"expiresAt":"2099-01-01T00:00:00Z"}' } },
+    cookie,
+  });
+  const d = await parse(r);
+  assert.equal(r.status, 200);
+  assert.ok(d.skipped >= 1);
+  assert.equal(await globalThis.__BLOG_KV__.get('auth_session_testtoken'), before);
+});
+await test('未登录 WebDAV 恢复被拒绝', async () => {
+  const r = await call('api/backup/restore-webdav.js', 'POST', `${BASE}/api/backup/restore-webdav`);
+  assert.equal(r.status, 401);
+});
+await test('未配置 WebDAV 时恢复返回 400', async () => {
+  const r = await call('api/backup/restore-webdav.js', 'POST', `${BASE}/api/backup/restore-webdav`, { cookie });
+  assert.equal(r.status, 400);
+});
 
 console.log('\n[8/9] TOTP 二次验证');
 let totpSecret;

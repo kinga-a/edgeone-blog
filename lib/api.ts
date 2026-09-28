@@ -134,6 +134,18 @@ export const api = {
   /** 推送备份到 WebDAV */
   backupToWebdav: () =>
     request<{ ok: true; count: number; url: string }>('/api/backup/webdav', { method: 'POST', body: JSON.stringify({}) }),
+  /** 从 JSON 备份恢复 KV 数据（合并式覆盖） */
+  restoreBackup: (payload: unknown) =>
+    request<{ ok: true; restored: number; skipped: number; count: number }>('/api/backup/restore', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  /** 从 WebDAV 拉取备份并恢复 */
+  restoreFromWebdav: () =>
+    request<{ ok: true; restored: number; skipped: number; count: number }>('/api/backup/restore-webdav', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
 };
 
 export type { PostStatus };
