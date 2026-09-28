@@ -43,59 +43,81 @@ export default function Header() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // 抽屉打开时锁定页面滚动
+  useEffect(() => {
+    document.body.style.overflow = open ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [open]);
+
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/' || pathname === '';
     return pathname.startsWith(href);
   };
 
   return (
-    <header className={`site-header ${scrolled ? 'scrolled' : ''}`}>
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 tracking-tight group">
-          <span className="w-9 h-9 rounded-lg bg-brand-600 flex items-center justify-center text-white text-lg font-bold font-display">
-            B
-          </span>
-          <span className="text-[17px] font-display font-semibold text-slate-900 dark:text-slate-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
-            {title}
-          </span>
-        </Link>
-
-        <nav className="hidden md:flex items-center gap-0.5">
-          {NAV.map((n) => (
-            <Link
-              key={n.href}
-              href={n.href}
-              className={`nav-link ${isActive(n.href) ? 'active' : ''}`}
-            >
-              {n.label}
-            </Link>
-          ))}
-          <Link
-            href="/search/"
-            aria-label="搜索"
-            title="搜索"
-            className="ml-1 w-10 h-10 flex items-center justify-center rounded-[10px] text-slate-500 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-colors border border-transparent hover:border-brand-600/30"
-          >
-            <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-              <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.6" />
-              <path d="M14 14l4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-            </svg>
+    <>
+      <header className={`site-header ${scrolled ? 'scrolled' : ''}`}>
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3 tracking-tight group">
+            <span className="w-9 h-9 rounded-lg bg-brand-600 flex items-center justify-center text-white text-lg font-bold font-display">
+              B
+            </span>
+            <span className="text-[17px] font-display font-semibold text-slate-900 dark:text-slate-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
+              {title}
+            </span>
           </Link>
-          <span className="ml-1.5 flex items-center">
-            <ThemeToggle />
-          </span>
-        </nav>
 
-        <button
-          className="md:hidden icon-btn"
-          onClick={() => setOpen((v) => !v)}
-          aria-label="打开菜单"
-        >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-          </svg>
-        </button>
-      </div>
+          <nav className="hidden md:flex items-center gap-0.5">
+            {NAV.map((n) => (
+              <Link
+                key={n.href}
+                href={n.href}
+                className={`nav-link ${isActive(n.href) ? 'active' : ''}`}
+              >
+                {n.label}
+              </Link>
+            ))}
+            <Link
+              href="/search/"
+              aria-label="搜索"
+              title="搜索"
+              className="ml-1 w-10 h-10 flex items-center justify-center rounded-[10px] text-slate-500 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-colors border border-transparent hover:border-brand-600/30"
+            >
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.6" />
+                <path d="M14 14l4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+            </Link>
+            <span className="ml-1.5 flex items-center">
+              <ThemeToggle />
+            </span>
+          </nav>
+
+          <div className="md:hidden flex items-center gap-1.5">
+            <Link
+              href="/search/"
+              aria-label="搜索"
+              title="搜索"
+              className="icon-btn"
+            >
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.6" />
+                <path d="M14 14l4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+            </Link>
+            <ThemeToggle />
+            <button
+              className="icon-btn"
+              onClick={() => setOpen((v) => !v)}
+              aria-label="打开菜单"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </header>
 
       {open && (
         <>
@@ -148,6 +170,6 @@ export default function Header() {
           </aside>
         </>
       )}
-    </header>
+    </>
   );
 }

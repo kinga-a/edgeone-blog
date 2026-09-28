@@ -73,26 +73,17 @@ function CategoryIcon({ slug }: { slug: string }) {
 
 export default function CategoriesClient() {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [postsByCat, setPostsByCat] = useState<Record<string, PostSummary[]>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let alive = true;
-    api.listCategories().then((d) => {
-      if (!alive || !d?.ok) { setLoading(false); return; }
-      setCategories(d.items);
-      Promise.all(d.items.map((c) => api.listPosts({ category: c.slug, pageSize: 3 }).catch(() => null)))
-        .then((lists) => {
-          if (!alive) return;
-          const map: Record<string, PostSummary[]> = {};
-          d.items.forEach((c, i) => {
-            if (lists[i]?.ok) map[c.id] = lists[i].items;
-          });
-          setPostsByCat(map);
-          setLoading(false);
-        })
-        .catch(() => setLoading(false));
-    }).catch(() => setLoading(false));
+    api.listCategories()
+      .then((d) => {
+        if (!alive) return;
+        if (d?.ok) setCategories(d.items);
+        setLoading(false);
+      })
+      .catch(() => alive && setLoading(false));
     return () => { alive = false; };
   }, []);
 
@@ -123,7 +114,7 @@ export default function CategoriesClient() {
       ) : categories.length ? (
         <div className="space-y-4">
           {categories.map((c) => {
-            const posts = postsByCat[c.id] || [];
+            const posts = c.posts || [];
             return (
               <div
                 key={c.id}
@@ -151,7 +142,7 @@ export default function CategoriesClient() {
                   <ul className="mt-4">
                     {posts.map((p) => (
                       <li
-                        key={p.id}
+                        key={p.slug}
                         className="flex items-baseline justify-between gap-4 py-2.5 border-b border-slate-100 dark:border-slate-700/50 last:border-b-0"
                       >
                         <Link

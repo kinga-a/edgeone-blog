@@ -1,10 +1,24 @@
 import { json, fail, readJson, publicHeaders } from '../_lib/response.js';
-import { getCategoriesWithCounts, createCategory } from '../_lib/data.js';
+import { getCategoriesWithCounts, createCategory, getPublicPosts } from '../_lib/data.js';
 import { requireAdmin } from '../_lib/auth.js';
 
-/** GET /api/categories — 分类列表（公开，含文章数） */
+/** GET /api/categories — 分类列表（公开，含文章数与近期文章） */
 export async function onRequestGet({ env }) {
   const items = await getCategoriesWithCounts(env);
+  const posts = await getPublicPosts(env);
+  const map = {};
+  for (const p of posts) {
+    if (!p.categoryId) continue;
+    (map[p.categoryId] || (map[p.categoryId] = [])).push({
+      slug: p.slug,
+      title: p.title,
+      createdAt: p.createdAt,
+      publishedAt: p.publishedAt || p.createdAt,
+    });
+  }
+  for (const c of items) {
+    c.posts = (map[c.id] || []).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)).slice(0, 5);
+  }
   return json({ ok: true, items }, { headers: publicHeaders() });
 }
 
