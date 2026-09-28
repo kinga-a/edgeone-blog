@@ -24,3 +24,5 @@ yarn-error.log*
 # edgeone cli
 .wrangler
 .edgeone
+
+tsconfig.tsbuildinfo
