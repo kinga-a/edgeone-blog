@@ -65,9 +65,9 @@ export const api = {
 
   // ---- 分类 / 标签 ----
   listCategories: () => request<{ ok: true; items: Category[] }>('/api/categories'),
-  createCategory: (body: { name: string; slug?: string; description?: string }) =>
+  createCategory: (body: { name: string; slug?: string; description?: string; icon?: string }) =>
     request<{ ok: true; category: Category }>('/api/categories', { method: 'POST', body: JSON.stringify(body) }),
-  updateCategory: (id: string, body: { name?: string; slug?: string; description?: string }) =>
+  updateCategory: (id: string, body: { name?: string; slug?: string; description?: string; icon?: string }) =>
     request<{ ok: true; category: Category }>(`/api/categories/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteCategory: (id: string) => request<{ ok: true }>(`/api/categories/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 

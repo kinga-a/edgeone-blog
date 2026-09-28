@@ -6,67 +6,38 @@ import { useEffect, useState } from 'react';
 import type { Category, PostSummary } from '@/lib/types';
 import { api } from '@/lib/api';
 import { fmtDate } from '@/lib/utils';
+import { CATEGORY_ICON_SET, resolveCategoryIcon, sanitizeSvg } from '@/lib/site-icons';
 
-const CATEGORY_ICONS: Record<string, string> = {
-  'frontend': 'frontend',
-  'backend': 'backend',
-  'database': 'database',
-  'devops': 'devops',
-  'tools': 'tools',
-  'notes': 'notes',
+/** 旧版按 slug 推断图标的兜底映射（分类未设置自定义图标时使用） */
+const LEGACY_ICON_BY_SLUG: Record<string, string> = {
+  frontend: 'layout',
+  backend: 'server',
+  database: 'database',
+  devops: 'gear',
+  tools: 'wrench',
+  notes: 'doc',
+  network: 'network',
+  cloud: 'cloud',
 };
 
-function CategoryIcon({ slug }: { slug: string }) {
-  // 文档图标：纸色底 + 朱砂描边，不同分类名映射不同图标
-  const kind = CATEGORY_ICONS[slug] || 'notes';
-  const common = { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none' as const, stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
-  const icon = {
-    frontend: (
-      <svg {...common}>
-        <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" />
-        <path d="M3 9h18M9 4v16" stroke="currentColor" />
-        <path d="M6 14l2 1.5-2 1.5M12 17h4" stroke="currentColor" strokeLinecap="round" />
-      </svg>
-    ),
-    backend: (
-      <svg {...common}>
-        <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" />
-        <circle cx="9" cy="9" r="1.4" fill="currentColor" stroke="none" />
-        <circle cx="15" cy="9" r="1.4" fill="currentColor" stroke="none" />
-        <path d="M9 14h6M9 16.5h4" stroke="currentColor" strokeLinecap="round" />
-      </svg>
-    ),
-    database: (
-      <svg {...common}>
-        <ellipse cx="12" cy="6" rx="8" ry="3" stroke="currentColor" />
-        <path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6" stroke="currentColor" />
-        <path d="M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6" stroke="currentColor" />
-      </svg>
-    ),
-    devops: (
-      <svg {...common}>
-        <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" stroke="currentColor" />
-        <path d="M12 12l8-4.5M12 12v9M12 12L4 7.5" stroke="currentColor" />
-      </svg>
-    ),
-    tools: (
-      <svg {...common}>
-        <path d="M14.7 6.3a4.5 4.5 0 0 0-6 5.6L4 16.6V20h3.4l4.7-4.7a4.5 4.5 0 0 0 5.6-6L14 13l-3-3 3.7-3.7z" stroke="currentColor" strokeLinejoin="round" />
-      </svg>
-    ),
-    notes: (
-      <svg {...common}>
-        <path d="M6 3h9l4 4v14H6V3z" stroke="currentColor" strokeLinejoin="round" />
-        <path d="M15 3v5h4M9 12h6M9 16h6" stroke="currentColor" strokeLinecap="round" />
-      </svg>
-    ),
-  }[kind] || null;
+function CategoryIcon({ slug, icon }: { slug: string; icon?: string }) {
+  // 分类自定义图标优先：粘贴的 SVG / 内置图标 key；无自定义时按 slug 兜底；最后默认 doc
+  const r = resolveCategoryIcon(icon);
+  const key = r.kind === 'key' ? r.value : (r.kind === 'none' ? (LEGACY_ICON_BY_SLUG[slug] || 'doc') : '');
+  const inner = key ? CATEGORY_ICON_SET[key] : '';
+  const common = { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none' as const, stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true as const };
   return (
     <span
       aria-hidden="true"
       className="shrink-0 w-14 h-14 rounded-[14px] bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center"
     >
-      {icon}
+      {r.kind === 'svg' ? (
+        <span dangerouslySetInnerHTML={{ __html: r.value }} />
+      ) : inner ? (
+        <svg {...common}>
+          <g dangerouslySetInnerHTML={{ __html: sanitizeSvg(inner) }} />
+        </svg>
+      ) : null}
     </span>
   );
 }
@@ -121,7 +92,7 @@ export default function CategoriesClient() {
                 className="group p-7 rounded-[14px] bg-[var(--t-card)] dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 hover:border-brand-400 transition-colors"
               >
                 <div className="flex items-start gap-4">
-                  <CategoryIcon slug={c.slug} />
+                  <CategoryIcon slug={c.slug} icon={c.icon} />
                   <div className="flex-1 min-w-0">
                     <Link
                       href={`/categories/${c.slug}/`}

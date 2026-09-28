@@ -4,6 +4,7 @@
  */
 import { getKv, Keys, kvGetJson, kvPutJson } from './kv.js';
 import { slugify, readingTime, nowIso, fmtDate } from './ids.js';
+import { normalizeCategoryIcon } from './icons.js';
 
 /* ------------------------------------------------------------------ */
 /* 站点配置                                                            */
@@ -325,6 +326,7 @@ export async function createCategory(env, input) {
     name,
     slug: slugify(input.slug || name) || id,
     description: String(input.description || '').trim(),
+    icon: normalizeCategoryIcon(input.icon),
     createdAt: nowIso(),
   };
   const sl = new Set(list.map((c) => c.slug));
@@ -349,6 +351,7 @@ export async function updateCategory(env, id, input) {
   }
   if (input.slug !== undefined && String(input.slug).trim()) next.slug = slugify(input.slug) || next.slug;
   if (input.description !== undefined) next.description = String(input.description).trim();
+  if (input.icon !== undefined) next.icon = normalizeCategoryIcon(input.icon);
   await kvPutJson(kv, Keys.category(id), next);
   const list = (await kvGetJson(kv, Keys.categoryList)) || [];
   await kvPutJson(kv, Keys.categoryList, list.map((c) => (c.id === id ? next : c)));

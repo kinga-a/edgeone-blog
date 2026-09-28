@@ -6,7 +6,8 @@ import { useEffect, useState } from 'react';
 import PostCard from './PostCard';
 import type { Category, PostSummary, SiteConfig } from '@/lib/types';
 import { api } from '@/lib/api';
-import { fmtDate, mediaUrl, coverClassFor, catIconClassFor } from '@/lib/utils';
+import { fmtDate, mediaUrl, coverClassFor } from '@/lib/utils';
+import { CATEGORY_ICON_SET, resolveCategoryIcon, sanitizeSvg } from '@/lib/site-icons';
 
 function FeaturedCard({ post }: { post: PostSummary }) {
   const cover = post.coverUrl || (post.coverKey ? mediaUrl(post.coverKey) : '');
@@ -212,16 +213,27 @@ export default function HomeClient() {
             <Link href="/categories/" className="section-link">全部分类 →</Link>
           </div>
           <div className="category-grid">
-            {categories.slice(0, 8).map((c) => (
-              <Link key={c.id} href={`/categories/${c.slug}/`} className="category-card">
-                <span className={`category-card-icon ${catIconClassFor()}`} aria-hidden="true">
-                  {c.name.slice(0, 1)}
-                </span>
-                <span className="category-card-name">{c.name}</span>
-                {c.description && <span className="category-card-desc">{c.description}</span>}
-                <span className="category-card-count">{c.postCount || 0} 篇文章</span>
-              </Link>
-            ))}
+            {categories.slice(0, 8).map((c) => {
+              const r = resolveCategoryIcon(c.icon);
+              const key = r.kind === 'key' ? r.value : (r.kind === 'none' ? 'doc' : '');
+              const inner = key ? CATEGORY_ICON_SET[key] : '';
+              return (
+                <Link key={c.id} href={`/categories/${c.slug}/`} className="category-card">
+                  <span className="category-card-icon" aria-hidden="true">
+                    {r.kind === 'svg' ? (
+                      <span dangerouslySetInnerHTML={{ __html: r.value }} />
+                    ) : inner ? (
+                      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                        <g dangerouslySetInnerHTML={{ __html: sanitizeSvg(inner) }} />
+                      </svg>
+                    ) : null}
+                  </span>
+                  <span className="category-card-name">{c.name}</span>
+                  {c.description && <span className="category-card-desc">{c.description}</span>}
+                  <span className="category-card-count">{c.postCount || 0} 篇文章</span>
+                </Link>
+              );
+            })}
           </div>
         </section>
       )}

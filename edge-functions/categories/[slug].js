@@ -1,6 +1,7 @@
 import { getCategories, getPublicPosts, getPostList } from '../api/_lib/data.js';
 import { requireAdmin } from '../api/_lib/auth.js';
 import { renderListPage } from '../api/_lib/render-html.js';
+import { categoryIconHtml } from '../api/_lib/icons.js';
 
 /** GET /categories/:slug — 分类归档页（服务端渲染；已登录管理员可见私人文章） */
 export async function onRequestGet({ request, env, params }) {
@@ -17,6 +18,7 @@ export async function onRequestGet({ request, env, params }) {
     slug: category.slug,
     title: `分类：${category.name}`,
     description: category.description || '',
+    iconHtml: categoryIconHtml(category.icon),
     items: posts,
     request,
   });

@@ -40,6 +40,7 @@ export interface Category {
   description: string;
   createdAt: string;
   postCount?: number;
+  icon?: string;
   posts?: { slug: string; title: string; createdAt: string; publishedAt: string }[];
 }
 
