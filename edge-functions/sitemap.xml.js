@@ -37,3 +37,5 @@ ${urls.join('\n')}
     headers: { 'content-type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=3600' },
   });
 }
+
+export const onRequest = onRequestGet;

@@ -377,14 +377,36 @@ await test('rss.xml 含文章条目', async () => {
 
 console.log('\n[7/9] 新功能：slug 自动生成 / 私人文章 / TOTP / 备份');
 let privateId, privateSlug;
-await test('slug 留白（空格）自动按标题生成', async () => {
+await test('中文标题 slug 留白时自动生成非中文别名（随机 id）', async () => {
   const r = await call('api/posts/index.js', 'POST', `${BASE}/api/posts`, {
-    body: { title: 'Slug 自动生成测试', slug: '   ', content: '正文', status: 'published' },
+    body: { title: '全中文标题测试', slug: '   ', content: '正文', status: 'published' },
     cookie,
   });
   const d = await parse(r);
   assert.equal(d.ok, true);
-  assert.equal(d.post.slug, 'slug-自动生成测试');
+  assert.match(d.post.slug, /^[a-z0-9]+$/); // 随机 id，不含中文
+  assert.ok(!/[^\x00-\x7F]/.test(d.post.slug), 'slug 不得包含中文');
+});
+await test('英文标题自动生成 ASCII slug', async () => {
+  const r = await call('api/posts/index.js', 'POST', `${BASE}/api/posts`, {
+    body: { title: 'Hello World Guide', content: '正文', status: 'published' },
+    cookie,
+  });
+  const d = await parse(r);
+  assert.equal(d.post.slug, 'hello-world-guide');
+});
+await test('文章支持外部封面 URL（优先级高于上传封面）', async () => {
+  const r = await call('api/posts/index.js', 'POST', `${BASE}/api/posts`, {
+    body: { title: '外部封面测试', content: '正文', status: 'published', coverKey: 'covers/demo-local.png', coverUrl: 'https://example.com/covers/demo.jpg' },
+    cookie,
+  });
+  const d = await parse(r);
+  assert.equal(d.ok, true);
+  assert.equal(d.post.coverUrl, 'https://example.com/covers/demo.jpg');
+  const r2 = await call('posts/[slug].js', 'GET', `${BASE}/posts/${d.post.slug}/`, { params: { slug: d.post.slug } });
+  const html = await parse(r2);
+  assert.ok(html.includes('https://example.com/covers/demo.jpg'));
+  assert.ok(!html.includes('demo-local.png'), '外部 URL 应优先于上传封面');
 });
 await test('创建私人文章（已发布但仅管理员可见）', async () => {
   const r = await call('api/posts/index.js', 'POST', `${BASE}/api/posts`, {

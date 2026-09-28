@@ -14,14 +14,15 @@ export function nowIso() {
 }
 
 /**
- * slug 化：保留中英文与数字，其余连续字符折叠为 '-'，首尾去除。
- * 支持 Unicode 属性转义（\p{L} 字母，\p{N} 数字）。
+ * slug 化：仅保留 ASCII 字母数字，其余字符（含中文）折叠为 '-'，首尾去除。
+ * 中文等非 ASCII 内容会得到空字符串 —— 调用方必须兜底（用随机 id 等），
+ * 因为非 ASCII slug 在 URL 路由中存在编码兼容问题，无法稳定访问。
  */
 export function slugify(input) {
   return String(input || '')
     .trim()
     .toLowerCase()
-    .replace(/[^\p{L}\p{N}]+/gu, '-')
+    .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 }
 
@@ -33,7 +34,7 @@ export function readingTime(markdown) {
     .replace(/`[^`]*`/g, ' ')
     .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
     .replace(/\[[^\]]*\]\([^)]*\)/g, ' ')
-    .replace(/[#>\*\-\|]/g, ' ');
+    .replace(/[#>*\-|]/g, ' ');
   const cjk = (text.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g) || []).length;
   const words = (text.match(/[a-zA-Z0-9]+/g) || []).length;
   const minutes = Math.ceil(cjk / 300 + words / 200);

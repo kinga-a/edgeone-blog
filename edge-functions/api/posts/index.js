@@ -70,3 +70,5 @@ export async function onRequestPost({ request, env }) {
     return fail(400, e.message || '创建文章失败');
   }
 }
+
+export const onRequest = onRequestPost;

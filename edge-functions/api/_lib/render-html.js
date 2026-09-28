@@ -136,7 +136,10 @@ export async function renderArticlePage(env, post, request) {
   const title = post.title;
   const description = post.summary || (html.replace(/<[^>]+>/g, '').slice(0, 160)) || '';
   const canonical = absUrl(origin, `/posts/${post.slug}/`);
-  const cover = post.coverKey ? absUrl(origin, `/api/media/${post.coverKey}`) : (config.seo?.ogImage || '');
+  // 封面优先级：外部 URL > 上传的 Blob 封面 > 站点默认 OG 图
+  const cover = post.coverUrl
+    ? post.coverUrl
+    : (post.coverKey ? absUrl(origin, `/api/media/${post.coverKey}`) : (config.seo?.ogImage || ''));
 
   const jsonLd = JSON.stringify({
     '@context': 'https://schema.org',
@@ -171,7 +174,7 @@ export async function renderArticlePage(env, post, request) {
         ${category ? `<a class="chip" href="/categories/${escapeHtml(category.slug)}/">${escapeHtml(category.name)}</a>` : ''}
         ${tagObjs.map((t) => `<a class="chip" href="/tags/${escapeHtml(t.slug)}/"># ${escapeHtml(t.name)}</a>`).join('')}
       </div>
-      ${post.coverKey ? `<img class="article-cover" src="${escapeHtml(absUrl(origin, `/api/media/${post.coverKey}`))}" alt="${escapeHtml(post.title)}" loading="lazy">` : ''}
+      ${cover ? `<img class="article-cover" src="${escapeHtml(cover)}" alt="${escapeHtml(post.title)}" loading="lazy">` : ''}
     </div>
     <div class="article-layout${toc.length ? ' has-toc' : ''}">
       ${toc.length ? `

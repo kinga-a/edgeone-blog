@@ -1,6 +1,7 @@
 import { json, fail } from '../_lib/response.js';
 import { getVisitStats, getPostList, getComments, getViews, getLikes, getCategories, getTags } from '../_lib/data.js';
 import { requireAdmin } from '../_lib/auth.js';
+import { getKv } from '../_lib/kv.js';
 
 /** GET /api/stats — 后台访问统计总览（管理员） */
 export async function onRequestGet({ request, env }) {

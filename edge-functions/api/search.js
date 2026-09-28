@@ -37,3 +37,5 @@ export async function onRequestGet({ request, env }) {
 
   return json({ ok: true, items, total: items.length, q: params.q }, { headers: publicHeaders() });
 }
+
+export const onRequest = onRequestGet;

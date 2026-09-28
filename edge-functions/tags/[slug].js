@@ -19,3 +19,5 @@ export async function onRequestGet({ request, env, params }) {
     headers: { 'content-type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=600' },
   });
 }
+
+export const onRequest = onRequestGet;

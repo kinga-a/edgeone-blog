@@ -55,11 +55,11 @@ export function readHash(defaultValue = ''): string {
   return h || defaultValue;
 }
 
-/** 客户端 slug 化 */
+/** 客户端 slug 化：仅保留 ASCII 字母数字（中文等非 ASCII 得到空串，由后端兜底为随机 id） */
 export function slugify(input: string): string {
   return String(input || '')
     .trim()
     .toLowerCase()
-    .replace(/[^\p{L}\p{N}]+/gu, '-')
+    .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 }

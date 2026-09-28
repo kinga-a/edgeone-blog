@@ -38,3 +38,5 @@ ${items}
     headers: { 'content-type': 'application/rss+xml; charset=utf-8', 'Cache-Control': 'public, max-age=300' },
   });
 }
+
+export const onRequest = onRequestGet;

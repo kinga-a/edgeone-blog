@@ -9,3 +9,5 @@ export async function onRequestPost({ env, params }) {
   const count = await trackView(env, post.id);
   return json({ ok: true, count }, { headers: publicHeaders() });
 }
+
+export const onRequest = onRequestPost;

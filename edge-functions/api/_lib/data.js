@@ -120,6 +120,7 @@ function toSummary(post, config) {
     title: post.title,
     summary: post.summary || '',
     coverKey: post.coverKey || '',
+    coverUrl: post.coverUrl || '',
     categoryId: post.categoryId || '',
     tags: post.tags || [],
     status: post.status || 'draft',
@@ -158,6 +159,7 @@ export async function createPost(env, input) {
     summary: String(input.summary || '').trim(),
     content: String(input.content || ''),
     coverKey: input.coverKey || '',
+    coverUrl: String(input.coverUrl || '').trim(),
     categoryId: input.categoryId || '',
     tags: Array.isArray(input.tags) ? [...new Set(input.tags)] : [],
     status,
@@ -185,7 +187,7 @@ export async function updatePost(env, id, input) {
   if (!existing) throw new Error('文章不存在');
 
   const next = { ...existing };
-  for (const key of ['title', 'summary', 'content', 'coverKey', 'categoryId', 'author']) {
+  for (const key of ['title', 'summary', 'content', 'coverKey', 'coverUrl', 'categoryId', 'author']) {
     if (input[key] !== undefined) next[key] = input[key];
   }
   if (input.tags !== undefined) next.tags = [...new Set(input.tags)];
@@ -337,7 +339,7 @@ export async function updateCategory(env, id, input) {
     if (list.some((c) => c.id !== id && c.name === name)) throw new Error('分类名称已存在');
     next.name = name;
   }
-  if (input.slug !== undefined && String(input.slug).trim()) next.slug = slugify(input.slug);
+  if (input.slug !== undefined && String(input.slug).trim()) next.slug = slugify(input.slug) || next.slug;
   if (input.description !== undefined) next.description = String(input.description).trim();
   await kvPutJson(kv, Keys.category(id), next);
   const list = (await kvGetJson(kv, Keys.categoryList)) || [];

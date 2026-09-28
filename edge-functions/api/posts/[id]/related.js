@@ -9,3 +9,5 @@ export async function onRequestGet({ env, params }) {
   const items = await relatedPosts(env, post, 5);
   return json({ ok: true, items }, { headers: publicHeaders() });
 }
+
+export const onRequest = onRequestGet;

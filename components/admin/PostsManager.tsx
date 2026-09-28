@@ -143,6 +143,7 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [coverKey, setCoverKey] = useState('');
+  const [coverUrl, setCoverUrl] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [preview, setPreview] = useState(false);
@@ -167,6 +168,7 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
         setCategoryId(p.categoryId || '');
         setTags(p.tags || []);
         setCoverKey(p.coverKey || '');
+        setCoverUrl(p.coverUrl || '');
         setLoading(false);
       }).catch((e) => toast(e.message, 'error'));
     }
@@ -178,6 +180,7 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
       const res = await fetch(url, { method: 'PUT', body: file, headers: { 'Content-Type': file.type || 'application/octet-stream' } });
       if (!res.ok) throw new Error('上传失败');
       setCoverKey(key);
+      setCoverUrl('');
       toast('封面上传成功');
     } catch (e) {
       toast(e instanceof Error ? e.message : '封面上传失败', 'error');
@@ -194,6 +197,7 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
       title, slug: finalSlug, summary, content, status, visibility, categoryId,
       tags: tags.map((t) => t.trim()).filter(Boolean),
       coverKey,
+      coverUrl: coverUrl.trim(),
     };
     try {
       if (mode === 'new') {
@@ -293,26 +297,36 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
         <div className="space-y-4">
           <Card>
             <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">封面图</h3>
-            {coverKey ? (
-              <div className="space-y-2">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={mediaUrl(coverKey)} alt="封面" className="w-full rounded-lg object-cover aspect-[16/9] bg-slate-100" />
-                <div className="flex gap-2">
-                  <Btn size="sm" variant="secondary" onClick={() => setCoverKey('')}>移除</Btn>
-                  <label className="cursor-pointer">
-                    <span className="inline-block px-2.5 py-1.5 rounded-lg text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-brand-400 transition-colors">
-                      更换
-                    </span>
-                    <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && uploadCover(e.target.files[0])} />
-                  </label>
+            {(() => {
+              const previewSrc = coverUrl || (coverKey ? mediaUrl(coverKey) : '');
+              return previewSrc ? (
+                <div className="space-y-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={previewSrc} alt="封面" className="w-full rounded-lg object-cover aspect-[16/9] bg-slate-100" />
+                  <div className="flex gap-2">
+                    <Btn size="sm" variant="secondary" onClick={() => { setCoverKey(''); setCoverUrl(''); }}>移除</Btn>
+                    <label className="cursor-pointer">
+                      <span className="inline-block px-2.5 py-1.5 rounded-lg text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-brand-400 transition-colors">
+                        更换
+                      </span>
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && uploadCover(e.target.files[0])} />
+                    </label>
+                  </div>
                 </div>
+              ) : (
+                <label className="block border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-6 text-center cursor-pointer hover:border-brand-400 transition-colors">
+                  <span className="text-sm text-slate-500 dark:text-slate-400">点击选择封面图片</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && uploadCover(e.target.files[0])} />
+                </label>
+              );
+            })()}
+            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/50">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">或使用外部图片 URL（图床 / CDN / 其它站点图片）</p>
+              <div className="flex gap-2">
+                <Input value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="https://example.com/cover.jpg" className="flex-1 !font-mono text-xs" />
+                <Btn size="sm" variant="secondary" onClick={() => { setCoverUrl(coverUrl.trim()); setCoverKey(''); }}>应用</Btn>
               </div>
-            ) : (
-              <label className="block border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-6 text-center cursor-pointer hover:border-brand-400 transition-colors">
-                <span className="text-sm text-slate-500 dark:text-slate-400">点击选择封面图片</span>
-                <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && uploadCover(e.target.files[0])} />
-              </label>
-            )}
+            </div>
           </Card>
 
           <Card>

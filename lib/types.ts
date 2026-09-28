@@ -11,6 +11,8 @@ export interface PostSummary {
   title: string;
   summary: string;
   coverKey: string;
+  /** 外部封面 URL（图床等），优先级高于 coverKey */
+  coverUrl?: string;
   categoryId: string;
   tags: string[];
   status: PostStatus;

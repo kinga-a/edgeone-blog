@@ -109,7 +109,7 @@ export function renderMarkdown(markdown) {
     if (hm) {
       const level = hm[1].length;
       const rawText = hm[2].trim();
-      const plain = rawText.replace(/[*`\[\]()!]/g, '').trim();
+      const plain = rawText.replace(/[*`[\]()!]/g, '').trim();
       const id = level === 2 || level === 3 ? headingId(plain) : '';
       out.push(`<h${level}${id ? ` id="${id}"` : ''}>${inline(rawText)}</h${level}>`);
       i++;
@@ -221,7 +221,7 @@ export function sanitizeHtml(html) {
   out = out.replace(/<(script|style|iframe|object|embed|form|input|button|textarea|select|option|link|meta|base|template)[^>]*>[\s\S]*?<\/\1>/gi, '');
   out = out.replace(/<(script|style|iframe|object|embed|form|input|button|textarea|select|option|link|meta|base|template)[^>]*\/?>/gi, '');
   // 逐标签清洗
-  out = out.replace(/<(\/?)([a-zA-Z][a-zA-Z0-9]*)((?:"[^"]*"|'[^']*'|[^'">])*)>/g, (whole, closing, tag, attrs) => {
+  out = out.replace(/<(\/?)()([a-zA-Z][a-zA-Z0-9]*)((?:"[^"]*"|'[^']*'|[^'">])*)>/g, (whole, closing, _sp, tag, attrs) => {
     const name = tag.toLowerCase();
     if (!ALLOWED_TAGS.has(name)) return escapeHtml(whole);
     if (!closing) {

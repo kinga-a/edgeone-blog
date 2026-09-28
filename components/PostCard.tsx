@@ -6,7 +6,8 @@ import type { PostSummary } from '@/lib/types';
 import { fmtDate, mediaUrl } from '@/lib/utils';
 
 export default function PostCard({ post }: { post: PostSummary }) {
-  const cover = post.coverKey ? mediaUrl(post.coverKey) : '';
+  // 封面优先级：外部 URL > 上传的 Blob 封面
+  const cover = post.coverUrl || (post.coverKey ? mediaUrl(post.coverKey) : '');
   return (
     <article className="group bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/60 overflow-hidden hover:shadow-lg hover:shadow-slate-200/60 dark:hover:shadow-black/30 hover:border-brand-300 dark:hover:border-brand-600 transition-all">
       {cover && (
