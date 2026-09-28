@@ -3,13 +3,13 @@
 @tailwind utilities;
 
 :root {
-  --bg: 248 250 252;
-  --fg: 26 34 51;
+  --bg: #faf9f7;
+  --fg: #1c1a17;
 }
 
 html.dark {
-  --bg: 15 23 42;
-  --fg: 226 232 240;
+  --bg: #1c1a17;
+  --fg: #e8e6e1;
 }
 
 html {
@@ -19,11 +19,28 @@ html {
 body {
   @apply bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-200 antialiased;
   font-feature-settings: 'rlig' 1, 'calt' 1;
+  /* 宽松行高，长时间阅读舒适 */
+  line-height: 1.8;
 }
 
-/* 代码块 */
+/* ---------- 代码块：圆角 + 头部工具条（复制按钮） ---------- */
+.code-block-wrap {
+  @apply my-5 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-900 dark:bg-slate-950;
+}
+.code-block-head {
+  @apply flex items-center justify-between px-3.5 py-2 border-b border-slate-700/60 bg-slate-800/60 dark:bg-slate-900/60;
+}
+.code-lang {
+  @apply text-xs text-slate-400 select-none;
+}
+.code-copy-btn {
+  @apply text-xs text-slate-400 hover:text-slate-100 transition-colors cursor-pointer border-none bg-transparent px-2 py-0.5 rounded;
+}
+.code-copy-btn.copied {
+  @apply text-brand-400;
+}
 .code-block {
-  @apply rounded-xl bg-slate-900 p-4 text-sm leading-relaxed overflow-x-auto;
+  @apply overflow-x-auto p-4 text-sm leading-relaxed;
 }
 .dark .code-block {
   @apply bg-slate-950;
@@ -32,47 +49,61 @@ body {
   @apply font-mono text-slate-100;
 }
 
-/* 文章正文（prose 微调） */
+/* 行号 */
+.code-lines {
+  counter-reset: line;
+}
+.code-line {
+  display: flex;
+}
+.code-line::before {
+  counter-increment: line;
+  content: counter(line);
+  @apply w-8 shrink-0 pr-3 text-right text-slate-500/70 select-none;
+  font-size: 0.8125em;
+}
+
+/* ---------- 文章正文（prose 微调） ---------- */
 .prose {
-  @apply text-[15px] leading-7 text-slate-700 dark:text-slate-300;
+  @apply text-[15px] leading-[1.85] text-slate-700 dark:text-slate-300;
 }
 .prose h2 {
-  @apply mt-8 mb-4 text-2xl font-bold text-slate-900 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 pb-2;
+  @apply mt-10 mb-5 text-2xl font-bold text-slate-900 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 pb-2;
   scroll-margin-top: 5rem;
 }
 .prose h3 {
-  @apply mt-6 mb-3 text-xl font-semibold text-slate-900 dark:text-slate-100;
+  @apply mt-8 mb-4 text-xl font-semibold text-slate-900 dark:text-slate-100;
   scroll-margin-top: 5rem;
 }
 .prose h4 {
-  @apply mt-5 mb-2 text-lg font-semibold text-slate-900 dark:text-slate-100;
+  @apply mt-6 mb-3 text-lg font-semibold text-slate-900 dark:text-slate-100;
 }
 .prose p {
-  @apply my-4;
+  @apply my-5;
 }
 .prose a {
-  @apply text-brand-600 dark:text-brand-400 underline decoration-brand-300 dark:decoration-brand-600 underline-offset-2 hover:decoration-brand-600;
+  @apply text-brand-600 dark:text-brand-400 underline decoration-brand-300 dark:decoration-brand-600 underline-offset-2 hover:decoration-brand-600 transition-colors;
 }
 .prose ul {
-  @apply my-4 pl-6 list-disc space-y-1;
+  @apply my-5 pl-6 list-disc space-y-1.5;
 }
 .prose ol {
-  @apply my-4 pl-6 list-decimal space-y-1;
+  @apply my-5 pl-6 list-decimal space-y-1.5;
 }
 .prose blockquote {
-  @apply my-4 border-l-4 border-brand-300 dark:border-brand-700 bg-slate-100 dark:bg-slate-800/60 px-4 py-2 text-slate-600 dark:text-slate-400 rounded-r-lg;
+  @apply my-5 border-l-4 border-brand-300 dark:border-brand-700 bg-slate-100 dark:bg-slate-800/60 px-5 py-3 text-slate-600 dark:text-slate-400 rounded-r-lg;
 }
 .prose pre {
-  @apply my-4;
+  @apply my-5;
 }
 .prose code:not(.code-block code) {
   @apply bg-slate-200 dark:bg-slate-800 text-brand-700 dark:text-brand-300 rounded px-1.5 py-0.5 text-[0.875em];
 }
 .prose img {
-  @apply my-4 rounded-xl shadow-sm max-w-full h-auto;
+  @apply my-6 rounded-lg max-w-full h-auto cursor-zoom-in;
 }
 .prose table {
-  @apply my-4 w-full text-sm border-collapse;
+  @apply my-5 w-full text-sm border-collapse;
 }
 .prose th {
   @apply border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2 text-left;
@@ -81,7 +112,34 @@ body {
   @apply border border-slate-300 dark:border-slate-700 px-3 py-2;
 }
 .prose hr {
-  @apply my-8 border-slate-300 dark:border-slate-700;
+  @apply my-10 border-slate-300 dark:border-slate-700;
+}
+
+/* ---------- 图片点击放大预览 ---------- */
+.lightbox {
+  @apply fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4;
+}
+.lightbox img {
+  @apply max-w-full max-h-full rounded-lg shadow-2xl;
+}
+.lightbox-close {
+  @apply absolute top-4 right-4 text-white/70 hover:text-white text-3xl cursor-pointer border-none bg-transparent;
+}
+
+/* ---------- 回到顶部 ---------- */
+.back-to-top {
+  @apply fixed bottom-6 right-6 z-40 w-10 h-10 flex items-center justify-center rounded-full bg-slate-800/90 dark:bg-slate-700/90 text-slate-100 dark:text-slate-100 shadow-md cursor-pointer border-none;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.back-to-top.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.back-to-top:hover {
+  @apply bg-brand-600;
+  transform: translateY(-2px);
 }
 
 /* 滚动条 */
@@ -96,11 +154,14 @@ body {
   @apply bg-transparent;
 }
 
-/* 动画 */
+/* 克制动画：仅首页 hero 入场一次 */
 @keyframes fade-in-up {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .fade-in-up {
   animation: fade-in-up 0.35s ease both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fade-in-up { animation: none; }
 }

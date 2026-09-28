@@ -62,6 +62,19 @@ export default function Header() {
               {n.label}
             </Link>
           ))}
+          {/* 搜索框：桌面端 */}
+          <form action="/search/" method="get" className="ml-2 relative">
+            <input
+              name="q"
+              placeholder="搜索…"
+              aria-label="搜索"
+              className="w-32 lg:w-44 pl-8 pr-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-transparent focus:border-brand-400 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 outline-none transition-colors"
+            />
+            <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" width="14" height="14" viewBox="0 0 20 20" fill="none">
+              <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.6" />
+              <path d="M14 14l4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            </svg>
+          </form>
           <button
             onClick={toggle}
             aria-label="切换主题"
@@ -99,6 +112,13 @@ export default function Header() {
               {n.label}
             </Link>
           ))}
+          <Link
+            href="/search/"
+            onClick={() => setOpen(false)}
+            className="block px-3 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300"
+          >
+            🔍 搜索
+          </Link>
           <button
             onClick={toggle}
             className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300"
