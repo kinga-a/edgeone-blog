@@ -47,6 +47,8 @@ export const api = {
     for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== '') qs.set(k, String(v));
     return request<Paged<PostSummary>>(`/api/posts?${qs.toString()}`);
   },
+  /** 首页精选文章（站点配置 featuredPostIds 指定，按顺序返回；未配置时为空） */
+  getFeaturedPosts: () => request<{ ok: true; items: PostSummary[] }>('/api/posts/featured'),
   getPost: (idOrSlug: string) => request<{ ok: true; post: Post }>(`/api/posts/${encodeURIComponent(idOrSlug)}`),
   createPost: (body: Record<string, unknown>) =>
     request<{ ok: true; post: Post }>('/api/posts', { method: 'POST', body: JSON.stringify(body) }),

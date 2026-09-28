@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Btn, Card, Field, Input, Textarea, useToast } from './ui';
 import { api } from '@/lib/api';
-import type { SiteConfig } from '@/lib/types';
+import type { PostSummary, SiteConfig } from '@/lib/types';
 
 export default function SettingsView() {
   const [config, setConfig] = useState<SiteConfig | null>(null);
@@ -24,13 +24,39 @@ export default function SettingsView() {
   // 备份文件选择 input（必须在早期 return 之前声明，保持 Hook 顺序稳定）
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // 首页精选文章
+  const [allPosts, setAllPosts] = useState<PostSummary[]>([]);
+  const [featuredChecked, setFeaturedChecked] = useState<string[]>([]);
+
   useEffect(() => {
     api.getConfig().then((d) => {
-      if (d?.ok) setConfig(d.config);
+      if (d?.ok) {
+        setConfig(d.config);
+        if (Array.isArray(d.config.featuredPostIds)) {
+          setFeaturedChecked(d.config.featuredPostIds.filter(Boolean));
+        }
+      }
     }).catch(() => {});
     api.me().then((d) => {
       if (d?.ok) setTotpEnabled(Boolean(d.totpEnabled));
     }).catch(() => {});
+    // 加载全部文章供精选勾选（分页拉取，直到取完）
+    (async () => {
+      const all: PostSummary[] = [];
+      let page = 1;
+      for (;;) {
+        try {
+          const d = await api.listPosts({ page, pageSize: 50, scope: 'admin', status: '' });
+          if (!d?.ok) break;
+          all.push(...d.items);
+          if (all.length >= d.total) break;
+          page += 1;
+        } catch {
+          break;
+        }
+      }
+      setAllPosts(all);
+    })();
   }, []);
 
   if (!config) return <div className="py-14 text-center text-sm text-slate-400">加载中…</div>;
@@ -41,10 +67,15 @@ export default function SettingsView() {
   const setBackup = (patch: Partial<NonNullable<SiteConfig['backup']>>) =>
     setConfig({ ...config, backup: { ...(config.backup || {}), ...patch } } as SiteConfig);
 
+  /** 精选文章勾选切换：保持勾选顺序（先勾的在前） */
+  const toggleFeatured = (id: string) => {
+    setFeaturedChecked((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+
   const save = async () => {
     setBusy(true);
     try {
-      await api.saveConfig(config);
+      await api.saveConfig({ ...config, featuredPostIds: featuredChecked });
       toast('设置已保存');
     } catch (e) {
       toast(e instanceof Error ? e.message : '保存失败', 'error');
@@ -213,6 +244,41 @@ export default function SettingsView() {
         <Card>
           <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">关于页内容（Markdown）</h2>
           <Textarea value={config.about} onChange={(e) => set({ about: e.target.value })} rows={8} />
+        </Card>
+
+        <Card>
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">首页精选文章</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+            勾选要展示在首页「精选文章 01」区的文章，按勾选顺序排列（第一篇为精选大卡，后两篇为侧边小卡）；留空则自动取最新文章。
+          </p>
+          <div className="max-h-64 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-lg divide-y divide-slate-100 dark:divide-slate-800">
+            {allPosts.length === 0 ? (
+              <div className="px-3 py-4 text-sm text-slate-400 text-center">文章加载中…</div>
+            ) : (
+              allPosts.map((p) => {
+                const idx = featuredChecked.indexOf(p.id);
+                const checked = idx >= 0;
+                return (
+                  <label
+                    key={p.id}
+                    className={`flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors ${checked ? 'bg-brand-50 dark:bg-brand-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleFeatured(p.id)}
+                      className="accent-brand-600"
+                    />
+                    <span className="flex-1 text-sm text-slate-800 dark:text-slate-200 truncate">{p.title}</span>
+                    {checked && (
+                      <span className="text-xs font-mono text-brand-600 dark:text-brand-400 shrink-0">精选 #{idx + 1}</span>
+                    )}
+                    <span className="text-xs text-slate-400 shrink-0">{p.status === 'published' ? '已发布' : p.status === 'draft' ? '草稿' : '私人'}</span>
+                  </label>
+                );
+              })
+            )}
+          </div>
         </Card>
 
         <Card>

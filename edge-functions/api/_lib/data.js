@@ -21,6 +21,8 @@ export const DEFAULT_SITE_CONFIG = {
   perPage: 10,
   commentEnabled: true,
   commentModeration: true,
+  /** 首页精选文章（文章 id 列表，按此顺序展示；为空时首页自动取最新文章） */
+  featuredPostIds: [],
   seo: {
     ogImage: '',
     twitterHandle: '',
@@ -90,13 +92,13 @@ export async function getPostByIdOrSlug(env, value) {
   return null;
 }
 
-/** 获取全部文章摘要列表（含草稿、私人），按 publishedAt 倒序 */
+/** 获取全部文章摘要列表（含草稿、私人），按创建时间 createdAt 倒序 */
 export async function getPostList(env) {
   const kv = getKv(env);
   const list = (await kvGetJson(kv, Keys.postList)) || [];
   return [...list].sort((a, b) => {
-    const ta = a.publishedAt || a.createdAt || '';
-    const tb = b.publishedAt || b.createdAt || '';
+    const ta = a.createdAt || '';
+    const tb = b.createdAt || '';
     return ta < tb ? 1 : ta > tb ? -1 : 0;
   });
 }

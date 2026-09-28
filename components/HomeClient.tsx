@@ -68,6 +68,7 @@ function FeaturedSmall({ post }: { post: PostSummary }) {
 export default function HomeClient() {
   const [config, setConfig] = useState<SiteConfig | null>(null);
   const [posts, setPosts] = useState<PostSummary[]>([]);
+  const [featuredList, setFeatured] = useState<PostSummary[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -77,12 +78,14 @@ export default function HomeClient() {
       api.getConfig().catch(() => null),
       api.listPosts({ page: 1, pageSize: 6, status: 'published' }).catch(() => null),
       api.listCategories().catch(() => null),
+      api.getFeaturedPosts().catch(() => null),
       api.trackVisit().catch(() => null),
-    ]).then(([cfg, list, cats]) => {
+    ]).then(([cfg, list, cats, feat]) => {
       if (!alive) return;
       if (cfg?.ok) setConfig(cfg.config);
       if (list?.ok) setPosts(list.items);
       if (cats?.ok) setCategories(cats.items);
+      if (feat?.ok && Array.isArray(feat.items)) setFeatured(feat.items);
       setLoading(false);
     });
     return () => { alive = false; };
@@ -94,8 +97,13 @@ export default function HomeClient() {
     );
   }
 
-  const featured = posts[0];
-  const sidePosts = posts.slice(1, 3);
+  // 精选文章：站点配置指定（featured）优先；未指定或指定不足时用最新文章兜底
+  const featured = featuredList[0] || posts[0];
+  const restFeatured = featuredList.slice(1);
+  const sidePosts = [
+    ...restFeatured,
+    ...posts.filter((p) => p.id !== featured?.id && !restFeatured.some((f) => f.id === p.id)),
+  ].slice(0, 2);
   const latestPosts = posts.slice(0, 6);
 
   return (

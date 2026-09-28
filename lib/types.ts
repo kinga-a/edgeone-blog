@@ -91,6 +91,8 @@ export interface SiteConfig {
   perPage: number;
   commentEnabled: boolean;
   commentModeration: boolean;
+  /** 首页精选文章 id 列表（按此顺序展示；空则自动取最新） */
+  featuredPostIds?: string[];
   seo: { ogImage?: string; twitterHandle?: string; googleSiteVerification?: string };
   social: { github?: string; twitter?: string; wechat?: string; email?: string };
   backup?: { webdavUrl?: string; webdavUsername?: string; webdavPassword?: string; webdavPath?: string };
