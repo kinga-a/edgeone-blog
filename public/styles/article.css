@@ -7,7 +7,7 @@
   --faint: #b8b0a2;
   --border: #e7dfd2;
   --border-strong: #d6cbb8;
-  --card: rgba(251, 244, 223, 0.32);
+  --card: #ffffff;
   --accent: #9a4318;
   --accent-dark: #7e3713;
   --accent-soft: rgba(154, 67, 24, 0.08);
@@ -109,9 +109,9 @@ html.dark .site-logo-badge { color: #241b12; }
   transition: all 0.2s;
 }
 .theme-toggle:hover, .icon-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
-.theme-toggle .ico-sun, .drawer-theme .ico-sun { display: none; }
-html.dark .theme-toggle .ico-sun, html.dark .drawer-theme .ico-sun { display: inline-flex; }
-html.dark .theme-toggle .ico-moon, html.dark .drawer-theme .ico-moon { display: none; }
+.theme-toggle .ico-sun { display: none; }
+html.dark .theme-toggle .ico-sun { display: inline-flex; }
+html.dark .theme-toggle .ico-moon { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .theme-toggle, .icon-btn, .drawer, .drawer-overlay { transition: none; }
 }
@@ -139,14 +139,6 @@ html.dark .theme-toggle .ico-moon, html.dark .drawer-theme .ico-moon { display: 
 }
 .drawer-nav a:hover { background: var(--accent-soft); color: var(--accent); }
 .drawer-nav a.active { color: var(--accent); background: var(--accent-soft); font-weight: 500; }
-.drawer-theme {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  width: 100%; margin: 16px 0 0; padding: 12px 24px;
-  font-size: 15px; font-weight: 500; border-radius: 10px; cursor: pointer;
-  background: transparent; color: var(--accent); border: 1px solid var(--border-strong);
-  font-family: inherit; transition: all 0.2s;
-}
-.drawer-theme:hover { border-color: var(--accent); background: var(--accent-soft); }
 
 /* 移动端：导航链接收进抽屉，仅保留搜索/主题/汉堡 */
 .site-menu { display: none; margin-left: 0.25rem; }

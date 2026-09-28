@@ -120,13 +120,7 @@ ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
   </button>
   <ul class="drawer-nav">
     ${NAV_ITEMS.map((n) => `<li><a href="${n.href}" class="${n.key === navKey ? 'active' : ''}">${n.label}</a></li>`).join('')}
-    <li><a href="/search/">搜索</a></li>
   </ul>
-  <button type="button" class="btn-secondary drawer-theme" id="drawer-theme">
-    <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-    <span id="drawer-theme-label">暗色模式</span>
-  </button>
 </aside>
 <main class="site-main">
 ${body}
@@ -141,7 +135,7 @@ ${body}
 (function(){
   var h=document.getElementById('site-header');
   if(h){var onScroll=function(){h.classList.toggle('scrolled',window.scrollY>10);};window.addEventListener('scroll',onScroll,{passive:true});onScroll();}
-  function setTheme(d){document.documentElement.classList.toggle('dark',d);document.documentElement.setAttribute('data-theme',d?'dark':'light');try{localStorage.setItem('blog-theme',d?'dark':'light');}catch(e){}var lbl=document.getElementById('drawer-theme-label');if(lbl){lbl.textContent=d?'亮色模式':'暗色模式';}}
+  function setTheme(d){document.documentElement.classList.toggle('dark',d);document.documentElement.setAttribute('data-theme',d?'dark':'light');try{localStorage.setItem('blog-theme',d?'dark':'light');}catch(e){}}
   var btn=document.getElementById('theme-toggle');
   if(btn){btn.addEventListener('click',function(){setTheme(!document.documentElement.classList.contains('dark'));});}
   var menu=document.getElementById('site-menu'),ov=document.getElementById('drawer-overlay'),dr=document.getElementById('site-drawer'),cl=document.getElementById('drawer-close');
@@ -151,8 +145,6 @@ ${body}
   if(cl){cl.addEventListener('click',closeDrawer);}
   if(ov){ov.addEventListener('click',closeDrawer);}
   if(dr){var links=dr.querySelectorAll('a');for(var i=0;i<links.length;i++){links[i].addEventListener('click',closeDrawer);}}
-  var dt=document.getElementById('drawer-theme');
-  if(dt){dt.addEventListener('click',function(){setTheme(!document.documentElement.classList.contains('dark'));});}
 })();
 </script>
 </body>
