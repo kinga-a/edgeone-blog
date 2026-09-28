@@ -7,7 +7,7 @@ import PostCard from './PostCard';
 import type { Category, PostSummary, SiteConfig } from '@/lib/types';
 import { api } from '@/lib/api';
 import { fmtDate, mediaUrl, coverClassFor } from '@/lib/utils';
-import { CATEGORY_ICON_SET, resolveCategoryIcon, sanitizeSvg } from '@/lib/site-icons';
+import { CATEGORY_ICON_SET, resolveCategoryIcon, sanitizeSvg, categoryIconGradientClass } from '@/lib/site-icons';
 
 function FeaturedCard({ post }: { post: PostSummary }) {
   const cover = post.coverUrl || (post.coverKey ? mediaUrl(post.coverKey) : '');
@@ -217,9 +217,10 @@ export default function HomeClient() {
               const r = resolveCategoryIcon(c.icon);
               const key = r.kind === 'key' ? r.value : (r.kind === 'none' ? 'doc' : '');
               const inner = key ? CATEGORY_ICON_SET[key] : '';
+              const gradCls = r.kind === 'svg' ? '' : (categoryIconGradientClass(key || 'doc'));
               return (
                 <Link key={c.id} href={`/categories/${c.slug}/`} className="category-card">
-                  <span className="category-card-icon" aria-hidden="true">
+                  <span className={`category-card-icon ${gradCls}`} aria-hidden="true">
                     {r.kind === 'svg' ? (
                       <span dangerouslySetInnerHTML={{ __html: r.value }} />
                     ) : inner ? (

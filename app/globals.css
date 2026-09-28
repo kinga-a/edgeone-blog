@@ -9,8 +9,8 @@
   --bg: 250 247 241;
   --fg: 41 37 36;
 
-  /* 卡片浅色底：暖米半透明（#fbf4df52），深色主题保持不变 */
-  --t-card: rgba(251, 244, 223, 0.32);
+  /* 卡片底：原型同款白色 surface */
+  --t-card: #ffffff;
 
   --t-slate-50: #faf7f1;
   --t-slate-100: #f3eee4;
@@ -40,8 +40,8 @@ html.dark {
   --bg: 41 37 36;
   --fg: 243 238 228;
 
-  /* 暗色卡片底：保持原有深色（slate-800 系），不随浅色变化 */
-  --t-card: #3b362f;
+  /* 暗色卡片底：原型同款深色 surface（#23201A） */
+  --t-card: #23201a;
 
   /* 暗色：朱砂提亮，保证深底对比度 */
   --t-brand-50: rgba(224, 138, 90, 0.10);
@@ -534,29 +534,41 @@ a:hover .card-title { color: var(--t-brand-600); }
   flex-direction: column;
   gap: 10px;
 }
-.dark .category-card { background: var(--t-slate-800); border-color: var(--t-slate-700); }
+.dark .category-card { background: var(--t-card); border-color: var(--t-slate-700); }
 .category-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 16px rgba(41, 37, 36, 0.08);
   border-color: var(--t-brand-600);
 }
 .dark .category-card:hover { border-color: var(--t-brand-400); }
+
+/* 分类图标：彩色渐变底纹（原型同款），图标统一白色 */
+.cat-ic-layout { background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); }
+.cat-ic-code { background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); }
+.cat-ic-server { background: linear-gradient(135deg, #2563EB 0%, #4F46E5 100%); }
+.cat-ic-gear { background: linear-gradient(135deg, #2563EB 0%, #4F46E5 100%); }
+.cat-ic-database { background: linear-gradient(135deg, #0D9488 0%, #0891B2 100%); }
+.cat-ic-cloud { background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%); }
+.cat-ic-network { background: linear-gradient(135deg, #0EA5E9 0%, #06B6D4 100%); }
+.cat-ic-book { background: linear-gradient(135deg, #B45309 0%, #D97706 100%); }
+.cat-ic-doc { background: linear-gradient(135deg, #D97706 0%, #DC2626 100%); }
+.cat-ic-pen { background: linear-gradient(135deg, #D97706 0%, #DC2626 100%); }
+.cat-ic-image { background: linear-gradient(135deg, #EC4899 0%, #8B5CF6 100%); }
+.cat-ic-music { background: linear-gradient(135deg, #F43F5E 0%, #EC4899 100%); }
+.cat-ic-video { background: linear-gradient(135deg, #F97316 0%, #EF4444 100%); }
+.cat-ic-game { background: linear-gradient(135deg, #8B5CF6 0%, #D946EF 100%); }
+.cat-ic-shield { background: linear-gradient(135deg, #10B981 0%, #14B8A6 100%); }
+.cat-ic-mobile { background: linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%); }
+.cat-ic-spark { background: linear-gradient(135deg, #A855F7 0%, #EC4899 100%); }
+.cat-ic-palette { background: linear-gradient(135deg, #F59E0B 0%, #EC4899 100%); }
+.cat-ic-star { background: linear-gradient(135deg, #F59E0B 0%, #EAB308 100%); }
+
 .category-card-icon {
   width: 40px; height: 40px;
   border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
   margin-bottom: 4px;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  color: var(--t-brand-600);
-  border: 1px solid rgba(154, 67, 24, 0.35); /* Safari < 15.4 兜底 */
-  border: 1px solid color-mix(in srgb, var(--t-brand-600) 35%, transparent);
-}
-.dark .category-card-icon {
-  color: var(--t-brand-400);
-  border-color: rgba(224, 138, 90, 0.4); /* Safari < 15.4 兜底 */
-  border-color: color-mix(in srgb, var(--t-brand-400) 40%, transparent);
+  color: #fff;
 }
 .category-card-name {
   font-size: 17px;

@@ -378,8 +378,28 @@ html.dark .theme-toggle .ico-moon, html.dark .drawer-theme .ico-moon { display: 
 .archive-icon {
   display: inline-flex; align-items: center; justify-content: center;
   width: 56px; height: 56px; border-radius: 14px; margin-bottom: 0.75rem;
-  background: var(--accent-soft); color: var(--accent);
+  color: #fff;
 }
+/* 分类图标彩色渐变底纹（与前台 globals.css 保持一致） */
+.cat-ic-layout { background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); }
+.cat-ic-code { background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); }
+.cat-ic-server { background: linear-gradient(135deg, #2563EB 0%, #4F46E5 100%); }
+.cat-ic-gear { background: linear-gradient(135deg, #2563EB 0%, #4F46E5 100%); }
+.cat-ic-database { background: linear-gradient(135deg, #0D9488 0%, #0891B2 100%); }
+.cat-ic-cloud { background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%); }
+.cat-ic-network { background: linear-gradient(135deg, #0EA5E9 0%, #06B6D4 100%); }
+.cat-ic-book { background: linear-gradient(135deg, #B45309 0%, #D97706 100%); }
+.cat-ic-doc { background: linear-gradient(135deg, #D97706 0%, #DC2626 100%); }
+.cat-ic-pen { background: linear-gradient(135deg, #D97706 0%, #DC2626 100%); }
+.cat-ic-image { background: linear-gradient(135deg, #EC4899 0%, #8B5CF6 100%); }
+.cat-ic-music { background: linear-gradient(135deg, #F43F5E 0%, #EC4899 100%); }
+.cat-ic-video { background: linear-gradient(135deg, #F97316 0%, #EF4444 100%); }
+.cat-ic-game { background: linear-gradient(135deg, #8B5CF6 0%, #D946EF 100%); }
+.cat-ic-shield { background: linear-gradient(135deg, #10B981 0%, #14B8A6 100%); }
+.cat-ic-mobile { background: linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%); }
+.cat-ic-spark { background: linear-gradient(135deg, #A855F7 0%, #EC4899 100%); }
+.cat-ic-palette { background: linear-gradient(135deg, #F59E0B 0%, #EC4899 100%); }
+.cat-ic-star { background: linear-gradient(135deg, #F59E0B 0%, #EAB308 100%); }
 .archive-icon svg { width: 26px; height: 26px; }
 .archive-title {
   font-size: 2.125rem; font-weight: 600; margin: 0 0 0.5rem;

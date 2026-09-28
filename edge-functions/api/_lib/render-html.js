@@ -298,7 +298,7 @@ export async function renderArticlePage(env, post, request) {
 
 /* ---------------- 分类 / 标签归档页 ---------------- */
 
-export async function renderListPage(env, { type, title, description, slug, items, request, iconHtml }) {
+export async function renderListPage(env, { type, title, description, slug, items, request, iconHtml, iconKey }) {
   const config = await getSiteConfig(env);
   const origin = siteOrigin(config, request);
   const canonical = absUrl(origin, `/${type}/${slug}/`);
@@ -321,7 +321,7 @@ export async function renderListPage(env, { type, title, description, slug, item
   const body = `
 <div class="archive-page">
   <div class="archive-head">
-    ${iconHtml ? `<span class="archive-icon" aria-hidden="true">${iconHtml}</span>` : ''}
+    ${iconHtml ? `<span class="archive-icon cat-ic-${escapeHtml(iconKey || 'doc')}" aria-hidden="true">${iconHtml}</span>` : ''}
     <h1 class="archive-title">${escapeHtml(title)}</h1>
     ${description ? `<p class="archive-desc">${escapeHtml(description)}</p>` : ''}
     <p class="archive-count">共 ${items.length} 篇文章</p>

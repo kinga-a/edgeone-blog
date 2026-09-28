@@ -70,4 +70,11 @@ function normalizeCategoryIcon(icon) {
   return '';
 }
 
-export { CATEGORY_ICON_SET, CATEGORY_ICON_KEYS, sanitizeSvg, resolveCategoryIcon, categoryIconHtml, normalizeCategoryIcon };
+/** 取内置图标 key（用于彩色渐变类；自定义 SVG 或无图标返回 'doc' 兜底） */
+function categoryIconKey(icon) {
+  const r = resolveCategoryIcon(icon);
+  if (r.kind === 'key') return r.value;
+  return 'doc';
+}
+
+export { CATEGORY_ICON_SET, CATEGORY_ICON_KEYS, sanitizeSvg, resolveCategoryIcon, categoryIconHtml, normalizeCategoryIcon, categoryIconKey };

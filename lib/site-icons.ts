@@ -58,3 +58,34 @@ export function resolveCategoryIcon(icon?: string): { kind: 'key' | 'svg' | 'non
   }
   return { kind: 'none', value: '' };
 }
+
+/** 图标彩色渐变底纹（原型同款）：key -> CSS 类名；未命中兜底 doc */
+export const CATEGORY_ICON_GRADIENTS: Record<string, string> = {
+  layout: 'cat-ic-layout',
+  code: 'cat-ic-code',
+  server: 'cat-ic-server',
+  gear: 'cat-ic-gear',
+  database: 'cat-ic-database',
+  cloud: 'cat-ic-cloud',
+  network: 'cat-ic-network',
+  book: 'cat-ic-book',
+  doc: 'cat-ic-doc',
+  pen: 'cat-ic-pen',
+  image: 'cat-ic-image',
+  music: 'cat-ic-music',
+  video: 'cat-ic-video',
+  game: 'cat-ic-game',
+  shield: 'cat-ic-shield',
+  mobile: 'cat-ic-mobile',
+  spark: 'cat-ic-spark',
+  palette: 'cat-ic-palette',
+  star: 'cat-ic-star',
+};
+
+/** 解析图标渐变类名：自定义 SVG 无渐变类（保持透明底），内置 key/兜底返回渐变类 */
+export function categoryIconGradientClass(icon?: string): string {
+  const r = resolveCategoryIcon(icon);
+  if (r.kind === 'svg') return '';
+  const key = r.kind === 'key' ? r.value : 'doc';
+  return CATEGORY_ICON_GRADIENTS[key] || CATEGORY_ICON_GRADIENTS.doc;
+}

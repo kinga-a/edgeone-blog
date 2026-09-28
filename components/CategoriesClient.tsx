@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import type { Category, PostSummary } from '@/lib/types';
 import { api } from '@/lib/api';
 import { fmtDate } from '@/lib/utils';
-import { CATEGORY_ICON_SET, resolveCategoryIcon, sanitizeSvg } from '@/lib/site-icons';
+import { CATEGORY_ICON_SET, resolveCategoryIcon, sanitizeSvg, categoryIconGradientClass } from '@/lib/site-icons';
 
 /** 旧版按 slug 推断图标的兜底映射（分类未设置自定义图标时使用） */
 const LEGACY_ICON_BY_SLUG: Record<string, string> = {
@@ -25,11 +25,12 @@ function CategoryIcon({ slug, icon }: { slug: string; icon?: string }) {
   const r = resolveCategoryIcon(icon);
   const key = r.kind === 'key' ? r.value : (r.kind === 'none' ? (LEGACY_ICON_BY_SLUG[slug] || 'doc') : '');
   const inner = key ? CATEGORY_ICON_SET[key] : '';
+  const gradCls = r.kind === 'svg' ? '' : (categoryIconGradientClass(key || 'doc'));
   const common = { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none' as const, stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true as const };
   return (
     <span
       aria-hidden="true"
-      className="shrink-0 w-14 h-14 rounded-[14px] bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center"
+      className={`shrink-0 w-14 h-14 rounded-[14px] ${gradCls} text-white flex items-center justify-center`}
     >
       {r.kind === 'svg' ? (
         <span dangerouslySetInnerHTML={{ __html: r.value }} />
@@ -89,7 +90,7 @@ export default function CategoriesClient() {
             return (
               <div
                 key={c.id}
-                className="group p-7 rounded-[14px] bg-[var(--t-card)] dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 hover:border-brand-400 transition-colors"
+                className="group p-7 rounded-[14px] bg-[var(--t-card)] border border-slate-200 dark:border-slate-700/60 hover:border-brand-400 transition-colors"
               >
                 <div className="flex items-start gap-4">
                   <CategoryIcon slug={c.slug} icon={c.icon} />
