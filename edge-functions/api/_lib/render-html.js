@@ -84,10 +84,6 @@ ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
     <a class="site-logo" href="/">${escapeHtml(config.title || '博客')}</a>
     <nav class="site-nav">
       ${NAV_ITEMS.map((n) => `<a href="${n.href}" class="${n.key === navKey ? 'active' : ''}">${n.label}</a>`).join('')}
-      <form class="site-search" action="/search/" method="get">
-        <svg class="search-icon" width="13" height="13" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.6"/><path d="M14 14l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-        <input type="text" name="q" placeholder="搜索…" aria-label="搜索">
-      </form>
       <button type="button" class="theme-toggle" id="theme-toggle" aria-label="切换主题">🌓</button>
     </nav>
   </div>
@@ -189,12 +185,6 @@ export async function renderArticlePage(env, post, request) {
       <div class="article-body prose">
         ${html}
       </div>
-    </div>
-    <div class="article-footer">
-      <div class="article-footer-tags">
-        ${tagObjs.length ? `<span class="label">标签：</span>${tagObjs.map((t) => `<a class="chip" href="/tags/${escapeHtml(t.slug)}/"># ${escapeHtml(t.name)}</a>`).join('')}` : ''}
-      </div>
-      <a class="btn-home" href="/">← 返回首页</a>
     </div>
     <div class="article-actions">
       <button type="button" class="btn-like" id="btn-like">👍 点赞 <span id="like-count-btn">${likes}</span></button>

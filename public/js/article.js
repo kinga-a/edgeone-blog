@@ -4,9 +4,6 @@
  * - 点赞（localStorage 防重复）
  * - 评论提交与审核提示
  * - 分享
- * - 代码高亮（highlight.js CDN 懒加载）→ 行号 + 一键复制
- * - 正文图片点击放大预览
- * - 回到顶部按钮
  * - 目录滚动高亮
  */
 (function () {
@@ -116,131 +113,23 @@
     }
   };
 
-  /* ---------- 代码块：语言标签 + 复制 + 行号（在高亮后处理） ---------- */
-  function enhanceCodeBlocks() {
-    var pres = document.querySelectorAll('.article-body pre.code-block');
-    if (!pres.length) return;
-    for (var i = 0; i < pres.length; i++) {
-      var pre = pres[i];
-      if (pre.getAttribute('data-enhanced')) continue;
-      pre.setAttribute('data-enhanced', '1');
-      var code = pre.querySelector('code');
-      if (!code) continue;
-      var lang = pre.getAttribute('data-lang') || '';
-      var raw = code.textContent || '';
-
-      // 容器
-      var wrap = document.createElement('div');
-      wrap.className = 'code-block-wrap';
-      pre.parentNode.insertBefore(wrap, pre);
-      wrap.appendChild(pre);
-
-      // 头部：语言 + 复制
-      var head = document.createElement('div');
-      head.className = 'code-block-head';
-      var langLabel = document.createElement('span');
-      langLabel.className = 'code-lang';
-      langLabel.textContent = lang || 'code';
-      var copyBtn = document.createElement('button');
-      copyBtn.type = 'button';
-      copyBtn.className = 'code-copy-btn';
-      copyBtn.textContent = '复制';
-      copyBtn.addEventListener('click', function () {
-        if (!navigator.clipboard) return;
-        navigator.clipboard.writeText(raw).then(function () {
-          copyBtn.textContent = '已复制';
-          copyBtn.classList.add('copied');
-          setTimeout(function () { copyBtn.textContent = '复制'; copyBtn.classList.remove('copied'); }, 1600);
-        }).catch(function () {});
-      });
-      head.appendChild(langLabel);
-      head.appendChild(copyBtn);
-      wrap.insertBefore(head, pre);
-
-      // 行号：按换行拆分
-      var lines = document.createElement('div');
-      lines.className = 'code-lines';
-      var parts = code.innerHTML.split('\n');
-      var html = '';
-      for (var k = 0; k < parts.length; k++) {
-        html += '<span class="code-line">' + (parts[k] || '&nbsp;') + '</span>';
-      }
-      lines.innerHTML = html;
-      code.innerHTML = '';
-      code.appendChild(lines);
-    }
-  }
-
-  /* ---------- 代码高亮（highlight.js CDN，懒加载）→ 之后行号化 ---------- */
+  /* ---------- 代码高亮（highlight.js CDN，懒加载） ---------- */
   (function () {
     var codes = document.querySelectorAll('.article-body pre.code-block code');
     if (!codes.length) return;
     function applyHighlight() {
-      if (window.hljs) {
-        for (var k = 0; k < codes.length; k++) {
-          try { window.hljs.highlightElement(codes[k]); } catch (e) {}
-        }
+      if (!window.hljs) return;
+      for (var k = 0; k < codes.length; k++) {
+        try { window.hljs.highlightElement(codes[k]); } catch (e) {}
       }
-      enhanceCodeBlocks();
     }
     if (window.hljs) { applyHighlight(); return; }
     var s = document.createElement('script');
     s.src = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js';
     s.async = true;
     s.onload = applyHighlight;
-    s.onerror = applyHighlight; // CDN 失败也补行号/复制，只是无高亮
+    s.onerror = function () {};
     document.head.appendChild(s);
-  })();
-
-  /* ---------- 正文图片点击放大 ---------- */
-  (function () {
-    var imgs = document.querySelectorAll('.article-body img');
-    if (!imgs.length) return;
-    var onKey;
-    function removeLightbox() {
-      var boxes = document.querySelectorAll('.lightbox');
-      for (var i = 0; i < boxes.length; i++) boxes[i].remove();
-      document.body.style.overflow = '';
-      document.removeEventListener('keydown', onKey);
-    }
-    onKey = function (e) { if (e.key === 'Escape') removeLightbox(); };
-    for (var i = 0; i < imgs.length; i++) {
-      imgs[i].addEventListener('click', function () {
-        var box = document.createElement('div');
-        box.className = 'lightbox';
-        var big = document.createElement('img');
-        big.src = this.src;
-        big.alt = this.alt || '';
-        var close = document.createElement('button');
-        close.className = 'lightbox-close';
-        close.textContent = '×';
-        close.addEventListener('click', removeLightbox);
-        box.addEventListener('click', function (e) { if (e.target === box) removeLightbox(); });
-        box.appendChild(big);
-        box.appendChild(close);
-        document.body.appendChild(box);
-        document.body.style.overflow = 'hidden';
-        document.addEventListener('keydown', onKey);
-      });
-    }
-  })();
-
-  /* ---------- 回到顶部 ---------- */
-  (function () {
-    var btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'back-to-top';
-    btn.setAttribute('aria-label', '回到顶部');
-    btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M10 16V4M4 10l6-6 6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-    btn.addEventListener('click', function () {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-    document.body.appendChild(btn);
-    function onScroll() {
-      btn.classList.toggle('show', window.scrollY > 400);
-    }
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
   })();
 
   /* ---------- 目录滚动高亮 ---------- */

@@ -38,16 +38,16 @@ export default function HomeClient() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-10">
-      {/* Hero（克制极简，无渐变堆砌） */}
+      {/* Hero */}
       <section className="text-center py-12 fade-in-up">
-        <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+        <h1 className="text-3xl sm:text-5xl font-bold tracking-tight bg-gradient-to-r from-brand-600 via-brand-500 to-indigo-500 bg-clip-text text-transparent">
           {config?.title || '我的博客'}
         </h1>
         <p className="mt-4 text-base sm:text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">
           {config?.subtitle || '记录思考，分享知识'}
         </p>
         <div className="mt-8 flex items-center justify-center gap-3 flex-wrap">
-          <Link href="/posts/" className="px-5 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition-colors">
+          <Link href="/posts/" className="px-5 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition-colors shadow-sm shadow-brand-600/30">
             浏览文章
           </Link>
           <Link href="/about/" className="px-5 py-2.5 rounded-xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm font-medium border border-slate-200 dark:border-slate-700 hover:border-brand-400 transition-colors">
