@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTheme } from './ThemeProvider';
+import ThemeToggle from './ThemeToggle';
 import { cx } from '@/lib/utils';
 
 const NAV = [
@@ -77,23 +78,9 @@ export default function Header() {
               <path d="M14 14l4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
             </svg>
           </Link>
-          <button
-            onClick={toggle}
-            aria-label={dark ? '切换到浅色模式' : '切换到暗色模式'}
-            title={dark ? '切换到浅色模式' : '切换到暗色模式'}
-            className="ml-0.5 w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          >
-            {dark ? (
-              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                <circle cx="10" cy="10" r="4.5" stroke="currentColor" strokeWidth="1.6" />
-                <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.3 4.3l1.4 1.4M14.3 14.3l1.4 1.4M15.7 4.3l-1.4 1.4M5.7 14.3l-1.4 1.4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-              </svg>
-            ) : (
-              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                <path d="M14.2 6.2a5 5 0 1 0 0 7.6 6.5 6.5 0 0 1-9.4-8.2A6 6 0 0 0 14.2 6.2z" fill="currentColor" />
-              </svg>
-            )}
-          </button>
+          <span className="ml-1.5 flex items-center">
+            <ThemeToggle />
+          </span>
         </nav>
 
         <button

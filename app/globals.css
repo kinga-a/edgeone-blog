@@ -664,6 +664,50 @@ a:hover .card-title { color: var(--t-brand-600); }
   animation: fade-in-up 0.35s ease both;
 }
 
+/* ========== 主题切换胶囊开关（纸墨风） ========== */
+.theme-toggle {
+  position: relative;
+  width: 56px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid var(--t-slate-300);
+  background: var(--t-slate-100);
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+html.dark .theme-toggle {
+  background: var(--t-slate-800);
+  border-color: var(--t-slate-600);
+}
+.theme-toggle:hover { border-color: var(--t-brand-600); }
+html.dark .theme-toggle:hover { border-color: var(--t-brand-400); }
+.theme-toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--t-brand-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(41, 37, 36, 0.22);
+  transition: transform 0.28s ease, background-color 0.2s ease, color 0.2s ease;
+}
+html.dark .theme-toggle-knob {
+  background: var(--t-slate-700);
+  color: var(--t-brand-400);
+}
+.theme-toggle-knob.on { transform: translateX(30px); }
+/* 减弱动态效果时关闭滑块过渡 */
+@media (prefers-reduced-motion: reduce) {
+  .theme-toggle-knob { transition: none; }
+}
+
 /* ========== 页面切换过渡（克制淡入） ========== */
 @keyframes page-enter {
   from { opacity: 0; transform: translateY(6px); }
