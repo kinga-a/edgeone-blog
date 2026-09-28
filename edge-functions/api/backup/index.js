@@ -6,7 +6,11 @@ import { makeExportResponse, webdavPush } from '../_lib/backup.js';
 export async function onRequestGet({ request, env }) {
   const admin = await requireAdmin(request, env);
   if (!admin.ok) return fail(401, '未登录或登录已过期');
-  return makeExportResponse(env);
+  try {
+    return await makeExportResponse(env);
+  } catch (e) {
+    return fail(500, `备份导出失败：${e.message || '未知错误'}`);
+  }
 }
 
 /** POST /api/backup — 将全量备份推送到 WebDAV（管理员） */

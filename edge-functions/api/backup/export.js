@@ -6,7 +6,11 @@ import { makeExportResponse } from '../_lib/backup.js';
 export async function onRequestGet({ request, env }) {
   const admin = await requireAdmin(request, env);
   if (!admin.ok) return fail(401, '未登录或登录已过期');
-  return makeExportResponse(env);
+  try {
+    return await makeExportResponse(env);
+  } catch (e) {
+    return fail(500, `备份导出失败：${e.message || '未知错误'}`);
+  }
 }
 
 export const onRequest = onRequestGet;

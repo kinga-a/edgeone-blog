@@ -7,14 +7,20 @@ export async function dumpAll(env) {
   const kv = getKv(env);
   const data = {};
   let cursor;
+  let pages = 0;
   do {
-    const res = await kv.list({ limit: 1000, ...(cursor ? { cursor } : {}) });
+    // 注意：EdgeOne Pages KV 的 list limit 上限为 256（与 Cloudflare 的 1000 不同）
+    const res = await kv.list({ limit: 256, ...(cursor ? { cursor } : {}) });
     for (const k of res.keys) {
-      const raw = await kv.get(k.key);
+      const raw = await kv.get(k.key).catch(() => null);
       if (raw !== null && raw !== undefined) data[k.key] = raw;
     }
-    cursor = res.cursor;
-    if (res.complete) break;
+    // 兼容 complete / list_complete / cursor 空串三种终止信号
+    const done = res.complete === true || res.list_complete === true || !res.cursor || res.cursor === '';
+    cursor = done ? null : res.cursor;
+    pages += 1;
+    // 兜底保护：最多遍历 200 页（约 5 万 key），防止异常死循环
+    if (pages >= 200) break;
   } while (cursor);
   return {
     exportedAt: new Date().toISOString(),

@@ -481,11 +481,11 @@ await test('私人文章拒绝评论', async () => {
   assert.equal(r.status, 400);
 });
 await test('未登录导出备份被拒绝', async () => {
-  const r = await call('api/backup/index.js', 'GET', `${BASE}/api/backup/export`);
+  const r = await call('api/backup/export.js', 'GET', `${BASE}/api/backup/export`);
   assert.equal(r.status, 401);
 });
 await test('管理员全量导出备份 JSON', async () => {
-  const r = await call('api/backup/index.js', 'GET', `${BASE}/api/backup/export`, { cookie });
+  const r = await call('api/backup/export.js', 'GET', `${BASE}/api/backup/export`, { cookie });
   const d = await parse(r);
   assert.equal(r.status, 200);
   assert.ok(d.count > 0);
@@ -493,7 +493,7 @@ await test('管理员全量导出备份 JSON', async () => {
   assert.ok(Object.keys(d.data).some((k) => k.startsWith('post_')));
 });
 await test('未登录 WebDAV 备份被拒绝', async () => {
-  const r = await call('api/backup/index.js', 'POST', `${BASE}/api/backup/webdav`);
+  const r = await call('api/backup/webdav.js', 'POST', `${BASE}/api/backup/webdav`);
   assert.equal(r.status, 401);
 });
 

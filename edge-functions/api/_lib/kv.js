@@ -77,15 +77,18 @@ export async function kvIncr(kv, key, step = 1) {
   return n;
 }
 
-/** 遍历某前缀下的所有 key（自动翻页） */
-export async function kvListKeys(kv, prefix, limit = 1000) {
+/** 遍历某前缀下的所有 key（自动翻页；兼容 complete / list_complete / cursor 空串终止信号） */
+export async function kvListKeys(kv, prefix, limit = 256) {
   const keys = [];
   let cursor;
+  let pages = 0;
   do {
     const res = await kv.list({ prefix, limit: 256, ...(cursor ? { cursor } : {}) });
     for (const k of res.keys) keys.push(k.key);
-    cursor = res.cursor;
-    if (res.complete) break;
+    const done = res.complete === true || res.list_complete === true || !res.cursor || res.cursor === '';
+    cursor = done ? null : res.cursor;
+    pages += 1;
+    if (pages >= 200) break;
   } while (cursor);
   return keys;
 }
