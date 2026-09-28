@@ -84,6 +84,7 @@ ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
     <a class="site-logo" href="/">${escapeHtml(config.title || '博客')}</a>
     <nav class="site-nav">
       ${NAV_ITEMS.map((n) => `<a href="${n.href}" class="${n.key === navKey ? 'active' : ''}">${n.label}</a>`).join('')}
+      <a class="search-link" href="/search/" aria-label="搜索" title="搜索">🔍</a>
       <button type="button" class="theme-toggle" id="theme-toggle" aria-label="切换主题">🌓</button>
     </nav>
   </div>

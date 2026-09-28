@@ -24,7 +24,7 @@ export default function TagsClient() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-10">
-      <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-6">标签</h1>
+      <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-slate-100 mb-6">标签</h1>
       {loading ? (
         <div className="text-center py-16 text-slate-400">加载中…</div>
       ) : tags.length ? (

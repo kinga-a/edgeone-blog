@@ -3,6 +3,7 @@ import './globals.css';
 import ThemeProvider from '@/components/ThemeProvider';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import BackToTop from '@/components/BackToTop';
 
 export const metadata: Metadata = {
   title: {
@@ -22,8 +23,8 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f8fafc' },
-    { media: '(prefers-color-scheme: dark)', color: '#0f172a' },
+    { media: '(prefers-color-scheme: light)', color: '#faf7f1' },
+    { media: '(prefers-color-scheme: dark)', color: '#292524' },
   ],
 };
 
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />
+          <BackToTop />
         </ThemeProvider>
       </body>
     </html>

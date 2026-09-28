@@ -40,11 +40,15 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-slate-200/80 dark:border-slate-800 bg-white/85 dark:bg-slate-900/85 backdrop-blur-md">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 h-14 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 font-bold text-lg tracking-tight">
-          <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white text-sm">B</span>
-          <span className="text-slate-900 dark:text-slate-100">{title}</span>
+        <Link href="/" className="flex items-center gap-2.5 tracking-tight group">
+          <span className="w-7 h-7 rounded-lg bg-brand-600 flex items-center justify-center text-white text-sm font-bold font-display">
+            B
+          </span>
+          <span className="text-lg font-display font-semibold text-slate-900 dark:text-slate-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
+            {title}
+          </span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-1">
@@ -62,10 +66,21 @@ export default function Header() {
               {n.label}
             </Link>
           ))}
+          <Link
+            href="/search/"
+            aria-label="搜索"
+            title="搜索"
+            className="ml-1 w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          >
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+              <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.6" />
+              <path d="M14 14l4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            </svg>
+          </Link>
           <button
             onClick={toggle}
             aria-label="切换主题"
-            className="ml-1 w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="ml-0.5 w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             {dark ? '☀️' : '🌙'}
           </button>
@@ -99,6 +114,13 @@ export default function Header() {
               {n.label}
             </Link>
           ))}
+          <Link
+            href="/search/"
+            onClick={() => setOpen(false)}
+            className="block px-3 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300"
+          >
+            🔍 搜索
+          </Link>
           <button
             onClick={toggle}
             className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300"

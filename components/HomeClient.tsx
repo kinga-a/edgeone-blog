@@ -1,11 +1,67 @@
 'use client';
 
-/** 首页：站点信息 + 最新文章 + 分类概览 + 访问统计埋点 */
+/** 首页（纸墨编辑风）：刊头 Hero + 精选文章 + 最新文章 + 分类速览 + 访问统计埋点 */
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import PostCard from './PostCard';
 import type { Category, PostSummary, SiteConfig } from '@/lib/types';
 import { api } from '@/lib/api';
+import { fmtDate, mediaUrl, coverClassFor, catIconClassFor } from '@/lib/utils';
+
+function FeaturedCard({ post }: { post: PostSummary }) {
+  const cover = post.coverUrl || (post.coverKey ? mediaUrl(post.coverKey) : '');
+  const fallbackCls = coverClassFor(post.categoryName);
+  return (
+    <Link href={`/posts/${post.slug}/`} className="featured-card">
+      <div className={`card-cover ${cover ? '' : fallbackCls}`}>
+        {cover ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={cover} alt={post.title} loading="lazy" className="w-full h-full object-cover" />
+        ) : (
+          <span className="absolute inset-0 flex items-center justify-center font-display text-white/90 text-4xl">
+            {post.title.slice(0, 1)}
+          </span>
+        )}
+      </div>
+      <div className="card-body">
+        <div className="card-meta">
+          {post.categoryName && <span className="card-category">{post.categoryName}</span>}
+          {post.categoryName && <span>·</span>}
+          <span>{fmtDate(post.publishedAt || post.createdAt)}</span>
+          <span>·</span>
+          <span>{post.readingTime || 1} 分钟阅读</span>
+        </div>
+        <h2 className="card-title">{post.title}</h2>
+        {post.summary && <p className="card-excerpt">{post.summary}</p>}
+      </div>
+    </Link>
+  );
+}
+
+function FeaturedSmall({ post }: { post: PostSummary }) {
+  const cover = post.coverUrl || (post.coverKey ? mediaUrl(post.coverKey) : '');
+  const fallbackCls = coverClassFor(post.categoryName);
+  return (
+    <Link href={`/posts/${post.slug}/`} className="featured-small">
+      <div className={`card-cover ${cover ? '' : fallbackCls}`}>
+        {cover ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={cover} alt={post.title} loading="lazy" className="w-full h-full object-cover" />
+        ) : (
+          <span className="absolute inset-0 flex items-center justify-center font-display text-white/90 text-xl">
+            {post.title.slice(0, 1)}
+          </span>
+        )}
+      </div>
+      <div className="card-info">
+        <div className="card-meta">
+          {post.categoryName && <span className="card-category">{post.categoryName}</span>}
+        </div>
+        <h3 className="card-title">{post.title}</h3>
+      </div>
+    </Link>
+  );
+}
 
 export default function HomeClient() {
   const [config, setConfig] = useState<SiteConfig | null>(null);
@@ -36,35 +92,66 @@ export default function HomeClient() {
     );
   }
 
+  const featured = posts[0];
+  const sidePosts = posts.slice(1, 3);
+  const latestPosts = posts.slice(0, 6);
+
   return (
-    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-10">
-      {/* Hero */}
-      <section className="text-center py-12 fade-in-up">
-        <h1 className="text-3xl sm:text-5xl font-bold tracking-tight bg-gradient-to-r from-brand-600 via-brand-500 to-indigo-500 bg-clip-text text-transparent">
-          {config?.title || '我的博客'}
-        </h1>
-        <p className="mt-4 text-base sm:text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">
-          {config?.subtitle || '记录思考，分享知识'}
-        </p>
-        <div className="mt-8 flex items-center justify-center gap-3 flex-wrap">
-          <Link href="/posts/" className="px-5 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition-colors shadow-sm shadow-brand-600/30">
-            浏览文章
-          </Link>
-          <Link href="/about/" className="px-5 py-2.5 rounded-xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm font-medium border border-slate-200 dark:border-slate-700 hover:border-brand-400 transition-colors">
-            关于我
-          </Link>
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 pb-10">
+      {/* 刊头 Hero */}
+      <section className="hero fade-in-up">
+        <div className="hero-grid">
+          <div className="hero-text">
+            <div className="hero-vol">VOL.{new Date().getFullYear()} · 记录与思考</div>
+            <h1 className="hero-title font-display">{config?.title || '我的博客'}</h1>
+            <p className="hero-subtitle font-display" style={{ fontWeight: 400 }}>
+              {config?.subtitle || '记录思考，分享知识'}
+            </p>
+            <p className="hero-desc">
+              互联网干货 · 技术踩坑记录 · 工具分享 · 网络观察随笔——用文字存档思考，把零散的认知沉淀成可回看的内容。
+            </p>
+            <div className="hero-actions">
+              <Link href="/posts/" className="btn-primary">浏览文章</Link>
+              <Link href="/about/" className="btn-ghost">关于我 →</Link>
+            </div>
+          </div>
+          <div className="hero-deco" aria-hidden="true">
+            <div className="hero-deco-paper"></div>
+            <div className="hero-deco-paper-2"></div>
+          </div>
         </div>
       </section>
 
+      {/* 精选文章 */}
+      {featured && (
+        <section className="mt-2">
+          <div className="section-header">
+            <h2 className="section-title">
+              精选文章<span className="mono-num">01</span>
+            </h2>
+            <Link href="/posts/" className="section-link">查看全部 →</Link>
+          </div>
+          <div className="featured-section">
+            <FeaturedCard post={featured} />
+            <div className="featured-side">
+              {sidePosts.map((p) => (
+                <FeaturedSmall key={p.id} post={p} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* 最新文章 */}
-      <section className="mt-6">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">最新文章</h2>
-          <Link href="/posts/" className="text-sm text-brand-600 dark:text-brand-400 hover:underline">查看全部 →</Link>
+      <section className="mt-12">
+        <div className="section-header">
+          <h2 className="section-title">
+            最新文章<span className="mono-num">02</span>
+          </h2>
         </div>
-        {posts.length ? (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {posts.map((p) => <PostCard key={p.id} post={p} />)}
+        {latestPosts.length ? (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {latestPosts.map((p) => <PostCard key={p.id} post={p} />)}
           </div>
         ) : (
           <div className="text-center py-16 text-slate-400">
@@ -73,22 +160,24 @@ export default function HomeClient() {
         )}
       </section>
 
-      {/* 分类概览 */}
+      {/* 分类速览 */}
       {categories.length > 0 && (
-        <section className="mt-14">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">分类</h2>
-            <Link href="/categories/" className="text-sm text-brand-600 dark:text-brand-400 hover:underline">全部分类 →</Link>
+        <section className="mt-12">
+          <div className="section-header">
+            <h2 className="section-title">
+              分类速览<span className="mono-num">03</span>
+            </h2>
+            <Link href="/categories/" className="section-link">全部分类 →</Link>
           </div>
-          <div className="flex flex-wrap gap-3">
-            {categories.slice(0, 12).map((c) => (
-              <Link
-                key={c.id}
-                href={`/categories/${c.slug}/`}
-                className="px-4 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-700 dark:text-slate-200 hover:border-brand-400 transition-colors"
-              >
-                {c.name}
-                <span className="ml-1.5 text-xs text-slate-400">({c.postCount || 0})</span>
+          <div className="category-grid">
+            {categories.slice(0, 8).map((c) => (
+              <Link key={c.id} href={`/categories/${c.slug}/`} className="category-card">
+                <span className={`category-card-icon ${catIconClassFor(c.name)}`} aria-hidden="true">
+                  {c.name.slice(0, 1)}
+                </span>
+                <span className="category-card-name">{c.name}</span>
+                {c.description && <span className="category-card-desc">{c.description}</span>}
+                <span className="category-card-count">{c.postCount || 0} 篇文章</span>
               </Link>
             ))}
           </div>

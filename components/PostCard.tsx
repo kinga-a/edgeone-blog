@@ -1,46 +1,90 @@
 'use client';
 
-/** 文章卡片：封面（懒加载）+ 元信息 + 摘要 */
+/** 文章卡片（杂志式）：封面（真实图/分类渐变占位）+ 分类·日期·阅读时长 + 衬线标题 + 摘要 + 标签 */
 import Link from 'next/link';
-import type { PostSummary } from '@/lib/types';
-import { fmtDate, mediaUrl } from '@/lib/utils';
+import { useEffect, useState } from 'react';
+import type { PostSummary, Tag } from '@/lib/types';
+import { fmtDate, mediaUrl, coverClassFor } from '@/lib/utils';
+
+/* 模块级缓存：全站只需拉一次标签列表 */
+let tagsCache: Tag[] | null = null;
+let tagsPromise: Promise<Tag[]> | null = null;
+function loadTags(): Promise<Tag[]> {
+  if (tagsCache) return Promise.resolve(tagsCache);
+  if (!tagsPromise) {
+    tagsPromise = fetch('/api/tags')
+      .then((r) => r.json())
+      .then((d) => {
+        tagsCache = (d?.items as Tag[]) || [];
+        return tagsCache;
+      })
+      .catch(() => {
+        tagsCache = [];
+        return tagsCache;
+      });
+  }
+  return tagsPromise;
+}
 
 export default function PostCard({ post }: { post: PostSummary }) {
-  // 封面优先级：外部 URL > 上传的 Blob 封面
+  const [tagNames, setTagNames] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!post.tags?.length) return;
+    let alive = true;
+    loadTags().then((tags) => {
+      if (!alive) return;
+      const map = new Map(tags.map((t) => [t.id, t.name]));
+      setTagNames(post.tags.map((id) => map.get(id)).filter((n): n is string => !!n).slice(0, 3));
+    });
+    return () => { alive = false; };
+  }, [post.tags]);
+
+  // 封面优先级：外部 URL > 上传的 Blob 封面 > 分类渐变占位
   const cover = post.coverUrl || (post.coverKey ? mediaUrl(post.coverKey) : '');
+  const fallbackCls = coverClassFor(post.categoryName);
+
   return (
-    <article className="group bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/60 overflow-hidden hover:shadow-lg hover:shadow-slate-200/60 dark:hover:shadow-black/30 hover:border-brand-300 dark:hover:border-brand-600 transition-all">
-      {cover && (
-        <Link href={`/posts/${post.slug}/`} className="block aspect-[16/7] overflow-hidden bg-slate-100 dark:bg-slate-800">
-          {/* 静态导出 + 禁用 next/image 优化，使用原生 img + 懒加载 */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
+    <article className="article-card group">
+      <Link href={`/posts/${post.slug}/`} className={`block card-cover ${cover ? '' : fallbackCls}`}>
+        {cover ? (
+          // 静态导出 + 禁用 next/image 优化，使用原生 img + 懒加载
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={cover}
             alt={post.title}
             loading="lazy"
-            className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
+            className="w-full h-full object-cover"
           />
-        </Link>
-      )}
-      <div className="p-5">
-        <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 mb-2 flex-wrap">
+        ) : (
+          <span className="absolute inset-0 flex items-center justify-center font-display text-white/90 text-2xl">
+            {post.title.slice(0, 1)}
+          </span>
+        )}
+      </Link>
+      <div className="card-body">
+        <div className="card-meta">
+          {post.categoryName && <span className="card-category">{post.categoryName}</span>}
+          {post.categoryName && <span>·</span>}
           <span>{fmtDate(post.publishedAt || post.createdAt)}</span>
-          {post.categoryName && (
-            <>
-              <span>·</span>
-              <span className="text-brand-600 dark:text-brand-400">{post.categoryName}</span>
-            </>
-          )}
           <span>·</span>
-          <span>{post.readingTime || 1} 分钟</span>
+          <span>{post.readingTime || 1} 分钟阅读</span>
         </div>
         <Link href={`/posts/${post.slug}/`}>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors leading-snug">
-            {post.title}
-          </h3>
+          <h3 className="card-title">{post.title}</h3>
         </Link>
-        {post.summary && (
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 line-clamp-2">{post.summary}</p>
+        {post.summary && <p className="card-excerpt">{post.summary}</p>}
+        {tagNames.length > 0 && (
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {tagNames.map((name) => (
+              <span
+                key={name}
+                className="px-2 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400"
+              >
+                #{name}
+              </span>
+            ))}
+          </div>
         )}
       </div>
     </article>
