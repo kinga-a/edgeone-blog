@@ -21,6 +21,8 @@ export default function SettingsView() {
 
   // 备份
   const [backupBusy, setBackupBusy] = useState(false);
+  // 备份文件选择 input（必须在早期 return 之前声明，保持 Hook 顺序稳定）
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     api.getConfig().then((d) => {
@@ -123,8 +125,6 @@ export default function SettingsView() {
     }
     setBackupBusy(false);
   };
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const onPickBackupFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
