@@ -1,5 +1,5 @@
 import { json, fail } from '../_lib/response.js';
-import { blobGetWithHeaders, blobDelete } from '../_lib/storage.js';
+import { blobGetBinaryWithHeaders, blobDelete } from '../_lib/storage.js';
 import { getMediaMeta, deleteMediaMeta } from '../_lib/data.js';
 import { requireAdmin } from '../_lib/auth.js';
 
@@ -10,17 +10,17 @@ function resolveKey(params) {
 }
 
 /**
- * GET /api/media/:key — 媒体文件访问（公开，代理 Blob 内容，附缓存头）
+ * GET /api/media/:key — 媒体文件访问（公开，代理 Blob 原始字节，附缓存头）
  * DELETE /api/media/:key — 删除媒体文件（管理员，需携带 uid 参数）
  */
 export async function onRequestGet({ request, env, params }) {
   const key = resolveKey(params);
   if (!key) return fail(400, '缺少文件 key');
-  const result = await blobGetWithHeaders(key).catch(() => null);
+  const result = await blobGetBinaryWithHeaders(key).catch(() => null);
   if (!result || result.body === null || result.body === undefined) return fail(404, '文件不存在');
 
   const headers = new Headers();
-  headers.set('Content-Type', result.headers?.['content-type'] || 'application/octet-stream');
+  headers.set('Content-Type', result.contentType);
   headers.set('Cache-Control', 'public, max-age=86400');
   headers.set('Access-Control-Allow-Origin', '*');
   return new Response(result.body, { headers });

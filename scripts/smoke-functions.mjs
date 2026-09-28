@@ -34,6 +34,11 @@ function createMockKv() {
 
 function createMockBlob() {
   const map = new Map(); // key -> { value, contentType }
+  const toBytes = (v) => {
+    if (v instanceof Uint8Array) return v;
+    if (v instanceof ArrayBuffer) return new Uint8Array(v);
+    return new TextEncoder().encode(String(v));
+  };
   return {
     async set(key, value, opts) {
       map.set(key, { value, contentType: opts?.contentType || 'application/octet-stream' });
@@ -41,9 +46,16 @@ function createMockBlob() {
     async get(key, { type = 'text' } = {}) {
       const item = map.get(key);
       if (!item) return null;
+      const bytes = toBytes(item.value);
       if (type === 'json') return JSON.parse(item.value);
-      if (type === 'arrayBuffer') return new TextEncoder().encode(item.value).buffer;
+      if (type === 'arrayBuffer') return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+      if (type === 'blob') return new Blob([bytes]);
       return item.value;
+    },
+    async getMetadata(key) {
+      const item = map.get(key);
+      if (!item) return null;
+      return { contentType: item.contentType, cacheControl: 'max-age=0', etag: '' };
     },
     async getWithHeaders(key) {
       const item = map.get(key);
@@ -299,16 +311,19 @@ await test('更新站点配置（管理员）', async () => {
   assert.equal(d.config.title, '墨白博客');
   assert.equal(d.config.commentEnabled, false);
 });
-await test('获取媒体直传 URL 并写文件', async () => {
+await test('获取媒体直传 URL 并写文件（二进制字节原样返回）', async () => {
   const r = await call('api/media/upload-url.js', 'POST', `${BASE}/api/media/upload-url`, { body: { name: 'cover.png', type: 'cover', contentType: 'image/png' }, cookie });
   const d = await parse(r);
   assert.equal(d.ok, true);
   assert.ok(d.url.includes('mock-upload'));
-  // 模拟浏览器直传
-  await globalThis.__BLOG_BLOB__.set(d.key, 'fake-image-bytes', { contentType: 'image/png' });
+  // 模拟浏览器直传：存真实 PNG 文件头（含非 UTF-8 字节 0x89）
+  const pngBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52]);
+  await globalThis.__BLOG_BLOB__.set(d.key, pngBytes, { contentType: 'image/png' });
   const r2 = await call('api/media/[[key]].js', 'GET', `${BASE}/api/media/${d.key}`, { params: { key: d.key } });
   assert.equal(r2.status, 200);
   assert.equal(r2.headers.get('Content-Type'), 'image/png');
+  const got = new Uint8Array(await r2.arrayBuffer());
+  assert.deepEqual(Array.from(got), Array.from(pngBytes), '代理必须原样返回二进制字节（不得被 UTF-8 解码替换）');
 });
 await test('未登录获取直传 URL 被拒绝', async () => {
   const r = await call('api/media/upload-url.js', 'POST', `${BASE}/api/media/upload-url`, { body: { name: 'x.png', type: 'image' } });

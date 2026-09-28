@@ -27,11 +27,19 @@ export async function blobGet(key, options) {
   return store().get(key, options);
 }
 
-/** 读取对象并附带响应头（用于代理媒体文件时回传 Content-Type 等）
- * 默认使用 strong 一致性（绕过边缘缓存域直读源站），
- * 避免刚上传的文件因最终一致性在短时间窗口内读不到。 */
-export async function blobGetWithHeaders(key, options) {
-  return store().getWithHeaders(key, { consistency: 'strong', ...(options || {}) });
+/** 读取二进制对象并附带 Content-Type（用于代理媒体文件）
+ * 注意：不能使用 SDK 的 getWithHeaders —— 它内部会把 body 用 TextDecoder('utf-8')
+ * 解码成字符串，二进制文件（图片等）的非 UTF-8 字节会被替换成 U+FFFD 而损坏。
+ * 这里用 get(type:'arrayBuffer') 取原始字节 + getMetadata(headObject) 取 Content-Type，
+ * 并强制 strong 一致性（绕过边缘缓存域直读源站，避免刚上传的文件在短时间窗口内读不到）。 */
+export async function blobGetBinaryWithHeaders(key, options) {
+  const s = store();
+  const [body, meta] = await Promise.all([
+    s.get(key, { type: 'arrayBuffer', consistency: 'strong', ...(options || {}) }),
+    s.getMetadata(key, { consistency: 'strong', ...(options || {}) }),
+  ]);
+  if (body === null || body === undefined) return null;
+  return { body, contentType: (meta && meta.contentType) || 'application/octet-stream' };
 }
 
 /** 删除对象 */
