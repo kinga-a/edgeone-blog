@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTheme } from './ThemeProvider';
 import ThemeToggle from './ThemeToggle';
-import { cx } from '@/lib/utils';
 
 const NAV = [
   { href: '/', label: '首页' },
@@ -22,6 +21,7 @@ export default function Header() {
   const { dark, toggle } = useTheme();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState('我的博客');
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     fetch('/api/config')
@@ -35,34 +35,37 @@ export default function Header() {
       .catch(() => {});
   }, []);
 
+  // 滚动后显示底部边框（毛玻璃半透明始终生效，与页面底色融为一体）
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/' || pathname === '';
     return pathname.startsWith(href);
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200/80 dark:border-slate-800 bg-white/85 dark:bg-slate-900/85 backdrop-blur-md">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 h-14 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5 tracking-tight group">
-          <span className="w-7 h-7 rounded-lg bg-brand-600 flex items-center justify-center text-white text-sm font-bold font-display">
+    <header className={`site-header ${scrolled ? 'scrolled' : ''}`}>
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 h-16 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-3 tracking-tight group">
+          <span className="w-9 h-9 rounded-lg bg-brand-600 flex items-center justify-center text-white text-lg font-bold font-display">
             B
           </span>
-          <span className="text-lg font-display font-semibold text-slate-900 dark:text-slate-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
+          <span className="text-[17px] font-display font-semibold text-slate-900 dark:text-slate-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
             {title}
           </span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden md:flex items-center gap-0.5">
           {NAV.map((n) => (
             <Link
               key={n.href}
               href={n.href}
-              className={cx(
-                'px-3 py-1.5 rounded-lg text-sm transition-colors',
-                isActive(n.href)
-                  ? 'text-brand-600 dark:text-brand-400 font-semibold bg-brand-50 dark:bg-brand-500/10'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800',
-              )}
+              className={`nav-link ${isActive(n.href) ? 'active' : ''}`}
             >
               {n.label}
             </Link>
@@ -71,7 +74,7 @@ export default function Header() {
             href="/search/"
             aria-label="搜索"
             title="搜索"
-            className="ml-1 w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="ml-1 w-10 h-10 flex items-center justify-center rounded-[10px] text-slate-500 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-colors border border-transparent hover:border-brand-600/30"
           >
             <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
               <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.6" />
@@ -95,18 +98,13 @@ export default function Header() {
       </div>
 
       {open && (
-        <nav className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-2 space-y-1 fade-in-up">
+        <nav className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 py-2 space-y-1 fade-in-up">
           {NAV.map((n) => (
             <Link
               key={n.href}
               href={n.href}
               onClick={() => setOpen(false)}
-              className={cx(
-                'block px-3 py-2 rounded-lg text-sm',
-                isActive(n.href)
-                  ? 'text-brand-600 dark:text-brand-400 font-semibold bg-brand-50 dark:bg-brand-500/10'
-                  : 'text-slate-600 dark:text-slate-300',
-              )}
+              className={`nav-link ${isActive(n.href) ? 'active' : ''}`}
             >
               {n.label}
             </Link>

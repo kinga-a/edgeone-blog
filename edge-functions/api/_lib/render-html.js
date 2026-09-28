@@ -91,9 +91,12 @@ ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
 <script>${DARK_MODE_SCRIPT}</script>
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="site-header">
   <div class="header-inner">
-    <a class="site-logo" href="/">${escapeHtml(config.title || '博客')}</a>
+    <a class="site-logo" href="/">
+      <span class="site-logo-badge" aria-hidden="true">B</span>
+      <span class="site-logo-text">${escapeHtml(config.title || '博客')}</span>
+    </a>
     <nav class="site-nav">
       ${NAV_ITEMS.map((n) => `<a href="${n.href}" class="${n.key === navKey ? 'active' : ''}">${n.label}</a>`).join('')}
       <a class="search-link" href="/search/" aria-label="搜索" title="搜索">
@@ -119,6 +122,8 @@ ${body}
 </footer>
 <script>
 (function(){
+  var h=document.getElementById('site-header');
+  if(h){var onScroll=function(){h.classList.toggle('scrolled',window.scrollY>10);};window.addEventListener('scroll',onScroll,{passive:true});onScroll();}
   var btn=document.getElementById('theme-toggle');
   if(btn){btn.addEventListener('click',function(){
     var d=document.documentElement.classList.toggle('dark');

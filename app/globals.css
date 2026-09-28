@@ -664,6 +664,75 @@ a:hover .card-title { color: var(--t-brand-600); }
   animation: fade-in-up 0.35s ease both;
 }
 
+/* ========== 站点头部（纸墨毛玻璃：始终半透明与页面底色融为一体，滚动后出现底边框） ========== */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  background-color: rgba(250, 247, 241, 0.72);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+html.dark .site-header {
+  background-color: rgba(25, 22, 18, 0.72);
+}
+.site-header.scrolled {
+  border-bottom-color: var(--t-slate-200);
+}
+html.dark .site-header.scrolled {
+  border-bottom-color: var(--t-slate-800);
+}
+
+/* 导航链接（原型：hover 朱砂 + 纸色底，active 朱砂 + 底部 2px 下划线） */
+.nav-link {
+  padding: 8px 14px;
+  font-size: 14px;
+  color: var(--t-slate-600);
+  text-decoration: none;
+  border-radius: 8px;
+  transition: color 0.2s ease, background-color 0.2s ease;
+  position: relative;
+  white-space: nowrap;
+}
+html.dark .nav-link { color: var(--t-slate-300); }
+.nav-link:hover {
+  color: var(--t-brand-600);
+  background: rgba(154, 67, 24, 0.08);
+}
+html.dark .nav-link:hover {
+  color: var(--t-brand-400);
+  background: rgba(224, 138, 90, 0.12);
+}
+.nav-link.active {
+  color: var(--t-brand-600);
+  font-weight: 500;
+}
+html.dark .nav-link.active {
+  color: var(--t-brand-400);
+}
+.nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 14px;
+  right: 14px;
+  height: 2px;
+  background: var(--t-brand-600);
+  border-radius: 1px;
+}
+html.dark .nav-link.active::after {
+  background: var(--t-brand-400);
+}
+/* 移动端折叠菜单内的导航项 */
+.md\:hidden .nav-link {
+  display: block;
+  padding: 12px 16px;
+  font-size: 15px;
+  border-radius: 10px;
+}
+
 /* ========== 主题切换胶囊开关（纸墨风） ========== */
 .theme-toggle {
   position: relative;

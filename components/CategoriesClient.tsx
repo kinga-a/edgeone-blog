@@ -64,7 +64,7 @@ function CategoryIcon({ slug }: { slug: string }) {
   return (
     <span
       aria-hidden="true"
-      className="shrink-0 w-12 h-12 rounded-xl bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center"
+      className="shrink-0 w-14 h-14 rounded-[14px] bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center"
     >
       {icon}
     </span>
@@ -108,7 +108,7 @@ export default function CategoriesClient() {
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="p-6 rounded-2xl border border-slate-200 dark:border-slate-700/60">
               <div className="flex items-start gap-4">
-                <div className="skeleton w-12 h-12 rounded-xl" aria-hidden="true" />
+                <div className="skeleton w-14 h-14 rounded-[14px]" aria-hidden="true" />
                 <div className="flex-1 space-y-2">
                   <div className="skeleton h-5 w-1/3 rounded" aria-hidden="true" />
                   <div className="skeleton h-4 w-2/3 rounded" aria-hidden="true" />
@@ -127,37 +127,40 @@ export default function CategoriesClient() {
             return (
               <div
                 key={c.id}
-                className="group p-6 rounded-2xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 hover:border-brand-400 transition-colors"
+                className="group p-7 rounded-[14px] bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 hover:border-brand-400 transition-colors"
               >
                 <div className="flex items-start gap-4">
                   <CategoryIcon slug={c.slug} />
                   <div className="flex-1 min-w-0">
                     <Link
                       href={`/categories/${c.slug}/`}
-                      className="text-lg font-semibold text-slate-900 dark:text-slate-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors"
+                      className="text-2xl font-semibold text-slate-900 dark:text-slate-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors"
                     >
                       {c.name}
                     </Link>
                     {c.description && (
                       <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 line-clamp-2">{c.description}</p>
                     )}
-                    <span className="mt-2 inline-block text-xs px-2 py-0.5 rounded-full bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400">
+                    <span className="mt-2 inline-block text-xs text-brand-600 dark:text-brand-400 font-mono">
                       {c.postCount || 0} 篇文章
                     </span>
                   </div>
                 </div>
 
                 {posts.length > 0 && (
-                  <ul className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-700/50 space-y-2">
+                  <ul className="mt-4">
                     {posts.map((p) => (
-                      <li key={p.id} className="flex items-baseline justify-between gap-4">
+                      <li
+                        key={p.id}
+                        className="flex items-baseline justify-between gap-4 py-2.5 border-b border-slate-100 dark:border-slate-700/50 last:border-b-0"
+                      >
                         <Link
                           href={`/posts/${p.slug}/`}
-                          className="text-sm text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors truncate"
+                          className="text-[15px] text-slate-700 dark:text-slate-200 hover:text-brand-600 dark:hover:text-brand-400 transition-colors truncate"
                         >
                           {p.title}
                         </Link>
-                        <time className="shrink-0 text-xs text-slate-400">{fmtDate(p.publishedAt || p.createdAt)}</time>
+                        <time className="shrink-0 text-xs text-slate-400 font-mono">{fmtDate(p.publishedAt || p.createdAt)}</time>
                       </li>
                     ))}
                   </ul>
