@@ -117,6 +117,55 @@ export async function getAdmin(env) {
 }
 
 /* ------------------------------------------------------------------ */
+/* 登录暴力破解防护：每 IP 15 分钟窗口内最多 5 次失败                    */
+/* ------------------------------------------------------------------ */
+
+const LOGIN_FAIL_LIMIT = 5;
+const LOGIN_FAIL_WINDOW_MS = 15 * 60 * 1000;
+
+/** 从请求头解析客户端 IP（优先 CDN 回源头） */
+export function clientIp(request) {
+  const fwd =
+    request?.headers?.get('CF-Connecting-IP') ||
+    request?.headers?.get('X-Forwarded-For') ||
+    request?.headers?.get('x-real-ip') ||
+    '';
+  return String(fwd).split(',')[0].trim().slice(0, 64) || 'unknown';
+}
+
+/** 检查是否允许尝试登录；锁定期返回 { ok:false, waitSec } */
+export async function checkLoginRate(request, env) {
+  const kv = getKv(env);
+  const key = Keys.rateLimit('login', clientIp(request));
+  const rec = await kvGetJson(kv, key);
+  if (!rec || typeof rec.count !== 'number') return { ok: true, remaining: LOGIN_FAIL_LIMIT };
+  const elapsed = Date.now() - (rec.at || 0);
+  if (elapsed > LOGIN_FAIL_WINDOW_MS) {
+    await kv.delete(key);
+    return { ok: true, remaining: LOGIN_FAIL_LIMIT };
+  }
+  if (rec.count >= LOGIN_FAIL_LIMIT) {
+    return { ok: false, waitSec: Math.ceil((LOGIN_FAIL_WINDOW_MS - elapsed) / 1000) };
+  }
+  return { ok: true, remaining: LOGIN_FAIL_LIMIT - rec.count };
+}
+
+/** 记录一次登录失败 */
+export async function recordLoginFail(request, env) {
+  const kv = getKv(env);
+  const key = Keys.rateLimit('login', clientIp(request));
+  const rec = await kvGetJson(kv, key);
+  const fresh = !rec || typeof rec.count !== 'number' || Date.now() - (rec.at || 0) > LOGIN_FAIL_WINDOW_MS;
+  await kvPutJson(kv, key, { count: fresh ? 1 : rec.count + 1, at: fresh ? Date.now() : rec.at });
+}
+
+/** 登录成功后清除失败记录 */
+export async function clearLoginFails(request, env) {
+  const kv = getKv(env);
+  await kv.delete(Keys.rateLimit('login', clientIp(request)));
+}
+
+/* ------------------------------------------------------------------ */
 /* TOTP 二次验证（RFC 6238，基于 Web Crypto，无外部依赖）                */
 /* ------------------------------------------------------------------ */
 

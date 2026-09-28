@@ -22,6 +22,14 @@ export async function dumpAll(env) {
     // 兜底保护：最多遍历 200 页（约 5 万 key），防止异常死循环
     if (pages >= 200) break;
   } while (cursor);
+  // 备份不携带敏感字段：抹掉 WebDAV 密码（config_site 为原始 JSON 字符串）
+  if (typeof data.config_site === 'string') {
+    try {
+      const cfg = JSON.parse(data.config_site);
+      if (cfg && cfg.backup && typeof cfg.backup === 'object') cfg.backup.webdavPassword = '';
+      data.config_site = JSON.stringify(cfg);
+    } catch { /* 解析失败则原样保留 */ }
+  }
   return {
     exportedAt: new Date().toISOString(),
     version: 1,

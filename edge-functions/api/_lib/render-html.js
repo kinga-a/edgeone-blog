@@ -43,6 +43,19 @@ export function siteOrigin(config, request) {
   }
 }
 
+/** SSR 页面安全响应头（与 edgeone.json 全局头双保险；CSP 需放行内联脚本与 highlight.js CDN） */
+export function pageSecurityHeaders(cacheControl = 'public, max-age=600') {
+  return {
+    'content-type': 'text/html; charset=utf-8',
+    'Cache-Control': cacheControl,
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'SAMEORIGIN',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Content-Security-Policy':
+      "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http:; font-src 'self' data: https:; connect-src 'self' https:; media-src 'self' https:; frame-ancestors 'self'; base-uri 'self'; form-action 'self'",
+  };
+}
+
 function absUrl(origin, path) {
   return `${origin}${path}`;
 }

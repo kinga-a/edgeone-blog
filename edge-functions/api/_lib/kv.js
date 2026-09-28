@@ -43,6 +43,8 @@ export const Keys = {
   statsVisit: 'stats_visit',
   statsView: (postId) => `stats_view_${postId}`,
   statsLike: (postId) => `stats_like_${postId}`,
+  // 速率限制：IP 内仅含数字字母下划线（EdgeOne KV key 限制）
+  rateLimit: (scope, ip) => `rate_${scope}_${String(ip).replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 48)}`,
 };
 
 /** 读取 JSON 值，不存在返回 null */
@@ -91,4 +93,18 @@ export async function kvListKeys(kv, prefix, limit = 256) {
     if (pages >= 200) break;
   } while (cursor);
   return keys;
+}
+
+/** 速率限制（固定窗口）：计数并检查是否超限。超限返回 { ok:false, waitSec } */
+export async function rateLimitHit(kv, key, limit, windowMs) {
+  const rec = await kvGetJson(kv, key);
+  const now = Date.now();
+  const fresh = !rec || typeof rec.count !== 'number' || now - (rec.at || 0) > windowMs;
+  const at = fresh ? now : rec.at;
+  const count = fresh ? 1 : rec.count + 1;
+  await kvPutJson(kv, key, { count, at });
+  if (count > limit) {
+    return { ok: false, waitSec: Math.max(1, Math.ceil((windowMs - (now - at)) / 1000)) };
+  }
+  return { ok: true };
 }

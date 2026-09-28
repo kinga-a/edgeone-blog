@@ -1,5 +1,5 @@
 import { getPostByIdOrSlug, getSiteConfig, isPostPubliclyVisible } from '../api/_lib/data.js';
-import { renderArticlePage } from '../api/_lib/render-html.js';
+import { renderArticlePage, pageSecurityHeaders } from '../api/_lib/render-html.js';
 import { requireAdmin } from '../api/_lib/auth.js';
 
 /**
@@ -15,9 +15,7 @@ export async function onRequestGet({ request, env, params }) {
     if (!admin.ok) return new Response('文章不存在或未发布', { status: 404 });
   }
   const html = await renderArticlePage(env, post, request);
-  return new Response(html, {
-    headers: { 'content-type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=600' },
-  });
+  return new Response(html, { headers: pageSecurityHeaders() });
 }
 
 export const onRequest = onRequestGet;
