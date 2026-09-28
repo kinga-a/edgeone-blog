@@ -55,22 +55,12 @@ export function readHash(defaultValue = ''): string {
   return h || defaultValue;
 }
 
-/** 分类名 → 封面/图标渐变类（纸墨编辑风：按内容领域着色） */
-const CAT_COVER: Array<[string[], string]> = [
-  [['前端', 'frontend'], 'cover-frontend'],
-  [['数据库', 'database', '数据'], 'cover-database'],
-  [['云', 'cloud', 'serverless'], 'cover-cloud'],
-  [['随笔', 'essay', '生活', '杂谈'], 'cover-essay'],
-];
-export function coverClassFor(categoryName?: string): string {
-  const n = categoryName || '';
-  for (const [keys, cls] of CAT_COVER) {
-    if (keys.some((k) => n.includes(k))) return cls;
-  }
-  return 'cover-default';
+/** 无封面占位样式类（纸墨编辑风：纸色底 + 朱砂点缀，统一不使用彩色渐变，保持页面低饱和一致） */
+export function coverClassFor(): string {
+  return 'cover-placeholder';
 }
-export function catIconClassFor(categoryName?: string): string {
-  return coverClassFor(categoryName).replace('cover-', 'icon-');
+export function catIconClassFor(): string {
+  return 'icon-placeholder';
 }
 
 /** 客户端 slug 化：仅保留 ASCII 字母数字（中文等非 ASCII 得到空串，由后端兜底为随机 id） */

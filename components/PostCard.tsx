@@ -42,7 +42,7 @@ export default function PostCard({ post }: { post: PostSummary }) {
 
   // 封面优先级：外部 URL > 上传的 Blob 封面 > 分类渐变占位
   const cover = post.coverUrl || (post.coverKey ? mediaUrl(post.coverKey) : '');
-  const fallbackCls = coverClassFor(post.categoryName);
+  const fallbackCls = coverClassFor();
 
   return (
     <article className="article-card group">
@@ -57,9 +57,10 @@ export default function PostCard({ post }: { post: PostSummary }) {
             className="w-full h-full object-cover"
           />
         ) : (
-          <span className="absolute inset-0 flex items-center justify-center font-display text-white/90 text-2xl">
-            {post.title.slice(0, 1)}
-          </span>
+          <>
+            <span className="cover-label">{post.categoryName || post.title.slice(0, 1)}</span>
+            <span className="cover-mark" aria-hidden="true" />
+          </>
         )}
       </Link>
       <div className="card-body">

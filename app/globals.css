@@ -421,22 +421,38 @@ html.dark .prose blockquote {
 .featured-small .card-title { font-size: 16px; }
 .featured-small .card-meta { font-size: 11px; }
 
-/* 封面渐变占位（按分类） */
+/* 无封面纸墨占位（纸色底 + 朱砂点缀，不使用彩色渐变） */
 .card-cover {
   position: relative;
   overflow: hidden;
 }
-.card-cover::after {
-  content: '';
+.cover-placeholder {
+  background: var(--t-slate-100);
+}
+.dark .cover-placeholder { background: var(--t-slate-800); }
+.cover-label {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, transparent 40%, rgba(255, 255, 255, 0.1) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-serif, 'Noto Serif SC', 'Songti SC', 'SimSun', serif);
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  color: var(--t-brand-600);
 }
-.cover-frontend { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); }
-.cover-database { background: linear-gradient(135deg, #0d9488 0%, #0891b2 100%); }
-.cover-cloud { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); }
-.cover-essay { background: linear-gradient(135deg, #d97706 0%, #dc2626 100%); }
-.cover-default { background: linear-gradient(135deg, #9a4318 0%, #7e3713 100%); }
+.dark .cover-label { color: var(--t-brand-400); }
+.cover-mark {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--t-brand-500);
+  opacity: 0.55;
+}
+.dark .cover-mark { background: var(--t-brand-400); }
 
 /* 卡片通用 */
 .card-body {
@@ -524,13 +540,16 @@ a:hover .card-title { color: var(--t-brand-600); }
   border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
   margin-bottom: 4px;
-  font-size: 17px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: var(--t-brand-600);
+  border: 1px solid color-mix(in srgb, var(--t-brand-600) 35%, transparent);
 }
-.icon-frontend { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); }
-.icon-database { background: linear-gradient(135deg, #0d9488 0%, #0891b2 100%); }
-.icon-cloud { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); }
-.icon-essay { background: linear-gradient(135deg, #d97706 0%, #dc2626 100%); }
-.icon-default { background: linear-gradient(135deg, #9a4318 0%, #7e3713 100%); }
+.dark .category-card-icon {
+  color: var(--t-brand-400);
+  border-color: color-mix(in srgb, var(--t-brand-400) 40%, transparent);
+}
 .category-card-name {
   font-size: 17px;
   font-weight: 600;

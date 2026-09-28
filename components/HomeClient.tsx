@@ -10,7 +10,7 @@ import { fmtDate, mediaUrl, coverClassFor, catIconClassFor } from '@/lib/utils';
 
 function FeaturedCard({ post }: { post: PostSummary }) {
   const cover = post.coverUrl || (post.coverKey ? mediaUrl(post.coverKey) : '');
-  const fallbackCls = coverClassFor(post.categoryName);
+  const fallbackCls = coverClassFor();
   return (
     <Link href={`/posts/${post.slug}/`} className="featured-card">
       <div className={`card-cover ${cover ? '' : fallbackCls}`}>
@@ -18,9 +18,10 @@ function FeaturedCard({ post }: { post: PostSummary }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={cover} alt={post.title} loading="lazy" className="w-full h-full object-cover" />
         ) : (
-          <span className="absolute inset-0 flex items-center justify-center font-display text-white/90 text-4xl">
-            {post.title.slice(0, 1)}
-          </span>
+          <>
+            <span className="cover-label">{post.categoryName || post.title.slice(0, 1)}</span>
+            <span className="cover-mark" aria-hidden="true" />
+          </>
         )}
       </div>
       <div className="card-body">
@@ -40,7 +41,7 @@ function FeaturedCard({ post }: { post: PostSummary }) {
 
 function FeaturedSmall({ post }: { post: PostSummary }) {
   const cover = post.coverUrl || (post.coverKey ? mediaUrl(post.coverKey) : '');
-  const fallbackCls = coverClassFor(post.categoryName);
+  const fallbackCls = coverClassFor();
   return (
     <Link href={`/posts/${post.slug}/`} className="featured-small">
       <div className={`card-cover ${cover ? '' : fallbackCls}`}>
@@ -48,9 +49,10 @@ function FeaturedSmall({ post }: { post: PostSummary }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={cover} alt={post.title} loading="lazy" className="w-full h-full object-cover" />
         ) : (
-          <span className="absolute inset-0 flex items-center justify-center font-display text-white/90 text-xl">
-            {post.title.slice(0, 1)}
-          </span>
+          <>
+            <span className="cover-label">{post.categoryName || post.title.slice(0, 1)}</span>
+            <span className="cover-mark" aria-hidden="true" />
+          </>
         )}
       </div>
       <div className="card-info">
@@ -172,7 +174,7 @@ export default function HomeClient() {
           <div className="category-grid">
             {categories.slice(0, 8).map((c) => (
               <Link key={c.id} href={`/categories/${c.slug}/`} className="category-card">
-                <span className={`category-card-icon ${catIconClassFor(c.name)}`} aria-hidden="true">
+                <span className={`category-card-icon ${catIconClassFor()}`} aria-hidden="true">
                   {c.name.slice(0, 1)}
                 </span>
                 <span className="category-card-name">{c.name}</span>
