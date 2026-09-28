@@ -703,6 +703,13 @@ html.dark .theme-toggle-knob {
   color: var(--t-brand-400);
 }
 .theme-toggle-knob.on { transform: translateX(30px); }
+.theme-toggle-moon {
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  padding-top: 1px;
+}
 /* 减弱动态效果时关闭滑块过渡 */
 @media (prefers-reduced-motion: reduce) {
   .theme-toggle-knob { transition: none; }
