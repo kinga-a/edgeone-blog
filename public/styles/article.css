@@ -109,6 +109,15 @@ html.dark .site-logo-badge { color: #241b12; }
   transition: all 0.2s;
 }
 .theme-toggle:hover, .icon-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+/* 搜索按钮与图标按钮完全同款（特异性高于 .site-nav a，避免被圆角/内边距覆盖） */
+.site-nav a.search-link {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px;
+  border: 1px solid var(--border); background: var(--card); color: var(--muted);
+  border-radius: 10px; padding: 0; margin-left: 0.25rem;
+  text-decoration: none; transition: all 0.2s;
+}
+.site-nav a.search-link:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); text-decoration: none; }
 .theme-toggle .ico-sun { display: none; }
 html.dark .theme-toggle .ico-sun { display: inline-flex; }
 html.dark .theme-toggle .ico-moon { display: none; }
@@ -147,13 +156,6 @@ html.dark .theme-toggle .ico-moon { display: none; }
   .site-nav .theme-toggle { margin-left: 0.25rem; }
   .site-menu { display: inline-flex; }
 }
-.search-link {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 2.5rem; height: 2.5rem; border-radius: 0.625rem;
-  font-size: 0.875rem; color: var(--muted); text-decoration: none;
-  border: 1px solid transparent; transition: all 0.15s;
-}
-.search-link:hover { color: var(--accent); background: var(--accent-soft); border-color: rgba(154, 67, 24, 0.3); }
 
 /* ---------- 主体 ---------- */
 .site-main { max-width: 64rem; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }

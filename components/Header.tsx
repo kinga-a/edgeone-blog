@@ -79,7 +79,7 @@ export default function Header() {
               href="/search/"
               aria-label="搜索"
               title="搜索"
-              className="ml-1 w-10 h-10 flex items-center justify-center rounded-[10px] text-slate-500 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-colors border border-transparent hover:border-brand-600/30"
+              className="ml-1 icon-btn"
             >
               <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
                 <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.6" />
