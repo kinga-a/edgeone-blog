@@ -79,16 +79,39 @@ html.dark .site-header { background: rgba(41, 37, 36, 0.85); }
 }
 .site-nav a:hover { color: var(--fg); text-decoration: none; background: rgba(138, 131, 120, 0.12); }
 .site-nav a.active { color: var(--accent); font-weight: 600; background: var(--accent-soft); }
+/* 主题切换：胶囊滑块开关（与 Next.js 前端一致：浅色 ☾⋆ / 深色 太阳） */
 .theme-toggle {
-  border: none; background: none; cursor: pointer;
-  font-size: 1rem; margin-left: 0.25rem; width: 2rem; height: 2rem;
-  border-radius: 0.5rem; color: var(--muted);
+  position: relative; border: 1px solid var(--border-strong); background: var(--card);
+  cursor: pointer; width: 56px; height: 28px; border-radius: 999px;
+  margin-left: 0.25rem; padding: 0;
+  transition: border-color 0.2s;
 }
-.theme-toggle:hover { background: rgba(138, 131, 120, 0.12); }
+.theme-toggle:hover { border-color: var(--accent); }
+.theme-knob {
+  position: absolute; top: 2px; left: 2px; width: 22px; height: 22px;
+  border-radius: 50%; background: var(--card); border: 1px solid var(--border);
+  box-shadow: 0 1px 2px rgba(41, 37, 36, 0.15);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--accent); transition: transform 0.28s ease;
+}
+html.dark .theme-knob { transform: translateX(28px); }
+.theme-knob .knob-sun { display: none; align-items: center; }
+.theme-knob .knob-moon {
+  font-size: 11px; line-height: 1; letter-spacing: -0.02em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  padding-top: 1px;
+}
+html.dark .theme-knob .knob-sun { display: flex; }
+html.dark .theme-knob .knob-moon { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .theme-knob { transition: none; }
+}
 .search-link {
   display: inline-flex; align-items: center; justify-content: center;
+  width: 2rem; height: 2rem; border-radius: 0.5rem;
   font-size: 0.875rem; color: var(--muted); text-decoration: none;
 }
+.search-link:hover { color: var(--fg); background: rgba(138, 131, 120, 0.12); }
 
 /* ---------- 主体 ---------- */
 .site-main { max-width: 64rem; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
@@ -201,20 +224,22 @@ html.dark .site-header { background: rgba(41, 37, 36, 0.85); }
 .code-block { background: var(--code-bg); color: #ece5d9; padding: 1rem; font-size: 0.875rem; line-height: 1.6; }
 .hljs { display: block; overflow-x: auto; }
 
-/* 互动区 */
+/* 互动区（图 1 样式：图标 + 文字胶囊按钮并排） */
 .article-actions {
   margin-top: 2.5rem; display: flex; gap: 0.75rem; align-items: center;
   flex-wrap: wrap; padding-top: 1.5rem; border-top: 1px solid var(--border);
 }
-.btn-like, .btn-share, .btn-submit {
-  border: none; cursor: pointer; font-size: 0.875rem; font-weight: 500;
+.btn-like, .btn-share {
+  border: 1px solid var(--border-strong); background: var(--card); color: var(--fg);
+  cursor: pointer; font-size: 0.875rem; font-weight: 500;
   padding: 0.5rem 1.125rem; border-radius: 999px; transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 0.4rem;
 }
-.btn-like { background: var(--accent-soft); color: var(--accent); }
-.btn-like:hover { background: var(--accent-strong); }
-.btn-like.liked { background: var(--accent); color: #fff; }
-.btn-share { background: var(--blockquote-bg); color: var(--fg); }
-.btn-share:hover { opacity: 0.85; }
+.btn-like:hover, .btn-share:hover { border-color: var(--accent); color: var(--accent); }
+.btn-like.liked { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-like.liked:hover { color: #fff; }
+.btn-icon { flex-shrink: 0; }
+.btn-count { font-variant-numeric: tabular-nums; }
 
 /* 文末标签 + 返回首页 */
 .article-footer {
@@ -284,7 +309,11 @@ html.dark .site-header { background: rgba(41, 37, 36, 0.85); }
 .comment-form textarea { resize: vertical; }
 .form-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 0.75rem; }
 .form-tip { font-size: 0.8125rem; color: var(--muted); }
-.btn-submit { background: var(--accent); color: #fff; }
+.btn-submit {
+  border: none; cursor: pointer; font-size: 0.875rem; font-weight: 500;
+  padding: 0.5rem 1.125rem; border-radius: 999px; transition: all 0.15s;
+  background: var(--accent); color: #fff;
+}
 .btn-submit:hover { background: var(--accent-dark); }
 .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 

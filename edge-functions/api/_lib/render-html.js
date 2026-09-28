@@ -96,8 +96,15 @@ ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
     <a class="site-logo" href="/">${escapeHtml(config.title || '博客')}</a>
     <nav class="site-nav">
       ${NAV_ITEMS.map((n) => `<a href="${n.href}" class="${n.key === navKey ? 'active' : ''}">${n.label}</a>`).join('')}
-      <a class="search-link" href="/search/" aria-label="搜索" title="搜索">🔍</a>
-      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="切换主题">🌓</button>
+      <a class="search-link" href="/search/" aria-label="搜索" title="搜索">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.6"/><path d="M14 14l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </a>
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="切换主题" title="切换主题">
+        <span class="theme-knob" id="theme-knob">
+          <span class="knob-sun" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="4.5" stroke="currentColor" stroke-width="1.7"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.3 4.3l1.4 1.4M14.3 14.3l1.4 1.4M15.7 4.3l-1.4 1.4M5.7 14.3l-1.4 1.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+          <span class="knob-moon" aria-hidden="true">☾⋆</span>
+        </span>
+      </button>
     </nav>
   </div>
 </header>
@@ -201,8 +208,15 @@ export async function renderArticlePage(env, post, request) {
       </div>
     </div>
     <div class="article-actions">
-      <button type="button" class="btn-like" id="btn-like">👍 点赞 <span id="like-count-btn">${likes}</span></button>
-      <button type="button" class="btn-share" id="btn-share" onclick="shareArticle()">🔗 分享</button>
+      <button type="button" class="btn-like" id="btn-like">
+        <svg class="btn-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21s-7-4.5-9.5-9A5.2 5.2 0 0 1 12 6a5.2 5.2 0 0 1 9.5 6C19 16.5 12 21 12 21z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+        <span>点赞</span>
+        <span class="btn-count" id="like-count-btn">${likes}</span>
+      </button>
+      <button type="button" class="btn-share" id="btn-share" onclick="shareArticle()">
+        <svg class="btn-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="6" cy="12" r="2.2" stroke="currentColor" stroke-width="1.7"/><circle cx="18" cy="6" r="2.2" stroke="currentColor" stroke-width="1.7"/><circle cx="18" cy="18" r="2.2" stroke="currentColor" stroke-width="1.7"/><path d="M8.2 10.8l7.6-3.6M8.2 13.2l7.6 3.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        <span>分享</span>
+      </button>
     </div>
     <div class="post-nav">
       ${prev ? `<a class="post-nav-item" href="/posts/${escapeHtml(prev.slug)}/"><span class="post-nav-label">上一篇</span><span class="post-nav-title">${escapeHtml(prev.title)}</span></a>` : '<span class="post-nav-item empty"></span>'}
