@@ -5,8 +5,10 @@ import { requireAdmin } from '../_lib/auth.js';
 /**
  * GET /api/posts — 文章列表
  * 参数：page, pageSize, category, tag, status, q, sort, scope
- * 前台请求（无 scope=admin）始终只返回「已发布 + 公开」文章；
- * 后台请求（scope=admin 且已登录）返回全量（含草稿与私人文章）。
+ * 可见性规则：
+ * - 未登录：仅「已发布 + 公开」文章
+ * - 已登录管理员（前台请求）：已发布文章全量（公开 + 私人）
+ * - 后台请求（scope=admin 且已登录）：全量（含草稿与私人），配合 status 筛选
  * POST /api/posts — 新建文章（管理员）
  */
 export async function onRequestGet({ request, env }) {
@@ -20,7 +22,14 @@ export async function onRequestGet({ request, env }) {
 
   const admin = await requireAdmin(request, env).catch(() => ({ ok: false }));
   const adminScope = params.scope === 'admin' && admin.ok;
-  let list = adminScope ? await getPostList(env) : await getPublicPosts(env);
+  let list;
+  if (admin.ok) {
+    list = await getPostList(env);
+    // 前台已登录只看已发布（公开 + 私人）；后台 scope=admin 保留草稿全量
+    if (!adminScope) list = list.filter((p) => p.status === 'published');
+  } else {
+    list = await getPublicPosts(env);
+  }
   if (status) list = list.filter((p) => p.status === status);
   if (categoryId) list = list.filter((p) => p.categoryId === categoryId);
   if (tagId) list = list.filter((p) => (p.tags || []).includes(tagId));

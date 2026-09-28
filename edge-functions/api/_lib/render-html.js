@@ -10,6 +10,18 @@ import {
 } from './data.js';
 import { renderMarkdown, extractToc } from './md.js';
 import { readingTime, fmtDate } from './ids.js';
+import { requireAdmin } from './auth.js';
+
+/** 判断当前请求是否为已登录管理员（私人文章对管理员可见） */
+async function isAdminRequest(request, env) {
+  if (!request) return false;
+  try {
+    const admin = await requireAdmin(request, env);
+    return admin.ok;
+  } catch (e) {
+    return false;
+  }
+}
 
 /* ---------------- 工具 ---------------- */
 
@@ -117,9 +129,10 @@ ${body}
 export async function renderArticlePage(env, post, request) {
   const config = await getSiteConfig(env);
   const origin = siteOrigin(config, request);
+  const includePrivate = await isAdminRequest(request, env);
   const [adj, related, views, likes, comments, categories] = await Promise.all([
-    adjacentPosts(env, post),
-    relatedPosts(env, post),
+    adjacentPosts(env, post, includePrivate),
+    relatedPosts(env, post, 5, includePrivate),
     getViews(env, post.id),
     getLikes(env, post.id),
     getComments(env),
@@ -163,7 +176,7 @@ export async function renderArticlePage(env, post, request) {
   <div class="article-container">
     <div class="article-head">
       <nav class="breadcrumb"><a href="/">首页</a><span>/</span><a href="/posts/">文章</a></nav>
-      <h1 class="article-title">${escapeHtml(post.title)}</h1>
+      <h1 class="article-title">${escapeHtml(post.title)}${(post.visibility || 'public') === 'private' ? '<span class="private-badge">私人</span>' : ''}</h1>
       <div class="article-meta">
         <span class="meta-item">${escapeHtml(post.author || config.author || '博主')}</span>
         <span class="meta-item">${fmtDate(post.publishedAt || post.createdAt)}</span>
@@ -257,7 +270,7 @@ export async function renderListPage(env, { type, title, description, slug, item
   const listHtml = items.map((p) => `
   <article class="list-item">
     <div class="list-item-head">
-      <a class="list-item-title" href="/posts/${escapeHtml(p.slug)}/">${escapeHtml(p.title)}</a>
+      <a class="list-item-title" href="/posts/${escapeHtml(p.slug)}/">${escapeHtml(p.title)}${(p.visibility || 'public') === 'private' ? '<span class="private-badge">私人</span>' : ''}</a>
       <span class="list-item-date">${fmtDate(p.publishedAt || p.createdAt)}</span>
     </div>
     ${p.summary ? `<p class="list-item-summary">${escapeHtml(p.summary)}</p>` : ''}

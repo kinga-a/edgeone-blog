@@ -252,9 +252,11 @@ export async function postDetailView(env, post, config) {
   };
 }
 
-/** 上一篇 / 下一篇（按 publishedAt 相邻，仅公开文章） */
-export async function adjacentPosts(env, post) {
-  const list = await getPublicPosts(env);
+/** 上一篇 / 下一篇（按 publishedAt 相邻；includePrivate 时包含私人文章，仅限已登录管理员） */
+export async function adjacentPosts(env, post, includePrivate = false) {
+  const list = includePrivate
+    ? (await getPostList(env)).filter((p) => p.status === 'published')
+    : await getPublicPosts(env);
   const idx = list.findIndex((p) => p.id === post.id);
   if (idx === -1) return { prev: null, next: null };
   return {
@@ -263,9 +265,11 @@ export async function adjacentPosts(env, post) {
   };
 }
 
-/** 相关文章：同分类或共享标签，最多 limit 篇（仅公开文章） */
-export async function relatedPosts(env, post, limit = 5) {
-  const list = await getPublicPosts(env);
+/** 相关文章：同分类或共享标签，最多 limit 篇（includePrivate 时包含私人文章，仅限已登录管理员） */
+export async function relatedPosts(env, post, limit = 5, includePrivate = false) {
+  const list = includePrivate
+    ? (await getPostList(env)).filter((p) => p.status === 'published')
+    : await getPublicPosts(env);
   const tagSet = new Set(post.tags || []);
   const scored = list
     .filter((p) => p.id !== post.id)

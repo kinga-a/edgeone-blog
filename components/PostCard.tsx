@@ -64,6 +64,7 @@ export default function PostCard({ post }: { post: PostSummary }) {
       </Link>
       <div className="card-body">
         <div className="card-meta">
+          {post.visibility === 'private' && <span className="card-private">🔒 私人</span>}
           {post.categoryName && <span className="card-category">{post.categoryName}</span>}
           {post.categoryName && <span>·</span>}
           <span>{fmtDate(post.publishedAt || post.createdAt)}</span>

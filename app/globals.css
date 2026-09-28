@@ -460,6 +460,13 @@ html.dark .prose blockquote {
   font-family: inherit;
 }
 .dark .card-category { color: var(--t-brand-400); }
+.card-private {
+  color: var(--t-brand-600);
+  font-weight: 600;
+  font-family: inherit;
+  letter-spacing: 0.02em;
+}
+.dark .card-private { color: var(--t-brand-400); }
 .card-title {
   font-size: 19px;
   line-height: 1.35;

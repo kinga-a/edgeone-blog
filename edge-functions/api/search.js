@@ -1,17 +1,21 @@
 import { json, publicHeaders, parseSearchParams } from './_lib/response.js';
-import { getPublicPosts, getCategories, getTags } from './_lib/data.js';
+import { getPublicPosts, getPostList, getCategories, getTags } from './_lib/data.js';
+import { requireAdmin } from './_lib/auth.js';
 
 /**
  * GET /api/search?q=xxx — 全文搜索（标题/摘要/正文关键词）
- * 返回文章列表（仅已发布且公开），附带匹配片段。
+ * 默认仅搜索已发布且公开的文章；已登录管理员可搜到私人文章。
  */
 export async function onRequestGet({ request, env }) {
   const params = parseSearchParams(request.url);
   const q = (params.q || '').trim().toLowerCase();
   if (!q) return json({ ok: true, items: [], total: 0, q: '' }, { headers: publicHeaders() });
 
+  const admin = await requireAdmin(request, env).catch(() => ({ ok: false }));
   const [posts, categories, tags] = await Promise.all([
-    getPublicPosts(env),
+    admin.ok
+      ? (await getPostList(env)).filter((p) => p.status === 'published')
+      : getPublicPosts(env),
     getCategories(env),
     getTags(env),
   ]);

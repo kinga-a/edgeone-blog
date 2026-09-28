@@ -304,6 +304,18 @@ html.dark .site-header { background: rgba(41, 37, 36, 0.85); }
 .list-item-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .list-item-title { font-weight: 600; font-size: 1.0625rem; color: var(--fg); }
 .list-item-title:hover { color: var(--accent); }
+.private-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.05rem 0.45rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: 999px;
+  vertical-align: middle;
+}
 .list-item-date { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
 .list-item-summary { margin: 0.375rem 0 0; font-size: 0.875rem; color: var(--muted); }
 .archive-empty { color: var(--muted); text-align: center; padding: 3rem 0; }

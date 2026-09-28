@@ -430,10 +430,10 @@ await test('管理员文章列表含私人文章', async () => {
   const d = await parse(r);
   assert.ok(d.items.some((p) => p.visibility === 'private'));
 });
-await test('前台带 Cookie 也不暴露私人文章', async () => {
+await test('前台已登录管理员可看到私人文章', async () => {
   const r = await call('api/posts/index.js', 'GET', `${BASE}/api/posts?page=1&pageSize=20`, { cookie });
   const d = await parse(r);
-  assert.ok(!d.items.some((p) => p.visibility === 'private'));
+  assert.ok(d.items.some((p) => p.visibility === 'private'));
 });
 await test('未登录访问私人文章详情返回 404', async () => {
   const r = await call('api/posts/[id].js', 'GET', `${BASE}/api/posts/${privateSlug}`, { params: { id: privateSlug } });
@@ -453,10 +453,15 @@ await test('管理员 SSR 访问私人文章成功', async () => {
   const r = await call('posts/[slug].js', 'GET', `${BASE}/posts/${privateSlug}/`, { cookie, params: { slug: privateSlug } });
   assert.equal(r.status, 200);
 });
-await test('搜索不含私人文章', async () => {
+await test('未登录搜索不含私人文章', async () => {
   const r = await call('api/search.js', 'GET', `${BASE}/api/search?q=${encodeURIComponent('私人')}`);
   const d = await parse(r);
   assert.ok(!d.items.some((p) => p.visibility === 'private'));
+});
+await test('管理员搜索含私人文章', async () => {
+  const r = await call('api/search.js', 'GET', `${BASE}/api/search?q=${encodeURIComponent('私人')}`, { cookie });
+  const d = await parse(r);
+  assert.ok(d.items.some((p) => p.visibility === 'private'));
 });
 await test('sitemap 不含私人文章', async () => {
   const r = await call('sitemap.xml.js', 'GET', `${BASE}/sitemap.xml`);
