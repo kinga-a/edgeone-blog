@@ -153,7 +153,8 @@ html.dark .theme-toggle .ico-moon { display: none; }
 .site-menu { display: none; margin-left: 0.25rem; }
 @media (max-width: 767px) {
   .site-nav a:not(.search-link) { display: none; }
-  .site-nav .theme-toggle { margin-left: 0.25rem; }
+  .site-nav { gap: 6px; }
+  .site-nav .theme-toggle, .site-nav a.search-link, .site-nav .site-menu { margin-left: 0; }
   .site-menu { display: inline-flex; }
 }
 
