@@ -201,6 +201,7 @@ html.dark .theme-toggle .ico-moon { display: none; }
 }
 
 .article-layout { margin-top: 2rem; display: grid; grid-template-columns: 1fr; gap: 2rem; }
+.article-layout > * { min-width: 0; }
 @media (min-width: 1024px) {
   .article-layout.has-toc { grid-template-columns: 220px 1fr; }
 }
@@ -258,6 +259,18 @@ html.dark .theme-toggle .ico-moon { display: none; }
 }
 .prose img { max-width: 100%; height: auto; border-radius: 0.75rem; margin: 1.5rem 0; box-shadow: var(--shadow-sm); cursor: zoom-in; }
 .prose table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.875rem; }
+/* 宽表格横向滚动容器（手机端防撑破页面） */
+.table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 1.5rem 0;
+  border-radius: 0.75rem;
+}
+.table-wrap table { margin: 0; width: max-content; min-width: 100%; }
+.table-wrap::-webkit-scrollbar { height: 8px; }
+.table-wrap::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+.table-wrap::-webkit-scrollbar-track { background: transparent; }
 .prose th, .prose td { border: 1px solid var(--border); padding: 0.5rem 0.75rem; text-align: left; }
 .prose th { background: var(--blockquote-bg); }
 .prose hr {

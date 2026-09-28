@@ -167,7 +167,9 @@ export async function renderArticlePage(env, post, request) {
   ]);
   const { prev, next } = adj;
 
-  const html = renderMarkdown(post.content);
+  let html = renderMarkdown(post.content);
+  // 宽表格包进横向滚动容器，避免撑破阅读宽度（手机端尤其明显）
+  html = html.replace(/<table([^>]*)>/gi, '<div class="table-wrap"><table$1>').replace(/<\/table>/gi, '</table></div>');
   const toc = extractToc(html);
   const category = post.categoryId ? categories.find((c) => c.id === post.categoryId) : null;
   const tagObjs = (post.tags || []).length ? await getTagsByIds(env, post.tags) : [];
