@@ -2,14 +2,18 @@
 
 /** 站点设置：基本信息 / SEO / 社交 / 评论策略 / TOTP 安全验证 / 备份 */
 import { useEffect, useRef, useState } from 'react';
-import { Btn, Card, Field, Input, Textarea, useToast } from './ui';
+import { ActionBar, Btn, Card, Field, Input, SaveState, Textarea, useToast } from './ui';
 import { api } from '@/lib/api';
 import type { PostSummary, SiteConfig } from '@/lib/types';
 
 export default function SettingsView() {
   const [config, setConfig] = useState<SiteConfig | null>(null);
   const [busy, setBusy] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
   const toast = useToast();
+  // 已保存基线（config + 精选勾选顺序），用于未保存修改判定
+  const baseRef = useRef<{ config: SiteConfig; featured: string[] } | null>(null);
 
   // TOTP
   const [totpEnabled, setTotpEnabled] = useState(false);
@@ -32,9 +36,9 @@ export default function SettingsView() {
     api.getConfig().then((d) => {
       if (d?.ok) {
         setConfig(d.config);
-        if (Array.isArray(d.config.featuredPostIds)) {
-          setFeaturedChecked(d.config.featuredPostIds.filter(Boolean));
-        }
+        const featured = Array.isArray(d.config.featuredPostIds) ? d.config.featuredPostIds.filter(Boolean) : [];
+        setFeaturedChecked(featured);
+        baseRef.current = { config: d.config, featured };
       }
     }).catch(() => {});
     api.me().then((d) => {
@@ -59,6 +63,20 @@ export default function SettingsView() {
     })();
   }, []);
 
+  // 与已保存基线比较：任一字段或精选顺序变化 → 有未保存修改
+  useEffect(() => {
+    if (!config) return;
+    const b = baseRef.current;
+    if (!b) return;
+    const c = config;
+    const dirty =
+      JSON.stringify(c) !== JSON.stringify(b.config) ||
+      featuredChecked.length !== b.featured.length ||
+      featuredChecked.some((id, i) => id !== b.featured[i]);
+    setDirty(dirty);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [config, featuredChecked]);
+
   if (!config) return (
     <div className="py-10 space-y-3" aria-hidden="true">
       <div className="skeleton h-6 w-1/3 rounded" />
@@ -82,6 +100,11 @@ export default function SettingsView() {
     setBusy(true);
     try {
       await api.saveConfig({ ...config, featuredPostIds: featuredChecked });
+      const saved = { ...config, featuredPostIds: featuredChecked };
+      setConfig(saved);
+      baseRef.current = { config: saved, featured: [...featuredChecked] };
+      setSavedAt(new Date());
+      setDirty(false);
       toast('设置已保存');
     } catch (e) {
       toast(e instanceof Error ? e.message : '保存失败', 'error');
@@ -202,13 +225,10 @@ export default function SettingsView() {
   };
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-5">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">站点设置</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">配置展示在首页、页脚、SEO 与订阅源中的站点信息</p>
-        </div>
-        <Btn onClick={save} disabled={busy}>{busy ? '保存中…' : '保存设置'}</Btn>
+    <div className="pb-32">
+      <div className="mb-5">
+        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">站点设置</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">配置展示在首页、页脚、SEO 与订阅源中的站点信息</p>
       </div>
 
       <div className="space-y-5 max-w-3xl">
@@ -435,6 +455,15 @@ export default function SettingsView() {
           </div>
         </Card>
       </div>
+
+      {/* 固定底部操作栏：未保存状态提示 + 保存设置 */}
+      <ActionBar
+        left={<SaveState dirty={dirty} busy={busy} savedAt={savedAt} />}
+        primaryLabel="保存设置"
+        busyLabel="保存中…"
+        busy={busy}
+        onPrimary={save}
+      />
     </div>
   );
 }

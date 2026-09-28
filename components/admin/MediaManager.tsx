@@ -2,7 +2,7 @@
 
 /** 媒体库：浏览器直传 Blob（presigned URL）+ 列表 + 删除 */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Btn, Card, Empty, Loading, Table, Td, Th, useToast, Badge } from './ui';
+import { Btn, Card, Empty, Loading, RowBtn, Table, Td, Th, useToast, Badge } from './ui';
 import { api } from '@/lib/api';
 import type { MediaMeta } from '@/lib/types';
 import { fmtDate, mediaUrl } from '@/lib/utils';
@@ -127,8 +127,12 @@ export default function MediaManager() {
                   <Td><Badge tone={m.type === 'cover' ? 'blue' : m.type === 'image' ? 'green' : 'gray'}>{m.type === 'cover' ? '封面' : m.type === 'image' ? '图片' : '附件'}</Badge></Td>
                   <Td className="text-slate-500 dark:text-slate-400 whitespace-nowrap">{fmtDate(m.uploadedAt)}</Td>
                   <Td className="text-right whitespace-nowrap">
-                    <a href={mediaUrl(m.key)} target="_blank" rel="noopener noreferrer" className="mr-3 text-sm text-brand-600 dark:text-brand-400 hover:underline">打开</a>
-                    <button className="text-sm text-rose-500 hover:underline" onClick={() => remove(m)}>删除</button>
+                    <div className="inline-flex items-center gap-1">
+                      <a href={mediaUrl(m.key)} target="_blank" rel="noopener noreferrer">
+                        <RowBtn variant="ghost">打开</RowBtn>
+                      </a>
+                      <RowBtn variant="danger" onClick={() => remove(m)}>删除</RowBtn>
+                    </div>
                   </Td>
                 </tr>
               ))}

@@ -2,7 +2,7 @@
 
 /** 分类管理 */
 import { useCallback, useEffect, useState } from 'react';
-import { Btn, Card, Empty, Loading, Table, Td, Th, useToast, Field, Input, Textarea } from './ui';
+import { Btn, Card, Empty, Loading, RowBtn, Table, Td, Th, useToast, Field, Input, Textarea } from './ui';
 import { api } from '@/lib/api';
 import type { Category } from '@/lib/types';
 import { fmtDate } from '@/lib/utils';
@@ -94,8 +94,10 @@ export default function CategoriesManager() {
                   <Td className="text-slate-500 dark:text-slate-400">{c.postCount || 0}</Td>
                   <Td className="text-slate-500 dark:text-slate-400 whitespace-nowrap">{fmtDate(c.createdAt)}</Td>
                   <Td className="text-right whitespace-nowrap">
-                    <button className="mr-3 text-sm text-brand-600 dark:text-brand-400 hover:underline" onClick={() => startEdit(c)}>编辑</button>
-                    <button className="text-sm text-rose-500 hover:underline" onClick={() => remove(c)}>删除</button>
+                    <div className="inline-flex items-center gap-1">
+                      <RowBtn onClick={() => startEdit(c)}>编辑</RowBtn>
+                      <RowBtn variant="danger" onClick={() => remove(c)}>删除</RowBtn>
+                    </div>
                   </Td>
                 </tr>
               ))}

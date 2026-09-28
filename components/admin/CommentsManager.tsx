@@ -2,7 +2,7 @@
 
 /** 评论审核 */
 import { useCallback, useEffect, useState } from 'react';
-import { Btn, Card, Empty, Loading, Table, Td, Th, Badge, useToast } from './ui';
+import { Btn, Card, Empty, Loading, RowBtn, Table, Td, Th, Badge, useToast } from './ui';
 import { api } from '@/lib/api';
 import type { Comment, CommentStatus } from '@/lib/types';
 import { fmtDate } from '@/lib/utils';
@@ -101,13 +101,15 @@ export default function CommentsManager() {
                   </Td>
                   <Td className="text-slate-500 dark:text-slate-400 whitespace-nowrap">{fmtDate(c.createdAt)}</Td>
                   <Td className="text-right whitespace-nowrap">
-                    {c.status !== 'approved' && (
-                      <button className="mr-2 text-sm text-emerald-600 dark:text-emerald-400 hover:underline" onClick={() => moderate(c, 'approved')}>通过</button>
-                    )}
-                    {c.status !== 'rejected' && (
-                      <button className="mr-2 text-sm text-amber-600 dark:text-amber-400 hover:underline" onClick={() => moderate(c, 'rejected')}>拒绝</button>
-                    )}
-                    <button className="text-sm text-rose-500 hover:underline" onClick={() => remove(c)}>删除</button>
+                    <div className="inline-flex items-center gap-1">
+                      {c.status !== 'approved' && (
+                        <RowBtn variant="ghost" onClick={() => moderate(c, 'approved')}>通过</RowBtn>
+                      )}
+                      {c.status !== 'rejected' && (
+                        <RowBtn variant="secondary" onClick={() => moderate(c, 'rejected')}>拒绝</RowBtn>
+                      )}
+                      <RowBtn variant="danger" onClick={() => remove(c)}>删除</RowBtn>
+                    </div>
                   </Td>
                 </tr>
               ))}

@@ -2,7 +2,7 @@
 
 /** 标签管理 */
 import { useCallback, useEffect, useState } from 'react';
-import { Btn, Card, Empty, Loading, Table, Td, Th, useToast, Field, Input } from './ui';
+import { Btn, Card, Empty, Loading, RowBtn, Table, Td, Th, useToast, Field, Input } from './ui';
 import { api } from '@/lib/api';
 import type { Tag } from '@/lib/types';
 import { fmtDate } from '@/lib/utils';
@@ -89,8 +89,10 @@ export default function TagsManager() {
                   <Td className="text-slate-500 dark:text-slate-400">{t.postCount || 0}</Td>
                   <Td className="text-slate-500 dark:text-slate-400 whitespace-nowrap">{fmtDate(t.createdAt)}</Td>
                   <Td className="text-right whitespace-nowrap">
-                    <button className="mr-3 text-sm text-brand-600 dark:text-brand-400 hover:underline" onClick={() => startEdit(t)}>编辑</button>
-                    <button className="text-sm text-rose-500 hover:underline" onClick={() => remove(t)}>删除</button>
+                    <div className="inline-flex items-center gap-1">
+                      <RowBtn onClick={() => startEdit(t)}>编辑</RowBtn>
+                      <RowBtn variant="danger" onClick={() => remove(t)}>删除</RowBtn>
+                    </div>
                   </Td>
                 </tr>
               ))}

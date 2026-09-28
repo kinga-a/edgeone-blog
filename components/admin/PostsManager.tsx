@@ -1,8 +1,8 @@
 'use client';
 
 /** 文章管理：列表 + 编辑器（Markdown 编辑/预览、封面上传、分类/标签） */
-import { useCallback, useEffect, useState } from 'react';
-import { Btn, Card, Empty, Loading, Table, Td, Th, Badge, useToast, Field, Input, Textarea, Select } from './ui';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActionBar, Btn, Card, Empty, Loading, RowBtn, SaveState, Table, Td, Th, Badge, useToast, Field, Input, Textarea, Select } from './ui';
 import { api } from '@/lib/api';
 import type { Category, Post, PostSummary, Tag } from '@/lib/types';
 import { fmtDate, mediaUrl, slugify } from '@/lib/utils';
@@ -69,7 +69,7 @@ function PostsList({ navigate }: { navigate: (k: string) => void }) {
             <option value="published">已发布</option>
             <option value="draft">草稿</option>
           </Select>
-          <Btn onClick={() => navigate('posts/new')}>＋ 新建文章</Btn>
+          <Btn onClick={() => navigate('posts/new')}>＋ 新建</Btn>
         </div>
       </div>
 
@@ -104,11 +104,15 @@ function PostsList({ navigate }: { navigate: (k: string) => void }) {
                   <Td className="text-slate-500 dark:text-slate-400 whitespace-nowrap">{fmtDate(p.publishedAt || p.createdAt)}</Td>
                   <Td className="text-slate-500 dark:text-slate-400">{p.readingTime || 1} 分钟</Td>
                   <Td className="text-right whitespace-nowrap">
-                    {p.status === 'published' && (
-                      <a href={`/posts/${p.slug}/`} target="_blank" rel="noopener noreferrer" className="mr-3 text-sm text-brand-600 dark:text-brand-400 hover:underline">查看</a>
-                    )}
-                    <button className="mr-3 text-sm text-brand-600 dark:text-brand-400 hover:underline" onClick={() => navigate(`posts/edit/${p.id}`)}>编辑</button>
-                    <button className="text-sm text-rose-500 hover:underline" onClick={() => remove(p.id)}>删除</button>
+                    <div className="inline-flex items-center gap-1">
+                      {p.status === 'published' && (
+                        <a href={`/posts/${p.slug}/`} target="_blank" rel="noopener noreferrer">
+                          <RowBtn variant="ghost">查看</RowBtn>
+                        </a>
+                      )}
+                      <RowBtn onClick={() => navigate(`posts/edit/${p.id}`)}>编辑</RowBtn>
+                      <RowBtn variant="danger" onClick={() => remove(p.id)}>删除</RowBtn>
+                    </div>
                   </Td>
                 </tr>
               ))}
@@ -122,7 +126,7 @@ function PostsList({ navigate }: { navigate: (k: string) => void }) {
             )}
           </>
         ) : (
-          <Empty text="暂无文章，点击右上角「新建文章」开始创作" />
+          <Empty text="暂无文章，点击右上角「新建」开始创作" />
         )}
       </Card>
     </div>
@@ -148,6 +152,32 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(mode === 'edit');
+  const [dirty, setDirty] = useState(false);
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
+  // 已保存基线快照：与当前值比较判定是否有未保存修改
+  const baseRef = useRef<{
+    title: string; slug: string; summary: string; content: string;
+    status: 'draft' | 'published'; visibility: 'public' | 'private'; categoryId: string;
+    tags: string[]; coverKey: string; coverUrl: string;
+  } | null>(null);
+
+  // 判定是否有未保存修改（与保存基线对比；加载期间不判定）
+  const checkDirty = useCallback(() => {
+    if (loading) return;
+    if (!baseRef.current) {
+      baseRef.current = { title, slug, summary, content, status, visibility, categoryId, tags, coverKey, coverUrl };
+      setDirty(false);
+      return;
+    }
+    const b = baseRef.current;
+    setDirty(
+      title !== b.title || slug !== b.slug || summary !== b.summary || content !== b.content ||
+      status !== b.status || visibility !== b.visibility || categoryId !== b.categoryId ||
+      tags.length !== b.tags.length || tags.some((t, i) => t !== b.tags[i]) ||
+      coverKey !== b.coverKey || coverUrl !== b.coverUrl,
+    );
+  }, [title, slug, summary, content, status, visibility, categoryId, tags, coverKey, coverUrl, loading]);
+  useEffect(checkDirty, [checkDirty]);
 
   useEffect(() => {
     Promise.all([api.listCategories().catch(() => null), api.listTags().catch(() => null)]).then(([cs, ts]) => {
@@ -168,6 +198,11 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
         setTags(p.tags || []);
         setCoverKey(p.coverKey || '');
         setCoverUrl(p.coverUrl || '');
+        baseRef.current = {
+          title: p.title, slug: p.slug, summary: p.summary, content: p.content,
+          status: p.status, visibility: p.visibility || 'public', categoryId: p.categoryId || '',
+          tags: p.tags || [], coverKey: p.coverKey || '', coverUrl: p.coverUrl || '',
+        };
         setLoading(false);
       }).catch((e) => toast(e.message, 'error'));
     }
@@ -201,10 +236,16 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
     try {
       if (mode === 'new') {
         const d = await api.createPost(body);
+        baseRef.current = { title, slug: finalSlug, summary, content, status, visibility, categoryId, tags: body.tags, coverKey, coverUrl: coverUrl.trim() };
+        setSavedAt(new Date());
+        setDirty(false);
         toast(`文章已创建，别名：/${d.post.slug}/`);
         navigate(`posts/edit/${d.post.id}`);
       } else {
         await api.updatePost(postId!, body);
+        baseRef.current = { title, slug: finalSlug, summary, content, status, visibility, categoryId, tags: body.tags, coverKey, coverUrl: coverUrl.trim() };
+        setSavedAt(new Date());
+        setDirty(false);
         toast('文章已保存');
       }
     } catch (e) {
@@ -223,16 +264,10 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
   if (loading) return <Loading />;
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-5">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{mode === 'new' ? '新建文章' : '编辑文章'}</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">支持 Markdown 语法：标题、列表、代码块、图片、链接等</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Btn variant="secondary" onClick={() => navigate('posts')}>返回列表</Btn>
-          <Btn onClick={save} disabled={busy}>{busy ? '保存中…' : mode === 'new' ? '创建' : '保存'}</Btn>
-        </div>
+    <div className="pb-32">
+      <div className="mb-5">
+        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{mode === 'new' ? '新建文章' : '编辑文章'}</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">支持 Markdown 语法：标题、列表、代码块、图片、链接等</p>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[1fr_300px]">
@@ -344,6 +379,17 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
           </Card>
         </div>
       </div>
+
+      {/* 固定底部操作栏：状态提示 + 返回 + 保存 */}
+      <ActionBar
+        left={<SaveState dirty={dirty} busy={busy} savedAt={savedAt} />}
+        primaryLabel={mode === 'new' ? '创建' : '保存'}
+        busyLabel={mode === 'new' ? '创建中…' : '保存中…'}
+        busy={busy}
+        onPrimary={save}
+        secondaryLabel="返回列表"
+        onSecondary={() => navigate('posts')}
+      />
     </div>
   );
 }

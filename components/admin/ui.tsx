@@ -146,13 +146,92 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       {toast && (
         <div className={cx(
-          'fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl text-sm font-medium shadow-lg fade-in-up',
+          'fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl text-sm font-medium shadow-lg fade-in-up flex items-center gap-2',
           toast.tone === 'ok' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white',
         )}>
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            {toast.tone === 'ok' ? (
+              <path d="M4 10.5l4 4 8-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            ) : (
+              <path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            )}
+          </svg>
           {toast.msg}
         </div>
       )}
     </ToastContext.Provider>
+  );
+}
+
+/* ---------- 固定底部操作栏 ---------- */
+export function ActionBar({
+  left,
+  primaryLabel,
+  onPrimary,
+  primaryDisabled,
+  busy,
+  busyLabel = '保存中…',
+  secondaryLabel,
+  onSecondary,
+}: {
+  left?: ReactNode;
+  primaryLabel: string;
+  onPrimary: () => void;
+  primaryDisabled?: boolean;
+  busy?: boolean;
+  busyLabel?: string;
+  secondaryLabel?: string;
+  onSecondary?: () => void;
+}) {
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 dark:border-slate-700/60 bg-white/95 dark:bg-slate-900/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+        <div className="min-w-0 flex-1">{left}</div>
+        <div className="flex items-center gap-2 shrink-0">
+          {secondaryLabel && onSecondary && (
+            <Btn variant="secondary" onClick={onSecondary}>{secondaryLabel}</Btn>
+          )}
+          <Btn onClick={onPrimary} disabled={primaryDisabled || busy}>{busy ? busyLabel : primaryLabel}</Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- 保存状态指示 ---------- */
+export function SaveState({
+  dirty, busy, savedAt,
+}: { dirty?: boolean; busy?: boolean; savedAt?: Date | null }) {
+  if (busy) {
+    return <span className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400"><span className="w-3 h-3 rounded-full border-2 border-brand-500/30 border-t-brand-500 animate-spin" />保存中…</span>;
+  }
+  if (dirty) {
+    return <span className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 dark:text-brand-400"><span className="w-2 h-2 rounded-full bg-brand-500" />有未保存的修改</span>;
+  }
+  if (savedAt) {
+    return <span className="text-xs text-slate-400">已保存 {savedAt.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</span>;
+  }
+  return <span className="text-xs text-slate-400" />;
+}
+
+/* ---------- 操作列小按钮 ---------- */
+export function RowBtn({
+  children, onClick, variant = 'secondary', disabled,
+}: { children: ReactNode; onClick?: () => void; variant?: 'secondary' | 'danger' | 'ghost'; disabled?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cx(
+        'px-2 py-1 rounded-md text-xs font-medium transition-colors disabled:opacity-50',
+        variant === 'secondary' && 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/60',
+        variant === 'danger' && 'text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10',
+        variant === 'ghost' && 'text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-500/10',
+      )}
+    >
+      {children}
+    </button>
   );
 }
 
