@@ -5,6 +5,8 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BackToTop from '@/components/BackToTop';
 import PageTransition from '@/components/PageTransition';
+import FaviconUpdater from '@/components/FaviconUpdater';
+import { DEFAULT_FAVICON } from '@/lib/constants';
 
 export const metadata: Metadata = {
   title: {
@@ -17,6 +19,10 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     siteName: '我的博客',
+  },
+  icons: {
+    icon: DEFAULT_FAVICON,
+    apple: DEFAULT_FAVICON,
   },
 };
 
@@ -34,6 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="zh-CN" suppressHydrationWarning>
       <body className="min-h-screen flex flex-col">
         <ThemeProvider>
+          <FaviconUpdater />
           <Header />
           <main className="flex-1">
             <PageTransition>{children}</PageTransition>

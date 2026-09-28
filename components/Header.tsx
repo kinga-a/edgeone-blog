@@ -132,9 +132,7 @@ export default function Header() {
                 <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.3 4.3l1.4 1.4M14.3 14.3l1.4 1.4M15.7 4.3l-1.4 1.4M5.7 14.3l-1.4 1.4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
               </svg>
             ) : (
-              <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                <path d="M14.2 6.2a5 5 0 1 0 0 7.6 6.5 6.5 0 0 1-9.4-8.2A6 6 0 0 0 14.2 6.2z" fill="currentColor" />
-              </svg>
+              <span className="theme-toggle-moon" aria-hidden="true">☾⋆</span>
             )}
             {dark ? '浅色模式' : '暗色模式'}
           </button>

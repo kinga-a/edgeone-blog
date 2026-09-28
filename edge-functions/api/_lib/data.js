@@ -21,6 +21,8 @@ export const DEFAULT_SITE_CONFIG = {
   perPage: 10,
   commentEnabled: true,
   commentModeration: true,
+  /** 网站图标 URL（favicon 图片地址；为空使用默认图标） */
+  faviconUrl: '',
   /** 首页精选文章（文章 id 列表，按此顺序展示；为空时首页自动取最新文章） */
   featuredPostIds: [],
   seo: {

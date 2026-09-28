@@ -91,6 +91,8 @@ export interface SiteConfig {
   perPage: number;
   commentEnabled: boolean;
   commentModeration: boolean;
+  /** 网站图标 URL（favicon 图片地址；为空使用默认图标） */
+  faviconUrl?: string;
   /** 首页精选文章 id 列表（按此顺序展示；空则自动取最新） */
   featuredPostIds?: string[];
   seo: { ogImage?: string; twitterHandle?: string; googleSiteVerification?: string };

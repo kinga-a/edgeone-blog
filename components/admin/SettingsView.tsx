@@ -241,6 +241,11 @@ export default function SettingsView() {
             </Field>
           </div>
           <div className="mt-4">
+            <Field label="网站图标 URL（favicon）" hint="填写图片 URL 作为浏览器标签页/收藏夹图标，如 https://example.com/favicon.png；留空使用默认图标">
+              <Input value={config.faviconUrl || ''} onChange={(e) => set({ faviconUrl: e.target.value })} placeholder="https://…" />
+            </Field>
+          </div>
+          <div className="mt-4">
             <Field label="页脚文字">
               <Input value={config.footerText} onChange={(e) => set({ footerText: e.target.value })} />
             </Field>
