@@ -103,14 +103,30 @@ ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
         <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.6"/><path d="M14 14l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
       </a>
       <button type="button" class="theme-toggle" id="theme-toggle" aria-label="切换主题" title="切换主题">
-        <span class="theme-knob" id="theme-knob">
-          <span class="knob-sun" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="4.5" stroke="currentColor" stroke-width="1.7"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.3 4.3l1.4 1.4M14.3 14.3l1.4 1.4M15.7 4.3l-1.4 1.4M5.7 14.3l-1.4 1.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
-          <span class="knob-moon" aria-hidden="true">☾⋆</span>
-        </span>
+        <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
       </button>
     </nav>
+    <button type="button" class="icon-btn site-menu" id="site-menu" aria-label="打开菜单">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
   </div>
 </header>
+<div class="drawer-overlay" id="drawer-overlay" aria-hidden="true"></div>
+<aside class="drawer" id="site-drawer" role="dialog" aria-label="导航菜单">
+  <button type="button" class="icon-btn drawer-close" id="drawer-close" aria-label="关闭菜单">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+  </button>
+  <ul class="drawer-nav">
+    ${NAV_ITEMS.map((n) => `<li><a href="${n.href}" class="${n.key === navKey ? 'active' : ''}">${n.label}</a></li>`).join('')}
+    <li><a href="/search/">搜索</a></li>
+  </ul>
+  <button type="button" class="btn-secondary drawer-theme" id="drawer-theme">
+    <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+    <span id="drawer-theme-label">暗色模式</span>
+  </button>
+</aside>
 <main class="site-main">
 ${body}
 </main>
@@ -124,12 +140,18 @@ ${body}
 (function(){
   var h=document.getElementById('site-header');
   if(h){var onScroll=function(){h.classList.toggle('scrolled',window.scrollY>10);};window.addEventListener('scroll',onScroll,{passive:true});onScroll();}
+  function setTheme(d){document.documentElement.classList.toggle('dark',d);document.documentElement.setAttribute('data-theme',d?'dark':'light');try{localStorage.setItem('blog-theme',d?'dark':'light');}catch(e){}var lbl=document.getElementById('drawer-theme-label');if(lbl){lbl.textContent=d?'亮色模式':'暗色模式';}}
   var btn=document.getElementById('theme-toggle');
-  if(btn){btn.addEventListener('click',function(){
-    var d=document.documentElement.classList.toggle('dark');
-    document.documentElement.setAttribute('data-theme',d?'dark':'light');
-    try{localStorage.setItem('blog-theme',d?'dark':'light');}catch(e){}
-  });}
+  if(btn){btn.addEventListener('click',function(){setTheme(!document.documentElement.classList.contains('dark'));});}
+  var menu=document.getElementById('site-menu'),ov=document.getElementById('drawer-overlay'),dr=document.getElementById('site-drawer'),cl=document.getElementById('drawer-close');
+  function openDrawer(){if(ov){ov.classList.add('open');ov.setAttribute('aria-hidden','false');}if(dr){dr.classList.add('open');}document.body.style.overflow='hidden';}
+  function closeDrawer(){if(ov){ov.classList.remove('open');ov.setAttribute('aria-hidden','true');}if(dr){dr.classList.remove('open');}document.body.style.overflow='';}
+  if(menu){menu.addEventListener('click',openDrawer);}
+  if(cl){cl.addEventListener('click',closeDrawer);}
+  if(ov){ov.addEventListener('click',closeDrawer);}
+  if(dr){var links=dr.querySelectorAll('a');for(var i=0;i<links.length;i++){links[i].addEventListener('click',closeDrawer);}}
+  var dt=document.getElementById('drawer-theme');
+  if(dt){dt.addEventListener('click',function(){setTheme(!document.documentElement.classList.contains('dark'));});}
 })();
 </script>
 </body>

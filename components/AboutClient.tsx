@@ -27,7 +27,7 @@ export default function AboutClient() {
         <>
           <MarkdownView content={config.about || '## 关于我\n\n这是我的个人博客。'} className="prose mt-6" />
           {(social.github || social.twitter || social.wechat || social.email) && (
-            <div className="mt-8 p-5 rounded-2xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60">
+            <div className="mt-8 p-5 rounded-2xl bg-[var(--t-card)] dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60">
               <h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">联系我</h2>
               <div className="flex flex-wrap gap-3 text-sm">
                 {social.github && <a href={social.github} target="_blank" rel="noopener noreferrer" className="text-brand-600 dark:text-brand-400 hover:underline">GitHub</a>}

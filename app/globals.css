@@ -9,6 +9,9 @@
   --bg: 250 247 241;
   --fg: 41 37 36;
 
+  /* 卡片浅色底：暖米半透明（#fbf4df52），深色主题保持不变 */
+  --t-card: rgba(251, 244, 223, 0.32);
+
   --t-slate-50: #faf7f1;
   --t-slate-100: #f3eee4;
   --t-slate-200: #e7dfd2;
@@ -36,6 +39,9 @@
 html.dark {
   --bg: 41 37 36;
   --fg: 243 238 228;
+
+  /* 暗色卡片底：保持原有深色（slate-800 系），不随浅色变化 */
+  --t-card: #3b362f;
 
   /* 暗色：朱砂提亮，保证深底对比度 */
   --t-brand-50: rgba(224, 138, 90, 0.10);
@@ -332,7 +338,7 @@ html.dark .prose blockquote {
 
 /* ========== 精选文章（大卡 + 侧边小卡） ========== */
 .article-card {
-  background: #fff;
+  background: var(--t-card);
   border: 1px solid var(--t-slate-200);
   border-radius: 14px;
   overflow: hidden;
@@ -362,7 +368,7 @@ html.dark .prose blockquote {
   .featured-section { grid-template-columns: 1fr; }
 }
 .featured-card {
-  background: #fff;
+  background: var(--t-card);
   border: 1px solid var(--t-slate-200);
   border-radius: 14px;
   overflow: hidden;
@@ -389,7 +395,7 @@ html.dark .prose blockquote {
   gap: 16px;
 }
 .featured-small {
-  background: #fff;
+  background: var(--t-card);
   border: 1px solid var(--t-slate-200);
   border-radius: 14px;
   padding: 20px;
@@ -517,7 +523,7 @@ a:hover .card-title { color: var(--t-brand-600); }
   .category-grid { grid-template-columns: 1fr; }
 }
 .category-card {
-  background: #fff;
+  background: var(--t-card);
   border: 1px solid var(--t-slate-200);
   border-radius: 14px;
   padding: 24px;
@@ -733,56 +739,107 @@ html.dark .nav-link.active::after {
   border-radius: 10px;
 }
 
-/* ========== 主题切换胶囊开关（纸墨风） ========== */
-.theme-toggle {
-  position: relative;
-  width: 56px;
-  height: 28px;
-  border-radius: 999px;
-  border: 1px solid var(--t-slate-300);
-  background: var(--t-slate-100);
-  cursor: pointer;
-  flex-shrink: 0;
-  padding: 0;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
-}
-html.dark .theme-toggle {
-  background: var(--t-slate-800);
-  border-color: var(--t-slate-600);
-}
-.theme-toggle:hover { border-color: var(--t-brand-600); }
-html.dark .theme-toggle:hover { border-color: var(--t-brand-400); }
-.theme-toggle-knob {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #fff;
-  color: var(--t-brand-600);
+/* ========== 主题切换按钮 / 图标按钮（原型：40×40 描边，浅色月亮 / 深色太阳） ========== */
+.theme-toggle,
+.icon-btn {
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 1px 3px rgba(41, 37, 36, 0.22);
-  transition: transform 0.28s ease, background-color 0.2s ease, color 0.2s ease;
+  border: 1px solid var(--t-slate-200);
+  background: var(--t-card);
+  color: var(--t-slate-600);
+  border-radius: 10px;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  transition: all 0.2s ease;
 }
-html.dark .theme-toggle-knob {
-  background: var(--t-slate-700);
+html.dark .theme-toggle,
+html.dark .icon-btn {
+  background: var(--t-slate-800);
+  border-color: var(--t-slate-700);
+  color: var(--t-slate-300);
+}
+.theme-toggle:hover,
+.icon-btn:hover {
+  border-color: var(--t-brand-600);
+  color: var(--t-brand-600);
+  background: rgba(154, 67, 24, 0.08);
+}
+html.dark .theme-toggle:hover,
+html.dark .icon-btn:hover {
   color: var(--t-brand-400);
+  background: rgba(224, 138, 90, 0.12);
 }
-.theme-toggle-knob.on { transform: translateX(30px); }
-.theme-toggle-moon {
-  font-size: 11px;
-  line-height: 1;
-  letter-spacing: -0.02em;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  padding-top: 1px;
+
+/* ========== 移动端抽屉导航（原型：右侧滑出） ========== */
+.drawer-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(41, 37, 36, 0.4);
+  z-index: 150;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
-/* 减弱动态效果时关闭滑块过渡 */
-@media (prefers-reduced-motion: reduce) {
-  .theme-toggle-knob { transition: none; }
+.drawer-overlay.open { display: block; opacity: 1; }
+.drawer {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  width: 280px;
+  background: var(--t-slate-50);
+  z-index: 160;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  padding: 24px;
+  overflow-y: auto;
+  box-shadow: -8px 0 32px rgba(41, 37, 36, 0.12);
 }
+html.dark .drawer { background: var(--t-slate-900); }
+.drawer.open { transform: translateX(0); }
+.drawer-close {
+  position: absolute;
+  top: 16px; right: 16px;
+}
+.drawer-nav { list-style: none; margin-top: 48px; display: flex; flex-direction: column; gap: 4px; }
+.drawer-nav a {
+  display: block;
+  padding: 12px 16px;
+  color: var(--t-slate-800);
+  text-decoration: none;
+  border-radius: 10px;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+html.dark .drawer-nav a { color: var(--t-slate-200); }
+.drawer-nav a:hover { background: var(--t-slate-100); color: var(--t-brand-600); }
+html.dark .drawer-nav a:hover { background: var(--t-slate-800); color: var(--t-brand-400); }
+.drawer-nav a.active { color: var(--t-brand-600); background: rgba(154, 67, 24, 0.08); font-weight: 500; }
+html.dark .drawer-nav a.active { color: var(--t-brand-400); background: rgba(224, 138, 90, 0.12); }
+
+/* 次要按钮（原型 btn-secondary：描边 + 朱砂） */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 500;
+  border-radius: 10px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--t-brand-600);
+  border: 1px solid var(--t-slate-300);
+  transition: all 0.2s ease;
+  font-family: inherit;
+  text-decoration: none;
+}
+html.dark .btn-secondary { color: var(--t-brand-400); border-color: var(--t-slate-600); }
+.btn-secondary:hover { border-color: var(--t-brand-600); background: rgba(154, 67, 24, 0.08); }
+html.dark .btn-secondary:hover { background: rgba(224, 138, 90, 0.12); }
 
 /* ========== 页面切换过渡（克制淡入） ========== */
 @keyframes page-enter {

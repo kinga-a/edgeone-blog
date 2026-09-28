@@ -127,7 +127,7 @@ export default function CategoriesClient() {
             return (
               <div
                 key={c.id}
-                className="group p-7 rounded-[14px] bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 hover:border-brand-400 transition-colors"
+                className="group p-7 rounded-[14px] bg-[var(--t-card)] dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 hover:border-brand-400 transition-colors"
               >
                 <div className="flex items-start gap-4">
                   <CategoryIcon slug={c.slug} />

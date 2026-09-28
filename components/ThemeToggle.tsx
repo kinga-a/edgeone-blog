@@ -1,6 +1,6 @@
 'use client';
 
-/** 主题切换胶囊开关：太阳/月亮滑块滑动切换（纸墨风，克制无多余动效） */
+/** 主题切换按钮（原型样式：40×40 描边图标按钮，浅色显示月亮 / 深色显示太阳） */
 import { useTheme } from './ThemeProvider';
 
 export default function ThemeToggle() {
@@ -14,16 +14,16 @@ export default function ThemeToggle() {
       title={dark ? '切换到浅色模式' : '切换到暗色模式'}
       className="theme-toggle"
     >
-      <span className={`theme-toggle-knob ${dark ? 'on' : ''}`}>
-        {dark ? (
-          <svg width="13" height="13" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-            <circle cx="10" cy="10" r="4.5" stroke="currentColor" strokeWidth="1.7" />
-            <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.3 4.3l1.4 1.4M14.3 14.3l1.4 1.4M15.7 4.3l-1.4 1.4M5.7 14.3l-1.4 1.4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-          </svg>
-        ) : (
-          <span className="theme-toggle-moon" aria-hidden="true">☾⋆</span>
-        )}
-      </span>
+      {dark ? (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" aria-hidden="true">
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        </svg>
+      )}
     </button>
   );
 }
