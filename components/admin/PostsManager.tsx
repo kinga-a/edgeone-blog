@@ -281,7 +281,7 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[1fr_300px]">
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <Field label="标题">
             <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="文章标题" />
           </Field>
@@ -309,7 +309,7 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
           </Field>
 
           {/* 编辑器（Vditor：即时渲染 + 代码高亮 + 图片上传） */}
-          <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-800">
+          <div className="min-w-0 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-800">
             <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40">
               <span className="text-xs font-medium text-slate-500 dark:text-slate-400">正文（Markdown · 即时渲染）</span>
               <span className="text-xs text-slate-400">工具栏可上传图片 · 支持代码块 / 表格 / 公式</span>
@@ -319,7 +319,7 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
         </div>
 
         {/* 侧栏 */}
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <Card>
             <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">封面图</h3>
             {(() => {

@@ -40,7 +40,12 @@ export async function onRequestGet({ request, env }) {
 
   const total = list.length;
   const start = (page - 1) * pageSize;
-  const items = list.slice(start, start + pageSize);
+  const rawItems = list.slice(start, start + pageSize);
+
+  // 附加分类名，供列表展示（后台文章管理分类列）
+  const categories = await getCategories(env);
+  const catMap = new Map(categories.map((c) => [c.id, c.name]));
+  const items = rawItems.map((p) => ({ ...p, categoryName: catMap.get(p.categoryId) || '' }));
 
   return json({
     ok: true,

@@ -933,3 +933,30 @@ html.dark { scrollbar-color: var(--t-slate-700) transparent; }
     font-size: 16px;
   }
 }
+
+/* ========== Vditor 编辑器防溢出 ==========
+ * vditor 自身无宽度约束，宽表格/长代码会按 min-content 把编辑器撑破容器，
+ * 手机端尤甚。约束容器宽度 + 编辑/预览内容区内部横向滚动。 */
+.vditor {
+  max-width: 100%;
+}
+.vditor .vditor-content,
+.vditor .vditor-ir,
+.vditor .vditor-wysiwyg,
+.vditor .vditor-preview,
+.vditor .vditor-reset {
+  min-width: 0;
+  max-width: 100%;
+}
+.vditor .vditor-ir,
+.vditor .vditor-wysiwyg,
+.vditor .vditor-preview {
+  overflow-x: auto;
+}
+.vditor .vditor-reset pre,
+.vditor .vditor-reset table {
+  max-width: 100%;
+}
+.vditor .vditor-reset pre {
+  overflow-x: auto;
+}

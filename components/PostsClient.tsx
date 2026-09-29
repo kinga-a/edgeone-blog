@@ -156,8 +156,8 @@ export default function PostsClient() {
       )}
 
       {loading ? (
-        <div className="grid gap-5 sm:grid-cols-2">
-          {Array.from({ length: 4 }).map((_, i) => <PostCardSkeleton key={i} />)}
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => <PostCardSkeleton key={i} />)}
         </div>
       ) : error ? (
         <div className="text-center py-16 text-slate-400">
@@ -175,7 +175,7 @@ export default function PostsClient() {
         </div>
       ) : items.length ? (
         <>
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {items.map((p) => <PostCard key={p.id} post={p} />)}
           </div>
           <Pagination page={page} totalPages={totalPages} buildHref={buildHref} />
