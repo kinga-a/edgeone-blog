@@ -521,9 +521,12 @@ a:hover .card-title { color: var(--t-brand-600); }
   gap: 20px;
 }
 @media (max-width: 1024px) {
-  .category-grid { grid-template-columns: repeat(2, 1fr); }
+  .category-grid { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 640px) {
+  .category-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 420px) {
   .category-grid { grid-template-columns: 1fr; }
 }
 .category-card {

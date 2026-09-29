@@ -59,8 +59,13 @@ function FeaturedSmall({ post }: { post: PostSummary }) {
       <div className="card-info">
         <div className="card-meta">
           {post.categoryName && <span className="card-category">{post.categoryName}</span>}
+          {post.categoryName && <span>·</span>}
+          <span>{fmtDate(post.publishedAt || post.createdAt)}</span>
+          <span>·</span>
+          <span>{post.readingTime || 1} 分钟阅读</span>
         </div>
         <h3 className="card-title">{post.title}</h3>
+        {post.summary && <p className="card-excerpt">{post.summary}</p>}
       </div>
     </Link>
   );

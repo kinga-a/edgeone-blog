@@ -32,6 +32,46 @@ function escapeAttr(s) {
 
 /* ---------------- 行内语法 ---------------- */
 
+const VIDEO_EXT_MIME = { mp4: 'video/mp4', webm: 'video/webm', ogg: 'video/ogg', ogv: 'video/ogg', mov: 'video/quicktime', m4v: 'video/x-m4v' };
+
+/** 内嵌 iframe 播放器（B 站 / YouTube / 腾讯视频）。src 为原始 URL，转义由 sanitizeHtml 统一处理 */
+function iframeEmbed(src) {
+  return `<iframe class="video-embed" src="${src}" width="100%" height="420" frameborder="0" allowfullscreen="" loading="lazy" allow="autoplay; fullscreen; picture-in-picture" title="视频播放器"></iframe>`;
+}
+
+/**
+ * 识别视频链接并返回可播放 HTML：
+ * - 直链视频文件（.mp4/.webm/.ogg/.mov/.m4v）→ <video> 标签
+ * - B 站 / YouTube / 腾讯视频 → iframe 内嵌播放器
+ * 无法识别时返回 null（调用方按普通链接处理）
+ */
+export function videoEmbed(rawUrl) {
+  if (!rawUrl) return null;
+  let u;
+  try { u = new URL(String(rawUrl)); } catch { return null; }
+  if (!/^https?:$/.test(u.protocol)) return null;
+  const url = u.href;
+  // 直链视频文件
+  const extMatch = u.pathname.match(/\.([a-z0-9]+)(\/?)$/i);
+  if (extMatch && VIDEO_EXT_MIME[extMatch[1].toLowerCase()]) {
+    const mime = VIDEO_EXT_MIME[extMatch[1].toLowerCase()];
+    return `<video class="video-embed" controls="" preload="metadata" playsinline=""><source src="${url}" type="${mime}">您的浏览器不支持 video 标签，<a href="${url}">点击下载视频</a></video>`;
+  }
+  // B 站视频
+  let m = /(^|\.)bilibili\.com$/i.test(u.hostname) && u.pathname.match(/\/video\/(BV[\w]+)/i);
+  if (m) return iframeEmbed(`https://player.bilibili.com/player.html?bvid=${m[1]}&page=1&high_quality=1`);
+  // YouTube（watch?v= / embed / youtu.be 短链）
+  m = /(^|\.)(youtube\.com|youtube-nocookie\.com)$/i.test(u.hostname)
+    ? (u.searchParams.get('v') || (u.pathname.match(/\/embed\/([\w-]+)/) || [])[1])
+    : null;
+  if (!m && u.hostname === 'youtu.be') m = (u.pathname.slice(1).match(/^([\w-]+)/) || [])[1];
+  if (m) return iframeEmbed(`https://www.youtube.com/embed/${m}`);
+  // 腾讯视频
+  m = /(^|\.)qq\.com$/i.test(u.hostname) && u.pathname.match(/\/x\/page\/([\w]+)\.html/i);
+  if (m) return iframeEmbed(`https://v.qq.com/txp/iframe/player.html?vid=${m[1]}&tiny=0&auto=0`);
+  return null;
+}
+
 /** 行内 markdown → HTML（先提取行内代码占位，再处理粗斜体/链接，最后还原） */
 function inline(text) {
   let s = String(text);
@@ -43,9 +83,9 @@ function inline(text) {
   // 图片 ![alt](url)
   s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g, (m, alt, src) =>
     `<img src="${escapeAttr(src)}" alt="${escapeHtml(alt)}" loading="lazy">`);
-  // 链接 [text](url)
+  // 链接 [text](url)：视频链接自动转为播放器
   s = s.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g, (m, t, u) =>
-    `<a href="${escapeAttr(u)}">${t}</a>`);
+    videoEmbed(u) || `<a href="${escapeAttr(u)}">${t}</a>`);
   // 粗体 / 斜体
   s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
   s = s.replace(/(^|[^*\u0000])\*([^*\n]+)\*/g, '$1<em>$2</em>');
@@ -171,6 +211,15 @@ export function renderMarkdown(markdown) {
       continue;
     }
 
+    // 裸 URL 段落：独立一行 → 视频自动转播放器，其余转超链接
+    const soloUrl = line.trim().match(/^(https?:\/\/[^\s]+)$/);
+    if (soloUrl) {
+      const embed = videoEmbed(soloUrl[1]);
+      out.push(embed || `<p><a href="${escapeAttr(soloUrl[1])}">${escapeHtml(soloUrl[1])}</a></p>`);
+      i++;
+      continue;
+    }
+
     // 普通段落：收集连续非空行
     const buf = [line.trim()];
     i++;
@@ -203,7 +252,7 @@ export function extractToc(html) {
 /**
  * 轻量 HTML 安全过滤：
  * - 允许的标签白名单
- * - 剥离危险标签（script/style/iframe/object/embed/form 等）
+ * - 剥离危险标签（script/style/object/embed/form 等；iframe 仅限视频平台域名）
  * - 移除 on* 事件属性
  * - 过滤 javascript: / vbscript: / data:（图片除外）协议
  */
@@ -212,14 +261,28 @@ const ALLOWED_TAGS = new Set([
   'ul', 'ol', 'li', 'dl', 'dt', 'dd', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'caption',
   'a', 'img', 'strong', 'em', 'b', 'i', 'u', 's', 'del', 'ins', 'mark', 'sub', 'sup',
   'span', 'div', 'details', 'summary', 'figure', 'figcaption', 'section', 'article',
+  'video', 'source', 'iframe',
 ]);
+
+/** 允许内嵌的 iframe 视频平台域名 */
+const EMBED_HOSTS = ['bilibili.com', 'youtube.com', 'youtube-nocookie.com', 'qq.com', 'vimeo.com'];
+
+function isAllowedEmbedSrc(value) {
+  try {
+    const u = new URL(String(value));
+    if (!/^https?:$/.test(u.protocol)) return false;
+    return EMBED_HOSTS.some((h) => u.hostname === h || u.hostname.endsWith('.' + h));
+  } catch {
+    return false;
+  }
+}
 
 export function sanitizeHtml(html) {
   // 先去掉注释
   let out = String(html).replace(/<!--[\s\S]*?-->/g, '');
-  // 剥离危险标签及其内容
-  out = out.replace(/<(script|style|iframe|object|embed|form|input|button|textarea|select|option|link|meta|base|template)[^>]*>[\s\S]*?<\/\1>/gi, '');
-  out = out.replace(/<(script|style|iframe|object|embed|form|input|button|textarea|select|option|link|meta|base|template)[^>]*\/?>/gi, '');
+  // 剥离危险标签及其内容（iframe 交给下方逐标签白名单 + 域名校验）
+  out = out.replace(/<(script|style|object|embed|form|input|button|textarea|select|option|link|meta|base|template)[^>]*>[\s\S]*?<\/\1>/gi, '');
+  out = out.replace(/<(script|style|object|embed|form|input|button|textarea|select|option|link|meta|base|template)[^>]*\/?>/gi, '');
   // 逐标签清洗
   out = out.replace(/<(\/?)()([a-zA-Z][a-zA-Z0-9]*)((?:"[^"]*"|'[^']*'|[^'">])*)>/g, (whole, closing, _sp, tag, attrs) => {
     const name = tag.toLowerCase();
@@ -232,6 +295,12 @@ export function sanitizeHtml(html) {
   });
   return out;
 }
+
+const ALLOWED_ATTRS = new Set([
+  'id', 'class', 'alt', 'title', 'width', 'height', 'colspan', 'rowspan', 'lang', 'data-lang', 'start', 'type',
+  'controls', 'poster', 'preload', 'playsinline', 'loop', 'muted', 'loading',
+  'allowfullscreen', 'frameborder', 'allow',
+]);
 
 function sanitizeAttributes(tag, attrsRaw) {
   const attrs = [];
@@ -246,12 +315,18 @@ function sanitizeAttributes(tag, attrsRaw) {
       if (trimmed.startsWith('javascript:') || trimmed.startsWith('vbscript:')) continue;
       if (name === 'src' && trimmed.startsWith('data:') && !trimmed.startsWith('data:image/')) continue;
       if (name === 'href' && trimmed.startsWith('data:')) continue;
+      // iframe 仅允许视频平台域名，且 src 必须 http(s)
+      if (tag === 'iframe') {
+        if (!isAllowedEmbedSrc(value)) continue;
+        attrs.push(`${name}="${escapeAttr(value)}"`);
+        continue;
+      }
       if (name === 'href') attrs.push(`${name}="${escapeAttr(value)}" target="_blank" rel="noopener noreferrer nofollow"`);
       else attrs.push(`${name}="${escapeAttr(value)}"`);
       continue;
     }
     // 白名单属性
-    if (['id', 'class', 'alt', 'title', 'width', 'height', 'colspan', 'rowspan', 'lang', 'data-lang', 'start', 'type'].includes(name)) {
+    if (ALLOWED_ATTRS.has(name)) {
       attrs.push(`${name}="${escapeAttr(value)}"`);
     }
   }
