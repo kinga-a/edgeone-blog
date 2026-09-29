@@ -52,7 +52,7 @@ export function pageSecurityHeaders(cacheControl = 'public, max-age=600') {
     'X-Frame-Options': 'SAMEORIGIN',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
     'Content-Security-Policy':
-      "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http:; font-src 'self' data: https:; connect-src 'self' https:; media-src 'self' https:; frame-ancestors 'self'; base-uri 'self'; form-action 'self'",
+      "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http:; font-src 'self' data: https:; connect-src 'self' https:; media-src 'self' https: blob:; frame-src 'self' https://player.bilibili.com https://www.youtube.com https://www.youtube-nocookie.com https://v.qq.com https://player.qq.com https://player.vimeo.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self'",
   };
 }
 

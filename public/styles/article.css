@@ -248,11 +248,18 @@ html.dark .theme-toggle .ico-moon { display: none; }
 .prose h4 { margin: 1.75rem 0 0.5rem; font-size: 1.0625rem; font-weight: 600; }
 .prose p { margin: 1rem 0; }
 .prose video.video-embed, .prose iframe.video-embed {
-  display: block; width: 100%; max-width: 100%;
-  margin: 1.25rem 0; border-radius: 10px;
-  background: #0f0f10; border: none;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 1.25rem auto;
+  border-radius: 10px;
+  background: #0f0f10;
+  border: none;
+  overflow: hidden;
 }
-.prose video.video-embed { aspect-ratio: 16/9; object-fit: contain; }
+/* iframe/video 按 16:9 自适应高度（旧 Safari 无 aspect-ratio 时退回 HTML height 属性） */
+.prose iframe.video-embed { aspect-ratio: 16/9; height: auto; }
+.prose video.video-embed { aspect-ratio: 16/9; height: auto; object-fit: contain; }
 .prose a { text-decoration: underline; text-decoration-color: var(--accent-strong); text-underline-offset: 3px; }
 .prose a:hover { text-decoration-color: var(--accent); }
 .prose ul { margin: 1rem 0; padding-left: 1.5rem; list-style: disc; }
