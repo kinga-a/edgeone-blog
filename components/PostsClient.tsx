@@ -23,28 +23,37 @@ export default function PostsClient() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [keyword, setKeyword] = useState(q);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let alive = true;
     setLoading(true);
+    setError(null);
     Promise.all([
       api.listPosts({ page, pageSize: 10, category, tag, q }),
       api.listCategories().catch(() => null),
       api.listTags().catch(() => null),
-    ]).then(([list, cats, tgs]) => {
-      if (!alive) return;
-      if (list?.ok) {
-        setItems(list.items);
-        setTotalPages(list.totalPages);
-        setTotal(list.total);
-      }
-      if (cats?.ok) setCategories(cats.items);
-      if (tgs?.ok) setTags(tgs.items);
-      setLoading(false);
-    });
+    ])
+      .then(([list, cats, tgs]) => {
+        if (!alive) return;
+        if (list?.ok) {
+          setItems(list.items);
+          setTotalPages(list.totalPages);
+          setTotal(list.total);
+        }
+        if (cats?.ok) setCategories(cats.items);
+        if (tgs?.ok) setTags(tgs.items);
+        setLoading(false);
+      })
+      .catch((e) => {
+        if (!alive) return;
+        setError(e?.message || '加载失败，请稍后重试');
+        setLoading(false);
+      });
     return () => { alive = false; };
-  }, [page, category, tag, q]);
+  }, [page, category, tag, q, reloadKey]);
 
   const buildHref = useCallback(
     (p: number) => {
@@ -70,7 +79,7 @@ export default function PostsClient() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-slate-100">文章</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">共 {total} 篇文章</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{loading ? '加载中…' : `共 ${total} 篇文章`}</p>
         </div>
         <div className="flex gap-2">
           <input
@@ -149,6 +158,20 @@ export default function PostsClient() {
       {loading ? (
         <div className="grid gap-5 sm:grid-cols-2">
           {Array.from({ length: 4 }).map((_, i) => <PostCardSkeleton key={i} />)}
+        </div>
+      ) : error ? (
+        <div className="text-center py-16 text-slate-400">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" className="mx-auto mb-4 opacity-50" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          <p>{error}</p>
+          <button
+            onClick={() => setReloadKey((k) => k + 1)}
+            className="mt-4 px-4 py-2 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition-colors"
+          >
+            点击重试
+          </button>
         </div>
       ) : items.length ? (
         <>

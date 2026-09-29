@@ -304,10 +304,16 @@ const ALLOWED_ATTRS = new Set([
 
 function sanitizeAttributes(tag, attrsRaw) {
   const attrs = [];
-  const re = /([a-zA-Z_:][-a-zA-Z0-9_:.]*)\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/g;
+  // 同时匹配带值属性与无值布尔属性
+  const re = /([a-zA-Z_:][-a-zA-Z0-9_:.]*)(?:\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+)))?/g;
   let m;
   while ((m = re.exec(attrsRaw))) {
     const name = m[1].toLowerCase();
+    if (!m[2]) {
+      // 无值属性：仅保留布尔白名单属性
+      if (BOOLEAN_ATTRS.has(name) && ALLOWED_ATTRS.has(name)) attrs.push(`${name}=""`);
+      continue;
+    }
     const value = m[3] ?? m[4] ?? m[5] ?? '';
     if (name.startsWith('on')) continue; // 事件属性
     if (name === 'href' || name === 'src') {
@@ -330,5 +336,17 @@ function sanitizeAttributes(tag, attrsRaw) {
       attrs.push(`${name}="${escapeAttr(value)}"`);
     }
   }
+  // video / iframe 统一附加 video-embed class，保证样式约束（防溢出、自适应宽高）
+  if (tag === 'video' || tag === 'iframe') {
+    const clsIdx = attrs.findIndex((a) => a.startsWith('class='));
+    if (clsIdx >= 0) {
+      attrs[clsIdx] = attrs[clsIdx].replace(/class="([^"]*)"/, (_, c) => `class="${c.includes('video-embed') ? c : `${c} video-embed`}"`);
+    } else {
+      attrs.unshift(`class="video-embed"`);
+    }
+  }
   return attrs.length ? ' ' + attrs.join(' ') : '';
 }
+
+/** 允许无值写法的布尔属性 */
+const BOOLEAN_ATTRS = new Set(['controls', 'playsinline', 'loop', 'muted', 'autoplay', 'allowfullscreen', 'nofollow']);
