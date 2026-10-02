@@ -13,6 +13,7 @@ export default function TagsManager() {
   const [editing, setEditing] = useState<Tag | null>(null);
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
+  const [sort, setSort] = useState('0');
   const toast = useToast();
 
   const load = useCallback(() => {
@@ -28,16 +29,18 @@ export default function TagsManager() {
     setEditing(t || null);
     setName(t?.name || '');
     setSlug(t?.slug || '');
+    setSort(String(t?.sort ?? 0));
   };
 
   const save = async () => {
     if (!name.trim()) { toast('请输入标签名称', 'error'); return; }
     try {
+      const body = { name, slug, sort: Number(sort) || 0 };
       if (editing) {
-        await api.updateTag(editing.id, { name, slug });
+        await api.updateTag(editing.id, body);
         toast('标签已更新');
       } else {
-        await api.createTag({ name, slug });
+        await api.createTag(body);
         toast('标签已创建');
       }
       startEdit();
@@ -72,6 +75,9 @@ export default function TagsManager() {
             <Field label="别名（slug）" hint="留空自动生成">
               <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="nextjs" />
             </Field>
+            <Field label="排序" hint="数字越小越靠前，默认 0">
+              <Input type="number" value={sort} onChange={(e) => setSort(e.target.value)} placeholder="0" />
+            </Field>
             <div className="flex gap-2 pt-1">
               <Btn onClick={save}>{editing ? '保存修改' : '创建标签'}</Btn>
               {editing && <Btn variant="secondary" onClick={() => startEdit()}>取消</Btn>}
@@ -81,11 +87,12 @@ export default function TagsManager() {
 
         <Card className="!p-0 overflow-hidden">
           {loading ? <Loading /> : items.length ? (
-            <Table head={<><Th>名称</Th><Th>别名</Th><Th>文章数</Th><Th>创建时间</Th><Th className="text-right">操作</Th></>}>
+            <Table head={<><Th>名称</Th><Th>别名</Th><Th>排序</Th><Th>文章数</Th><Th>创建时间</Th><Th className="text-right">操作</Th></>}>
               {items.map((t) => (
                 <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
                   <Td className="font-medium text-slate-800 dark:text-slate-200">#{t.name}</Td>
                   <Td className="text-slate-500 dark:text-slate-400 text-xs">/{t.slug}/</Td>
+                  <Td className="text-slate-500 dark:text-slate-400 font-mono">{t.sort || 0}</Td>
                   <Td className="text-slate-500 dark:text-slate-400">{t.postCount || 0}</Td>
                   <Td className="text-slate-500 dark:text-slate-400 whitespace-nowrap">{fmtDate(t.createdAt)}</Td>
                   <Td className="text-right whitespace-nowrap">

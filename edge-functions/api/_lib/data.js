@@ -301,7 +301,12 @@ export async function getCategory(env, id) {
 export async function getCategories(env) {
   const kv = getKv(env);
   const list = (await kvGetJson(kv, Keys.categoryList)) || [];
-  return list.sort((a, b) => a.name.localeCompare(b.name, 'zh'));
+  return list.sort((a, b) => {
+    const sa = Number(a.sort) || 0;
+    const sb = Number(b.sort) || 0;
+    if (sa !== sb) return sa - sb;
+    return (a.createdAt || '').localeCompare(b.createdAt || '');
+  });
 }
 
 /** 分类附带文章数（按前台可见的公开文章统计） */
@@ -327,6 +332,7 @@ export async function createCategory(env, input) {
     slug: slugify(input.slug || name) || id,
     description: String(input.description || '').trim(),
     icon: normalizeCategoryIcon(input.icon),
+    sort: Number(input.sort) || 0,
     createdAt: nowIso(),
   };
   const sl = new Set(list.map((c) => c.slug));
@@ -352,6 +358,7 @@ export async function updateCategory(env, id, input) {
   if (input.slug !== undefined && String(input.slug).trim()) next.slug = slugify(input.slug) || next.slug;
   if (input.description !== undefined) next.description = String(input.description).trim();
   if (input.icon !== undefined) next.icon = normalizeCategoryIcon(input.icon);
+  if (input.sort !== undefined) next.sort = Number(input.sort) || 0;
   await kvPutJson(kv, Keys.category(id), next);
   const list = (await kvGetJson(kv, Keys.categoryList)) || [];
   await kvPutJson(kv, Keys.categoryList, list.map((c) => (c.id === id ? next : c)));
@@ -377,7 +384,12 @@ export async function getTag(env, id) {
 export async function getTags(env) {
   const kv = getKv(env);
   const list = (await kvGetJson(kv, Keys.tagList)) || [];
-  return list.sort((a, b) => a.name.localeCompare(b.name, 'zh'));
+  return list.sort((a, b) => {
+    const sa = Number(a.sort) || 0;
+    const sb = Number(b.sort) || 0;
+    if (sa !== sb) return sa - sb;
+    return a.name.localeCompare(b.name, 'zh');
+  });
 }
 
 export async function getTagsByIds(env, ids) {
@@ -408,6 +420,7 @@ export async function ensureTagByName(env, name) {
     id,
     name: trimmed,
     slug: slugify(trimmed) || id,
+    sort: 0,
     createdAt: nowIso(),
   };
   await kvPutJson(kv, Keys.tag(id), tag);
@@ -426,7 +439,7 @@ export async function updateTag(env, id, input) {
   if (!existing) throw new Error('标签不存在');
   const name = String(input.name ?? existing.name).trim();
   if (!name) throw new Error('标签名称不能为空');
-  const next = { ...existing, name, slug: slugify(input.slug ?? name) || existing.slug, updatedAt: nowIso() };
+  const next = { ...existing, name, slug: slugify(input.slug ?? name) || existing.slug, sort: input.sort !== undefined ? (Number(input.sort) || 0) : (existing.sort || 0), updatedAt: nowIso() };
   await kvPutJson(kv, Keys.tag(id), next);
   const list = (await kvGetJson(kv, Keys.tagList)) || [];
   await kvPutJson(kv, Keys.tagList, list.map((t) => (t.id === id ? next : t)));

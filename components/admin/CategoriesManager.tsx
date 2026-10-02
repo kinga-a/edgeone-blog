@@ -36,6 +36,7 @@ export default function CategoriesManager() {
   const [description, setDescription] = useState('');
   const [icon, setIcon] = useState('');
   const [customSvg, setCustomSvg] = useState('');
+  const [sort, setSort] = useState('0');
   const toast = useToast();
 
   const load = useCallback(() => {
@@ -55,6 +56,7 @@ export default function CategoriesManager() {
     const cur = c?.icon || '';
     setIcon(cur);
     setCustomSvg(cur.toLowerCase().startsWith('<svg') ? cur : '');
+    setSort(String(c?.sort ?? 0));
   };
 
   /** 选择内置图标：清空自定义粘贴内容 */
@@ -78,7 +80,7 @@ export default function CategoriesManager() {
   const save = async () => {
     if (!name.trim()) { toast('请输入分类名称', 'error'); return; }
     try {
-      const body = { name, slug, description, icon };
+      const body = { name, slug, description, icon, sort: Number(sort) || 0 };
       if (editing) {
         await api.updateCategory(editing.id, body);
         toast('分类已更新');
@@ -120,6 +122,9 @@ export default function CategoriesManager() {
             </Field>
             <Field label="描述">
               <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="!font-sans" />
+            </Field>
+            <Field label="排序" hint="数字越小越靠前，默认 0">
+              <Input type="number" value={sort} onChange={(e) => setSort(e.target.value)} placeholder="0" />
             </Field>
             <Field label="图标" hint="点击选择内置图标，或在下框粘贴自定义 SVG（页面将使用该图标，不再显示汉字）">
               <div className="grid grid-cols-6 gap-1.5">
@@ -171,7 +176,7 @@ export default function CategoriesManager() {
 
         <Card className="!p-0 overflow-hidden">
           {loading ? <Loading /> : items.length ? (
-            <Table head={<><Th>名称</Th><Th>图标</Th><Th>别名</Th><Th>文章数</Th><Th>创建时间</Th><Th className="text-right">操作</Th></>}>
+            <Table head={<><Th>名称</Th><Th>图标</Th><Th>别名</Th><Th>排序</Th><Th>文章数</Th><Th>创建时间</Th><Th className="text-right">操作</Th></>}>
               {items.map((c) => (
                 <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
                   <Td className="font-medium text-slate-800 dark:text-slate-200">{c.name}</Td>
@@ -181,6 +186,7 @@ export default function CategoriesManager() {
                     </span>
                   </Td>
                   <Td className="text-slate-500 dark:text-slate-400 text-xs">/{c.slug}/</Td>
+                  <Td className="text-slate-500 dark:text-slate-400 font-mono">{c.sort || 0}</Td>
                   <Td className="text-slate-500 dark:text-slate-400">{c.postCount || 0}</Td>
                   <Td className="text-slate-500 dark:text-slate-400 whitespace-nowrap">{fmtDate(c.createdAt)}</Td>
                   <Td className="text-right whitespace-nowrap">
