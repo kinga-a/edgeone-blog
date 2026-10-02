@@ -63,6 +63,12 @@ export default function PostCard({ post }: { post: PostSummary }) {
           <span>{fmtDate(post.publishedAt || post.createdAt)}</span>
           <span>·</span>
           <span>{post.readingTime || 1} 分钟阅读</span>
+          <span>·</span>
+          <span title="阅读量">{post.views || 0} 阅读</span>
+          <span>·</span>
+          <span title="评论">{post.commentCount || 0} 评</span>
+          <span>·</span>
+          <span title="点赞">{post.likes || 0} 赞</span>
         </div>
         <Link href={`/posts/${post.slug}/`}>
           <h3 className="card-title">{post.title}</h3>

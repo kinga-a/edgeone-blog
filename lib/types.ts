@@ -24,6 +24,8 @@ export interface PostSummary {
   readingTime: number;
   categoryName?: string;
   views?: number;
+  likes?: number;
+  commentCount?: number;
 }
 
 /** 文章详情（含正文、分类/标签/统计） */

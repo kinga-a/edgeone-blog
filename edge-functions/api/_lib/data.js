@@ -625,6 +625,40 @@ export async function getViewsBatch(env, postIds) {
   return new Map(results);
 }
 
+/** 批量查文章统计：{ views, likes, comments(已审核通过数) } */
+export async function getPostStatsBatch(env, postIds) {
+  const map = new Map();
+  postIds.forEach((id) => map.set(id, { views: 0, likes: 0, comments: 0 }));
+  if (!postIds.length) return map;
+  const kv = getKv(env);
+  // views + likes 并行查
+  await Promise.all(
+    postIds.map(async (id) => {
+      const [v, l] = await Promise.all([
+        kvGetJson(kv, Keys.statsView(id)),
+        kvGetJson(kv, Keys.statsLike(id)),
+      ]);
+      map.set(id, {
+        views: v?.count || 0,
+        likes: l?.count || 0,
+        comments: map.get(id)?.comments || 0,
+      });
+    })
+  );
+  // comments：全局 comment_list 里数 status=approved 且 postId 匹配的
+  try {
+    const all = (await kvGetJson(kv, Keys.commentList)) || [];
+    const ids = new Set(postIds);
+    for (const c of all) {
+      if (ids.has(c.postId) && c.status === 'approved') {
+        const rec = map.get(c.postId);
+        if (rec) rec.comments += 1;
+      }
+    }
+  } catch {}
+  return map;
+}
+
 /** 文章点赞 +1 */
 export async function trackLike(env, postId) {
   const kv = getKv(env);

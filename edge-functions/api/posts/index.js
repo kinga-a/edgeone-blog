@@ -1,5 +1,5 @@
 import { json, fail, readJson, parseSearchParams, intParam, publicHeaders } from '../_lib/response.js';
-import { getPostList, getPublicPosts, createPost, getCategories, getTags, ensureTagByName, getViewsBatch } from '../_lib/data.js';
+import { getPostList, getPublicPosts, createPost, getCategories, getTags, ensureTagByName, getPostStatsBatch } from '../_lib/data.js';
 import { requireAdmin } from '../_lib/auth.js';
 
 /**
@@ -42,15 +42,20 @@ export async function onRequestGet({ request, env }) {
   const start = (page - 1) * pageSize;
   const rawItems = list.slice(start, start + pageSize);
 
-  // 附加分类名 + views，供列表展示
+  // 附加分类名 + 统计（views/likes/comments）
   const categories = await getCategories(env);
   const catMap = new Map(categories.map((c) => [c.id, c.name]));
-  const viewsMap = await getViewsBatch(env, rawItems.map((p) => p.id));
-  const items = rawItems.map((p) => ({
-    ...p,
-    categoryName: catMap.get(p.categoryId) || '',
-    views: viewsMap.get(p.id) || 0,
-  }));
+  const statsMap = await getPostStatsBatch(env, rawItems.map((p) => p.id));
+  const items = rawItems.map((p) => {
+    const s = statsMap.get(p.id) || { views: 0, likes: 0, comments: 0 };
+    return {
+      ...p,
+      categoryName: catMap.get(p.categoryId) || '',
+      views: s.views,
+      likes: s.likes,
+      commentCount: s.comments,
+    };
+  });
 
   return json({
     ok: true,

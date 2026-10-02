@@ -25,6 +25,12 @@ function FeaturedCard({ post }: { post: PostSummary }) {
           <span>{fmtDate(post.publishedAt || post.createdAt)}</span>
           <span>·</span>
           <span>{post.readingTime || 1} 分钟阅读</span>
+          <span>·</span>
+          <span>{post.views || 0} 阅读</span>
+          <span>·</span>
+          <span>{post.commentCount || 0} 评</span>
+          <span>·</span>
+          <span>{post.likes || 0} 赞</span>
         </div>
         <h2 className="card-title">{post.title}</h2>
         {post.summary && <p className="card-excerpt">{post.summary}</p>}
@@ -48,6 +54,12 @@ function FeaturedSmall({ post }: { post: PostSummary }) {
           <span>{fmtDate(post.publishedAt || post.createdAt)}</span>
           <span>·</span>
           <span>{post.readingTime || 1} 分钟阅读</span>
+          <span>·</span>
+          <span>{post.views || 0} 阅读</span>
+          <span>·</span>
+          <span>{post.commentCount || 0} 评</span>
+          <span>·</span>
+          <span>{post.likes || 0} 赞</span>
         </div>
         <h3 className="card-title">{post.title}</h3>
         {post.summary && <p className="card-excerpt">{post.summary}</p>}
@@ -127,7 +139,7 @@ export default function HomeClient() {
     ...restFeatured,
     ...posts.filter((p) => p.id !== featured?.id && !restFeatured.some((f) => f.id === p.id)),
   ].slice(0, 2);
-  const latestPosts = posts.slice(0, 6);
+  const latestPosts = posts.slice(0, 3);
 
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 pb-10">
