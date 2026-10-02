@@ -692,29 +692,56 @@ a:hover .card-title { color: var(--t-brand-600); }
 }
 .lightbox-close:hover { color: #fff; }
 
-/* ========== 回到顶部 ========== */
+/* ========== 回到顶部 + 阅读进度环 ========== */
 .back-to-top {
   position: fixed;
   bottom: 1.5rem;
   right: 1.5rem;
   z-index: 40;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
   border: none;
   cursor: pointer;
-  background: rgba(43, 40, 35, 0.9);
+  background: rgba(43, 40, 35, 0.92);
   color: #e8e6e1;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition: opacity 0.25s ease, transform 0.25s var(--ease-out);
 }
 .back-to-top.show { opacity: 1; pointer-events: auto; }
-.back-to-top:hover { background: var(--t-brand-600); transform: translateY(-2px); }
+.back-to-top:hover { transform: translateY(-2px); }
+
+.progress-ring {
+  position: absolute;
+  inset: 0;
+  width: 48px;
+  height: 48px;
+  transform: rotate(-90deg);
+}
+.progress-ring .ring-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.15);
+  stroke-width: 2.5;
+}
+.progress-ring .ring-fill {
+  fill: none;
+  stroke: var(--t-brand-400);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.1s linear;
+}
+html:not(.dark) .progress-ring .ring-fill { stroke: var(--t-brand-600); }
+.ring-arrow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
 /* 滚动条 */
 ::-webkit-scrollbar {
@@ -748,21 +775,6 @@ a:hover .card-title { color: var(--t-brand-600); }
   opacity: 1;
   transform: translateY(0);
 }
-
-/* ========== 阅读进度条（顶部 1px 朱砂） ========== */
-.reading-progress {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: var(--t-brand-600);
-  transform-origin: left;
-  transform: scaleX(0);
-  z-index: 100;
-  transition: transform 0.1s linear;
-}
-html.dark .reading-progress { background: var(--t-brand-400); }
 
 /* ========== 站点头部（纸墨毛玻璃：始终半透明与页面底色融为一体，滚动后出现底边框） ========== */
 .site-header {
@@ -977,8 +989,7 @@ html.dark .btn-secondary:hover { background: rgba(224, 138, 90, 0.12); }
   .skeleton::after,
   .fade-in-up,
   .page-enter,
-  .reveal,
-  .reading-progress {
+  .reveal {
     animation: none;
     transition: none;
   }
