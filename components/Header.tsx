@@ -9,8 +9,6 @@ import ThemeToggle from './ThemeToggle';
 const NAV = [
   { href: '/', label: '首页' },
   { href: '/posts/', label: '文章' },
-  { href: '/categories/', label: '分类' },
-  { href: '/tags/', label: '标签' },
   { href: '/archives/', label: '归档' },
   { href: '/about/', label: '关于' },
 ];
