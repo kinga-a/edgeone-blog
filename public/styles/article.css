@@ -324,6 +324,7 @@ html.dark .theme-toggle .ico-moon { display: none; }
   margin: 0;
 }
 .code-block-wrap.collapsed .code-block { max-height: 12em; overflow: hidden; position: relative; }
+.code-block-wrap.expanded .code-block { max-height: 50vh; overflow-y: auto; }
 .code-block-wrap.collapsed .code-block::after {
   content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3em;
   background: linear-gradient(transparent, var(--code-bg));
