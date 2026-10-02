@@ -57,18 +57,18 @@ export default function PostCard({ post }: { post: PostSummary }) {
       </Link>
       <div className="card-body">
         <div className="card-meta">
-          {post.visibility === 'private' && <span className="card-private" title="私人">🔒</span>}
+          {post.visibility === 'private' && <span className="card-private">私人</span>}
           {post.categoryName && <span className="card-category">{post.categoryName}</span>}
           <span className="meta-dot">·</span>
           <span>{fmtDate(post.publishedAt || post.createdAt)}</span>
           <span className="meta-dot">·</span>
-          <span>{post.readingTime || 1} 分钟</span>
+          <span>{post.readingTime || 1} 分钟阅读</span>
           <span className="meta-dot">·</span>
-          <span title="阅读量" className="meta-stat">👁 {post.views || 0}</span>
+          <span title="阅读量">{post.views || 0} 阅读</span>
           <span className="meta-dot">·</span>
-          <span title="评论" className="meta-stat">💬 {post.commentCount || 0}</span>
+          <span title="评论">{post.commentCount || 0} 评论</span>
           <span className="meta-dot">·</span>
-          <span title="点赞" className="meta-stat">❤ {post.likes || 0}</span>
+          <span title="点赞">{post.likes || 0} 赞</span>
         </div>
         <Link href={`/posts/${post.slug}/`}>
           <h3 className="card-title">{post.title}</h3>

@@ -24,13 +24,13 @@ function FeaturedCard({ post }: { post: PostSummary }) {
           <span className="meta-dot">·</span>
           <span>{fmtDate(post.publishedAt || post.createdAt)}</span>
           <span className="meta-dot">·</span>
-          <span>{post.readingTime || 1} 分钟</span>
+          <span>{post.readingTime || 1} 分钟阅读</span>
           <span className="meta-dot">·</span>
-          <span title="阅读量" className="meta-stat">👁 {post.views || 0}</span>
+          <span title="阅读量">{post.views || 0} 阅读</span>
           <span className="meta-dot">·</span>
-          <span title="评论" className="meta-stat">💬 {post.commentCount || 0}</span>
+          <span title="评论">{post.commentCount || 0} 评论</span>
           <span className="meta-dot">·</span>
-          <span title="点赞" className="meta-stat">❤ {post.likes || 0}</span>
+          <span title="点赞">{post.likes || 0} 赞</span>
         </div>
         <h2 className="card-title">{post.title}</h2>
         {post.summary && <p className="card-excerpt">{post.summary}</p>}
@@ -53,13 +53,13 @@ function FeaturedSmall({ post }: { post: PostSummary }) {
           <span className="meta-dot">·</span>
           <span>{fmtDate(post.publishedAt || post.createdAt)}</span>
           <span className="meta-dot">·</span>
-          <span>{post.readingTime || 1} 分钟</span>
+          <span>{post.readingTime || 1} 分钟阅读</span>
           <span className="meta-dot">·</span>
-          <span title="阅读量" className="meta-stat">👁 {post.views || 0}</span>
+          <span title="阅读量">{post.views || 0} 阅读</span>
           <span className="meta-dot">·</span>
-          <span title="评论" className="meta-stat">💬 {post.commentCount || 0}</span>
+          <span title="评论">{post.commentCount || 0} 评论</span>
           <span className="meta-dot">·</span>
-          <span title="点赞" className="meta-stat">❤ {post.likes || 0}</span>
+          <span title="点赞">{post.likes || 0} 赞</span>
         </div>
         <h3 className="card-title">{post.title}</h3>
         {post.summary && <p className="card-excerpt">{post.summary}</p>}
