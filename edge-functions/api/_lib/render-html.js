@@ -162,6 +162,23 @@ ${body}
   if(dr){var links=dr.querySelectorAll('a');for(var i=0;i<links.length;i++){links[i].addEventListener('click',closeDrawer);}}
 })();
 </script>
+<style>
+.btp{position:fixed;bottom:1.5rem;right:1.5rem;width:48px;height:48px;border-radius:999px;background:#fff;color:#57534e;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 0 rgba(0,0,0,.06),0 2px 10px rgba(0,0,0,.08);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:40}
+.btp.show{opacity:1;pointer-events:auto}
+.btp:hover{transform:translateY(-2px)}
+.btp svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+html.dark .btp{background:rgba(60,55,48,.85);color:#e7e5e4;box-shadow:0 2px 0 rgba(255,255,255,.06),0 2px 10px rgba(0,0,0,.3)}
+</style>
+<button class="btp" id="btp" aria-label="回到顶部"><svg viewBox="0 0 20 20"><path d="M10 16V4M4 10l6-6 6 6"/></svg></button>
+<script>
+(function(){
+  var b=document.getElementById('btp');
+  window.addEventListener('scroll',function(){
+    if(window.scrollY>400){b.classList.add('show')}else{b.classList.remove('show')}
+  },{passive:true});
+  b.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'})});
+})();
+</script>
 </body>
 </html>`;
 }
