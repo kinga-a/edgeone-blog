@@ -44,6 +44,7 @@ export interface Category {
   createdAt: string;
   postCount?: number;
   icon?: string;
+  sort?: number;
   posts?: { slug: string; title: string; createdAt: string; publishedAt: string }[];
 }
 
@@ -53,6 +54,7 @@ export interface Tag {
   slug: string;
   createdAt: string;
   postCount?: number;
+  sort?: number;
 }
 
 export type CommentStatus = 'pending' | 'approved' | 'rejected';
