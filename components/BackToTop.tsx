@@ -1,6 +1,6 @@
 'use client';
 
-/** 回到顶部 + 阅读进度环：按钮外圈圆环随阅读进度填充，滚动超过阈值淡入，点击平滑回顶 */
+/** 回到顶部：按钮外圈进度环随阅读进度填充，滚动超过阈值淡入，点击平滑回顶 */
 import { useEffect, useState } from 'react';
 
 const R = 20;
@@ -23,12 +23,10 @@ export default function BackToTop() {
       });
     };
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
     onScroll();
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
     };
   }, []);
 
@@ -40,7 +38,6 @@ export default function BackToTop() {
       aria-label="回到顶部"
     >
       <svg className="progress-ring" viewBox="0 0 48 48" width="48" height="48" aria-hidden="true">
-        <circle className="ring-track" cx="24" cy="24" r={R} />
         <circle
           className="ring-fill"
           cx="24" cy="24" r={R}
@@ -48,11 +45,9 @@ export default function BackToTop() {
           strokeDashoffset={CIRC * (1 - progress)}
         />
       </svg>
-      <span className="ring-arrow">
-        <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-          <path d="M10 16V4M4 10l6-6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </span>
+      <svg className="ring-arrow" width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <path d="M10 16V4M4 10l6-6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
     </button>
   );
 }
