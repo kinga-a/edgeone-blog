@@ -65,8 +65,6 @@ function absUrl(origin, path) {
 const NAV_ITEMS = [
   { href: '/', label: '首页', key: 'home' },
   { href: '/posts/', label: '文章', key: 'posts' },
-  { href: '/categories/', label: '分类', key: 'categories' },
-  { href: '/tags/', label: '标签', key: 'tags' },
   { href: '/archives/', label: '归档', key: 'archives' },
   { href: '/about/', label: '关于', key: 'about' },
 ];
