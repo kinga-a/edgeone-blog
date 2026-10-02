@@ -160,6 +160,38 @@ ${body}
   if(dr){var links=dr.querySelectorAll('a');for(var i=0;i<links.length;i++){links[i].addEventListener('click',closeDrawer);}}
 })();
 </script>
+<style>
+.btp{position:fixed;bottom:1.5rem;right:1.5rem;width:48px;height:48px;border-radius:999px;background:#fff;color:#57534e;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.1);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:40}
+.btp.show{opacity:1;pointer-events:auto}
+.btp:hover{transform:translateY(-2px)}
+.btp .ring{position:absolute;top:0;left:0;width:48px;height:48px;transform:rotate(-90deg)}
+.btp .ring circle{fill:none;stroke:#9A4318;stroke-width:2.5;stroke-linecap:round;stroke-dasharray:125.66;stroke-dashoffset:125.66;transition:stroke-dashoffset .1s linear}
+html.dark .btp{background:rgba(60,55,48,.9);color:#e7e5e4;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+html.dark .btp .ring circle{stroke:#E08A5A}
+.btp .arrow{width:18px;height:18px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<button class="btp" id="btp" aria-label="回到顶部">
+<svg class="ring" viewBox="0 0 48 48"><circle id="btp-ring" cx="24" cy="24" r="20"/></svg>
+<svg class="arrow" viewBox="0 0 20 20"><path d="M10 16V4M4 10l6-6 6 6"/></svg>
+</button>
+<script>
+(function(){
+  var b=document.getElementById('btp');
+  var ring=document.getElementById('btp-ring');
+  var C=125.66,raf=0;
+  window.addEventListener('scroll',function(){
+    cancelAnimationFrame(raf);
+    raf=requestAnimationFrame(function(){
+      var el=document.documentElement;
+      var total=el.scrollHeight-el.clientHeight;
+      var p=total>0?Math.min(1,Math.max(0,el.scrollTop/total)):0;
+      ring.style.strokeDashoffset=C*(1-p);
+      if(window.scrollY>400){b.classList.add('show')}else{b.classList.remove('show')}
+    });
+  },{passive:true});
+  b.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'})});
+})();
+</script>
 </body>
 </html>`;
 }
@@ -238,10 +270,6 @@ export async function renderArticlePage(env, post, request) {
         <span class="meta-item" id="like-count">${likes} 赞</span>
         <span class="meta-item">${approvedComments.length} 评论</span>
         ${includePrivate ? `<a class="edit-post-link" href="/admin/#/posts/edit/${escapeHtml(post.id)}" title="编辑这篇文章">✎ 编辑</a>` : ''}
-      </div>
-      <div class="article-taxonomy">
-        ${category ? `<a class="chip" href="/categories/${escapeHtml(category.slug)}/">${escapeHtml(category.name)}</a>` : ''}
-        ${tagObjs.map((t) => `<a class="chip" href="/tags/${escapeHtml(t.slug)}/"># ${escapeHtml(t.name)}</a>`).join('')}
       </div>
       ${cover ? `<img class="article-cover" src="${escapeHtml(cover)}" alt="${escapeHtml(post.title)}" loading="lazy">` : ''}
     </div>
