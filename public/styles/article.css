@@ -282,7 +282,7 @@ html.dark .theme-toggle .ico-moon { display: none; }
   border-radius: 0 0.625rem 0.625rem 0;
   font-style: italic;
 }
-.prose pre { margin: 1.5rem 0; border-radius: 0.75rem; overflow-x: auto; }
+.prose pre { margin: 1.5rem 0; border-radius: 0.75rem; }
 .prose code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.875em;
@@ -313,8 +313,37 @@ html.dark .theme-toggle .ico-moon { display: none; }
 }
 
 /* 代码高亮（暗底亮字） */
-.code-block { background: var(--code-bg); color: #ece5d9; padding: 1rem; font-size: 0.875rem; line-height: 1.6; }
-.hljs { display: block; overflow-x: auto; }
+.code-block-wrap {
+  margin: 1.5rem 0; border-radius: 0.75rem; overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.code-block {
+  background: var(--code-bg); color: #ece5d9; padding: 1rem;
+  font-size: 0.875rem; line-height: 1.6;
+  white-space: pre-wrap; word-break: break-word; overflow-x: hidden;
+  margin: 0;
+}
+.code-block-wrap.collapsed .code-block { max-height: 12em; overflow: hidden; position: relative; }
+.code-block-wrap.collapsed .code-block::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3em;
+  background: linear-gradient(transparent, var(--code-bg));
+}
+.code-block-head {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.5rem 0.75rem; background: rgba(0,0,0,0.15);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.code-lang { font-size: 0.75rem; color: rgba(236,229,217,0.6); text-transform: lowercase; }
+.code-copy-btn, .code-expand-btn {
+  margin-left: auto; padding: 0.25rem 0.625rem; font-size: 0.75rem;
+  background: rgba(255,255,255,0.08); color: rgba(236,229,217,0.85);
+  border: 1px solid rgba(255,255,255,0.12); border-radius: 0.375rem;
+  cursor: pointer; transition: all 0.15s;
+}
+.code-expand-btn { margin-left: 0; }
+.code-copy-btn:hover, .code-expand-btn:hover { background: rgba(255,255,255,0.15); }
+.code-copy-btn.copied { background: var(--accent); border-color: var(--accent); color: #fff; }
+.hljs { display: block; }
 
 /* 互动区（原型：居中，图标 + 文字胶囊按钮并排） */
 .article-actions {

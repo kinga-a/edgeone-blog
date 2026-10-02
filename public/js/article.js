@@ -154,10 +154,11 @@
     document.head.appendChild(s);
   })();
 
-  /* ---------- 代码块：语言标签 + 复制 + 行号 ---------- */
+  /* ---------- 代码块：语言标签 + 复制 + 展开/折叠 ---------- */
   function enhanceCodeBlocks() {
     var pres = document.querySelectorAll('.article-body pre.code-block');
     if (!pres.length) return;
+    var COLLAPSE_LINES = 6;
     for (var i = 0; i < pres.length; i++) {
       var pre = pres[i];
       if (pre.getAttribute('data-enhanced')) continue;
@@ -190,18 +191,22 @@
       });
       head.appendChild(langLabel);
       head.appendChild(copyBtn);
-      wrap.insertBefore(head, pre);
 
-      var lines = document.createElement('div');
-      lines.className = 'code-lines';
-      var parts = code.innerHTML.split('\n');
-      var html = '';
-      for (var k = 0; k < parts.length; k++) {
-        html += '<span class="code-line">' + (parts[k] || '&nbsp;') + '</span>';
+      var lines = raw.split('\n').filter(function(l){ return l.trim(); }).length;
+      var expandBtn = null;
+      if (lines > COLLAPSE_LINES) {
+        expandBtn = document.createElement('button');
+        expandBtn.type = 'button';
+        expandBtn.className = 'code-expand-btn';
+        expandBtn.textContent = '展开';
+        expandBtn.addEventListener('click', function () {
+          var collapsed = wrap.classList.toggle('expanded');
+          expandBtn.textContent = collapsed ? '收起' : '展开';
+        });
+        head.appendChild(expandBtn);
+        wrap.classList.add('collapsed');
       }
-      lines.innerHTML = html;
-      code.innerHTML = '';
-      code.appendChild(lines);
+      wrap.insertBefore(head, pre);
     }
   }
 
