@@ -86,10 +86,10 @@ html.dark .site-logo-badge { color: #241b12; }
 .site-logo-text { font-weight: 600; font-size: 17px; color: var(--fg); }
 .site-logo:hover { text-decoration: none; }
 .site-logo:hover .site-logo-text { color: var(--accent); }
-.site-nav { display: flex; align-items: center; gap: 0.25rem; }
+.site-nav { display: flex; align-items: center; gap: 0.125rem; }
 .site-nav a {
   padding: 8px 14px; border-radius: 8px;
-  font-size: 14px; color: var(--muted);
+  font-size: 14px; color: #57534e;
   position: relative;
   transition: color 0.2s ease, background-color 0.2s ease;
 }
@@ -112,9 +112,11 @@ html.dark .site-logo-badge { color: #241b12; }
   display: inline-flex; align-items: center; justify-content: center;
   width: 40px; height: 40px;
   border: 1px solid var(--border); background: var(--card); color: var(--muted);
-  border-radius: 10px; cursor: pointer; padding: 0; margin-left: 0.25rem;
+  border-radius: 10px; cursor: pointer; padding: 0;
   transition: all 0.2s;
 }
+.icon-btn { margin-left: 0.25rem; }
+.theme-toggle { margin-left: 0.375rem; }
 .theme-toggle:hover, .icon-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
 /* 搜索按钮与图标按钮完全同款（特异性高于 .site-nav a，避免被圆角/内边距覆盖） */
 .site-nav a.search-link {
