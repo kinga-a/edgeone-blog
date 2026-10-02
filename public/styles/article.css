@@ -67,7 +67,7 @@ html.dark .site-header { background-color: rgba(25, 22, 18, 0.72); }
 html.dark .site-header.scrolled { border-bottom-color: rgba(68, 64, 60, 1); }
 
 .header-inner {
-  max-width: 64rem; margin: 0 auto; padding: 0 1.25rem;
+  max-width: 64rem; margin: 0 auto; padding: 0 1.5rem;
   height: 4rem; display: flex; align-items: center; justify-content: space-between;
 }
 .site-logo {
