@@ -7,24 +7,16 @@ import PostCard from './PostCard';
 import Reveal from './Reveal';
 import type { Category, PostSummary, SiteConfig } from '@/lib/types';
 import { api } from '@/lib/api';
-import { fmtDate, mediaUrl, coverClassFor } from '@/lib/utils';
+import { fmtDate, mediaUrl, defaultCoverFor } from '@/lib/utils';
 import { CATEGORY_ICON_SET, resolveCategoryIcon, sanitizeSvg, categoryIconGradientClass } from '@/lib/site-icons';
 
 function FeaturedCard({ post }: { post: PostSummary }) {
-  const cover = post.coverUrl || (post.coverKey ? mediaUrl(post.coverKey) : '');
-  const fallbackCls = coverClassFor();
+  const cover = post.coverUrl || (post.coverKey ? mediaUrl(post.coverKey) : '') || defaultCoverFor(post.id);
   return (
     <Link href={`/posts/${post.slug}/`} className="featured-card">
-      <div className={`card-cover ${cover ? '' : fallbackCls}`}>
-        {cover ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={cover} alt={post.title} loading="lazy" className="w-full h-full object-cover" />
-        ) : (
-          <>
-            <span className="cover-label">{post.categoryName || post.title.slice(0, 1)}</span>
-            <span className="cover-mark" aria-hidden="true" />
-          </>
-        )}
+      <div className="card-cover">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={cover} alt={post.title} loading="lazy" className="w-full h-full object-cover" />
       </div>
       <div className="card-body">
         <div className="card-meta">
@@ -42,20 +34,12 @@ function FeaturedCard({ post }: { post: PostSummary }) {
 }
 
 function FeaturedSmall({ post }: { post: PostSummary }) {
-  const cover = post.coverUrl || (post.coverKey ? mediaUrl(post.coverKey) : '');
-  const fallbackCls = coverClassFor();
+  const cover = post.coverUrl || (post.coverKey ? mediaUrl(post.coverKey) : '') || defaultCoverFor(post.id);
   return (
     <Link href={`/posts/${post.slug}/`} className="featured-small">
-      <div className={`card-cover ${cover ? '' : fallbackCls}`}>
-        {cover ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={cover} alt={post.title} loading="lazy" className="w-full h-full object-cover" />
-        ) : (
-          <>
-            <span className="cover-label">{post.categoryName || post.title.slice(0, 1)}</span>
-            <span className="cover-mark" aria-hidden="true" />
-          </>
-        )}
+      <div className="card-cover">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={cover} alt={post.title} loading="lazy" className="w-full h-full object-cover" />
       </div>
       <div className="card-info">
         <div className="card-meta">

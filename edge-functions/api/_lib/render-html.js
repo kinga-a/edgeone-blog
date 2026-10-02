@@ -194,10 +194,21 @@ export async function renderArticlePage(env, post, request) {
   const title = post.title;
   const description = post.summary || (html.replace(/<[^>]+>/g, '').slice(0, 160)) || '';
   const canonical = absUrl(origin, `/posts/${post.slug}/`);
-  // 封面优先级：外部 URL > 上传的 Blob 封面 > 站点默认 OG 图
+  // 封面优先级：外部 URL > 上传的 Blob 封面 > 按 post.id 选 public/covers/ 默认图 > 站点 OG 图
+  const DEFAULT_COVERS = [
+    '/covers/cover-backend-code.jpg', '/covers/cover-code-laptop.jpg',
+    '/covers/cover-css-code.jpg', '/covers/cover-data-flow.jpg',
+    '/covers/cover-dev-desk.jpg', '/covers/cover-devtools.jpg',
+    '/covers/cover-dual-monitor.jpg', '/covers/cover-hardware.jpg',
+    '/covers/cover-mac-coding.jpg', '/covers/cover-server.jpg',
+  ];
+  const sid = String(post.id || '');
+  let sh = 0;
+  for (let i = 0; i < sid.length; i++) sh = (sh * 31 + sid.charCodeAt(i)) >>> 0;
+  const defaultCover = absUrl(origin, DEFAULT_COVERS[sh % DEFAULT_COVERS.length]);
   const cover = post.coverUrl
     ? post.coverUrl
-    : (post.coverKey ? absUrl(origin, `/api/media/${post.coverKey}`) : (config.seo?.ogImage || ''));
+    : (post.coverKey ? absUrl(origin, `/api/media/${post.coverKey}`) : (config.seo?.ogImage || defaultCover));
 
   const jsonLd = JSON.stringify({
     '@context': 'https://schema.org',

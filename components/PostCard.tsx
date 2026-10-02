@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { PostSummary, Tag } from '@/lib/types';
-import { fmtDate, mediaUrl, coverClassFor } from '@/lib/utils';
+import { fmtDate, mediaUrl, defaultCoverFor } from '@/lib/utils';
 
 /* 模块级缓存：全站只需拉一次标签列表 */
 let tagsCache: Tag[] | null = null;
@@ -40,28 +40,20 @@ export default function PostCard({ post }: { post: PostSummary }) {
     return () => { alive = false; };
   }, [post.tags]);
 
-  // 封面优先级：外部 URL > 上传的 Blob 封面 > 分类渐变占位
-  const cover = post.coverUrl || (post.coverKey ? mediaUrl(post.coverKey) : '');
-  const fallbackCls = coverClassFor();
+  // 封面优先级：外部 URL > 上传的 Blob 封面 > 默认封面图（按文章 id 稳定选）
+  const cover = post.coverUrl || (post.coverKey ? mediaUrl(post.coverKey) : '') || defaultCoverFor(post.id);
 
   return (
     <article className="article-card group">
-      <Link href={`/posts/${post.slug}/`} className={`block card-cover ${cover ? '' : fallbackCls}`}>
-        {cover ? (
-          // 静态导出 + 禁用 next/image 优化，使用原生 img + 懒加载
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={cover}
-            alt={post.title}
-            loading="lazy"
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <>
-            <span className="cover-label">{post.categoryName || post.title.slice(0, 1)}</span>
-            <span className="cover-mark" aria-hidden="true" />
-          </>
-        )}
+      <Link href={`/posts/${post.slug}/`} className="block card-cover">
+        {/* 静态导出 + 禁用 next/image 优化，使用原生 img + 懒加载 */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={cover}
+          alt={post.title}
+          loading="lazy"
+          className="w-full h-full object-cover"
+        />
       </Link>
       <div className="card-body">
         <div className="card-meta">

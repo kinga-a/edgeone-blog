@@ -63,6 +63,28 @@ export function catIconClassFor(): string {
   return 'icon-placeholder';
 }
 
+/** public/covers/ 下的默认封面图（文章未设置封面时按 seed 稳定选用） */
+const DEFAULT_COVERS = [
+  '/covers/cover-backend-code.jpg',
+  '/covers/cover-code-laptop.jpg',
+  '/covers/cover-css-code.jpg',
+  '/covers/cover-data-flow.jpg',
+  '/covers/cover-dev-desk.jpg',
+  '/covers/cover-devtools.jpg',
+  '/covers/cover-dual-monitor.jpg',
+  '/covers/cover-hardware.jpg',
+  '/covers/cover-mac-coding.jpg',
+  '/covers/cover-server.jpg',
+];
+
+/** 根据 seed（文章 id/slug）稳定选一张默认封面——同一篇文章始终同一张，不同文章均匀分散 */
+export function defaultCoverFor(seed: string | number | undefined): string {
+  const s = String(seed ?? '');
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return DEFAULT_COVERS[h % DEFAULT_COVERS.length];
+}
+
 /** 客户端 slug 化：仅保留 ASCII 字母数字（中文等非 ASCII 得到空串，由后端兜底为随机 id） */
 export function slugify(input: string): string {
   return String(input || '')
