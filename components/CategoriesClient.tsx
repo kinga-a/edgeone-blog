@@ -103,6 +103,9 @@ export default function CategoriesClient() {
                         className="text-2xl font-semibold text-slate-900 dark:text-slate-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors"
                       >
                         {c.name}
+                        <span className="ml-2 text-base font-normal text-slate-400 dark:text-slate-500 font-mono align-middle">
+                          {c.postCount || 0}
+                        </span>
                       </Link>
                       <span className="shrink-0 text-xs text-brand-600 dark:text-brand-400 font-mono">
                         {c.postCount || 0} 篇文章
