@@ -63,7 +63,8 @@ a:hover { text-decoration: underline; }
   transition: border-color 0.3s ease, background-color 0.3s ease;
 }
 html.dark .site-header { background-color: rgba(25, 22, 18, 0.72); }
-.site-header.scrolled { border-bottom-color: var(--border); }
+.site-header.scrolled { border-bottom-color: rgba(226, 224, 220, 1); }
+html.dark .site-header.scrolled { border-bottom-color: rgba(68, 64, 60, 1); }
 
 .header-inner {
   max-width: 64rem; margin: 0 auto; padding: 0 1.25rem;
@@ -99,6 +100,12 @@ html.dark .site-logo-badge { color: #241b12; }
   position: absolute;
   bottom: 2px; left: 14px; right: 14px;
   height: 2px; background: var(--accent); border-radius: 1px;
+  transform-origin: left;
+  animation: nav-underline .3s ease-out both;
+}
+@keyframes nav-underline {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
 }
 /* 主题切换 / 图标按钮（原型：40×40 描边，浅色月亮 / 深色太阳） */
 .theme-toggle, .icon-btn {
