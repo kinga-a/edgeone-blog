@@ -1,5 +1,5 @@
 import { json, fail, readJson, publicHeaders } from '../_lib/response.js';
-import { getPostByIdOrSlug, updatePost, deletePost, postDetailView, getSiteConfig, isPostPubliclyVisible } from '../_lib/data.js';
+import { getPostByIdOrSlug, updatePost, deletePost, postDetailView, getSiteConfig, isPostPubliclyVisible, getTags, ensureTagByName } from '../_lib/data.js';
 import { requireAdmin } from '../_lib/auth.js';
 
 /**
@@ -23,6 +23,22 @@ export async function onRequestPut({ request, env, params }) {
   const body = await readJson(request);
   if (!body) return fail(400, '请求体无效');
   try {
+    // 编辑时前端 tags 数组里可能混着标签名字（用户输入）和已有 id，统一规范化为 id
+    if (Array.isArray(body.tags)) {
+      const allTags = await getTags(env);
+      const ids = [];
+      for (const t of body.tags) {
+        const v = String(t || '').trim();
+        if (!v) continue;
+        // 已经是已知 id 直接用
+        const byId = allTags.find((x) => x.id === v);
+        if (byId) { ids.push(byId.id); continue; }
+        // 否则按名字查/建
+        const byName = allTags.find((x) => x.name === v || x.slug === v);
+        ids.push(byName ? byName.id : (await ensureTagByName(env, v)).id);
+      }
+      body.tags = ids;
+    }
     const post = await updatePost(env, params.id, body);
     return json({ ok: true, post });
   } catch (e) {

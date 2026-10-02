@@ -1,6 +1,5 @@
 import { json, fail, readJson, parseSearchParams, intParam, publicHeaders } from '../_lib/response.js';
-import { getPostList, getPublicPosts, createPost, getCategories, getTags, ensureTagByName, getPostStatsBatch } from '../_lib/data.js';
-import { requireAdmin } from '../_lib/auth.js';
+import { getPostList, getPublicPosts, createPost, getCategories, getTags, ensureTagByName, getPostStatsBatch } from '../_lib/data.js';import { requireAdmin } from '../_lib/auth.js';
 
 /**
  * GET /api/posts — 文章列表
@@ -74,19 +73,28 @@ export async function onRequestPost({ request, env }) {
   if (!body) return fail(400, '请求体无效');
   try {
     // 支持通过名称自动解析分类 / 创建标签
-    if (body.categoryName && !body.categoryId) {
+    if (Array.isArray(body.categoryName) && !body.categoryId) {
       const categories = await getCategories(env);
       const hit = categories.find((c) => c.name === body.categoryName || c.slug === body.categoryName);
       if (hit) body.categoryId = hit.id;
     }
-    if (Array.isArray(body.tagNames) && body.tagNames.length && !body.tags?.length) {
-      const tags = await getTags(env);
+    // 统一规范化 tags：前端可能传 id 数组或名字数组，统一转成 id
+    const rawTags = Array.isArray(body.tags) && body.tags.length ? body.tags
+      : (Array.isArray(body.tagNames) && body.tagNames.length ? body.tagNames : []);
+    if (rawTags.length) {
+      const allTags = await getTags(env);
       const ids = [];
-      for (const name of body.tagNames) {
-        const hit = tags.find((t) => t.name === name || t.slug === name);
-        ids.push(hit ? hit.id : (await ensureTagByName(env, name)).id);
+      for (const t of rawTags) {
+        const v = String(t || '').trim();
+        if (!v) continue;
+        const byId = allTags.find((x) => x.id === v);
+        if (byId) { ids.push(byId.id); continue; }
+        const byName = allTags.find((x) => x.name === v || x.slug === v);
+        ids.push(byName ? byName.id : (await ensureTagByName(env, v)).id);
       }
       body.tags = ids;
+    } else {
+      body.tags = [];
     }
     const post = await createPost(env, body);
     return json({ ok: true, post }, { status: 201 });
