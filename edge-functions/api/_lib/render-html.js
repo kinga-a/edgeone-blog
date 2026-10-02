@@ -271,6 +271,10 @@ export async function renderArticlePage(env, post, request) {
         <span class="meta-item">${approvedComments.length} 评论</span>
         ${includePrivate ? `<a class="edit-post-link" href="/admin/#/posts/edit/${escapeHtml(post.id)}" title="编辑这篇文章">✎ 编辑</a>` : ''}
       </div>
+      <div class="article-taxonomy">
+        ${category ? `<a class="chip" href="/categories/${escapeHtml(category.slug)}/">${escapeHtml(category.name)}</a>` : ''}
+        ${tagObjs.map((t) => `<a class="chip" href="/tags/${escapeHtml(t.slug)}/"># ${escapeHtml(t.name)}</a>`).join('')}
+      </div>
       ${cover ? `<img class="article-cover" src="${escapeHtml(cover)}" alt="${escapeHtml(post.title)}" loading="lazy">` : ''}
     </div>
     <div class="article-layout${toc.length ? ' has-toc' : ''}">
