@@ -195,13 +195,20 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
         setStatus(p.status);
         setVisibility(p.visibility || 'public');
         setCategoryId(p.categoryId || '');
-        setTags(p.tags || []);
+        // tags 存的是 id，用 tagDetails 映射回名字，否则编辑页会显示一长串 id
+        const tagIds = p.tags || [];
+        const tagNames = (p.tagDetails || [])
+          .filter((t: any) => tagIds.includes(t.id))
+          .map((t: any) => t.name);
+        // 兜底：tagDetails 里没匹配上的（比如新加的还没刷新），保留 id 名字
+        const missing = tagIds.filter((id: string) => !(p.tagDetails || []).some((t: any) => t.id === id));
+        setTags([...tagNames, ...missing]);
         setCoverKey(p.coverKey || '');
         setCoverUrl(p.coverUrl || '');
         baseRef.current = {
           title: p.title, slug: p.slug, summary: p.summary, content: p.content,
           status: p.status, visibility: p.visibility || 'public', categoryId: p.categoryId || '',
-          tags: p.tags || [], coverKey: p.coverKey || '', coverUrl: p.coverUrl || '',
+          tags: [...tagNames, ...missing], coverKey: p.coverKey || '', coverUrl: p.coverUrl || '',
         };
         setLoading(false);
       }).catch((e) => toast(e.message, 'error'));
