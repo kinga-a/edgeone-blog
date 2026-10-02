@@ -77,7 +77,7 @@ export default function HomeClient() {
     let alive = true;
     Promise.all([
       api.getConfig().catch(() => null),
-      api.listPosts({ page: 1, pageSize: 6, status: 'published' }).catch(() => null),
+      api.listPosts({ page: 1, pageSize: 30, status: 'published' }).catch(() => null),
       api.getFeaturedPosts().catch(() => null),
       api.trackVisit().catch(() => null),
     ]).then(([cfg, list, feat]) => {
