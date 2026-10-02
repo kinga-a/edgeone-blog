@@ -99,7 +99,7 @@ export default function CategoriesClient() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline justify-between gap-3">
                       <Link
-                        href={`/categories/${c.slug}/`}
+                        href={`/posts/?category=${encodeURIComponent(c.id)}`}
                         className="text-2xl font-semibold text-slate-900 dark:text-slate-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors"
                       >
                         {c.name}
@@ -134,7 +134,7 @@ export default function CategoriesClient() {
                 )}
                 {hasMore && (
                   <Link
-                    href={`/categories/${c.slug}/`}
+                    href={`/posts/?category=${encodeURIComponent(c.id)}`}
                     className="mt-3 inline-flex items-center gap-1 text-sm text-brand-600 dark:text-brand-400 hover:gap-2 transition-all"
                   >
                     查看全部 {c.postCount || allPosts.length} 篇 →

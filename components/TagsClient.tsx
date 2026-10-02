@@ -38,7 +38,7 @@ export default function TagsClient() {
             return (
               <Link
                 key={t.id}
-                href={`/tags/${t.slug}/`}
+                href={`/posts/?tag=${encodeURIComponent(t.id)}`}
                 className="px-3 py-1.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-brand-600 dark:text-brand-400 hover:border-brand-400 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-all"
                 style={{ fontSize: `${size}rem` }}
               >
