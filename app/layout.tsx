@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import BackToTop from '@/components/BackToTop';
 import PageTransition from '@/components/PageTransition';
 import FaviconUpdater from '@/components/FaviconUpdater';
+import ScrollManager from '@/components/ScrollManager';
 import { DEFAULT_FAVICON } from '@/lib/constants';
 
 export const metadata: Metadata = {
@@ -41,6 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen flex flex-col">
         <ThemeProvider>
           <FaviconUpdater />
+          <ScrollManager />
           <Header />
           <main className="flex-1">
             <PageTransition>{children}</PageTransition>
