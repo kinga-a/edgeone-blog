@@ -238,19 +238,32 @@
     }
   })();
 
-  /* ---------- 回到顶部 ---------- */
+  /* ---------- 回到顶部（带阅读进度环） ---------- */
   (function () {
     var btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'back-to-top';
     btn.setAttribute('aria-label', '回到顶部');
-    btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M10 16V4M4 10l6-6 6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    btn.innerHTML =
+      '<svg class="progress-ring" viewBox="0 0 48 48" width="48" height="48" aria-hidden="true">' +
+      '<circle class="ring-fill" cx="24" cy="24" r="20" fill="none" stroke="#9A4318" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="125.66" stroke-dashoffset="125.66"/>' +
+      '</svg>' +
+      '<svg class="ring-arrow" width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M10 16V4M4 10l6-6 6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     btn.addEventListener('click', function () {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
     document.body.appendChild(btn);
+    var ring = btn.querySelector('.ring-fill');
+    var C = 125.66, raf = 0;
     function onScroll() {
-      btn.classList.toggle('show', window.scrollY > 400);
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(function () {
+        var el = document.documentElement;
+        var total = el.scrollHeight - el.clientHeight;
+        var p = total > 0 ? Math.min(1, Math.max(0, el.scrollTop / total)) : 0;
+        ring.style.strokeDashoffset = C * (1 - p);
+        btn.classList.toggle('show', window.scrollY > 400);
+      });
     }
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
