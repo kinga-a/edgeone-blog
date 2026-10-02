@@ -121,6 +121,7 @@ export default function PostsClient() {
                   className={`px-3 py-1 rounded-full text-xs border transition-colors ${category === c.id ? 'bg-brand-600 text-white border-brand-600' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'}`}
                 >
                   {c.name}
+                  <span className={`ml-1 ${category === c.id ? 'text-white/70' : 'text-slate-400'}`}>{c.postCount || 0}</span>
                 </button>
               ))}
             </div>
@@ -148,6 +149,7 @@ export default function PostsClient() {
                   className={`px-3 py-1 rounded-full text-xs border transition-colors ${tag === t.id ? 'bg-brand-600 text-white border-brand-600' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'}`}
                 >
                   #{t.name}
+                  <span className={`ml-1 ${tag === t.id ? 'text-white/70' : 'text-slate-400'}`}>{t.postCount || 0}</span>
                 </button>
               ))}
             </div>
