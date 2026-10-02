@@ -21,16 +21,16 @@ function FeaturedCard({ post }: { post: PostSummary }) {
       <div className="card-body">
         <div className="card-meta">
           {post.categoryName && <span className="card-category">{post.categoryName}</span>}
-          {post.categoryName && <span>·</span>}
+          <span className="meta-dot">·</span>
           <span>{fmtDate(post.publishedAt || post.createdAt)}</span>
-          <span>·</span>
-          <span>{post.readingTime || 1} 分钟阅读</span>
-          <span>·</span>
-          <span>{post.views || 0} 阅读</span>
-          <span>·</span>
-          <span>{post.commentCount || 0} 评</span>
-          <span>·</span>
-          <span>{post.likes || 0} 赞</span>
+          <span className="meta-dot">·</span>
+          <span>{post.readingTime || 1} 分钟</span>
+          <span className="meta-dot">·</span>
+          <span title="阅读量" className="meta-stat">👁 {post.views || 0}</span>
+          <span className="meta-dot">·</span>
+          <span title="评论" className="meta-stat">💬 {post.commentCount || 0}</span>
+          <span className="meta-dot">·</span>
+          <span title="点赞" className="meta-stat">❤ {post.likes || 0}</span>
         </div>
         <h2 className="card-title">{post.title}</h2>
         {post.summary && <p className="card-excerpt">{post.summary}</p>}
@@ -50,16 +50,16 @@ function FeaturedSmall({ post }: { post: PostSummary }) {
       <div className="card-info">
         <div className="card-meta">
           {post.categoryName && <span className="card-category">{post.categoryName}</span>}
-          {post.categoryName && <span>·</span>}
+          <span className="meta-dot">·</span>
           <span>{fmtDate(post.publishedAt || post.createdAt)}</span>
-          <span>·</span>
-          <span>{post.readingTime || 1} 分钟阅读</span>
-          <span>·</span>
-          <span>{post.views || 0} 阅读</span>
-          <span>·</span>
-          <span>{post.commentCount || 0} 评</span>
-          <span>·</span>
-          <span>{post.likes || 0} 赞</span>
+          <span className="meta-dot">·</span>
+          <span>{post.readingTime || 1} 分钟</span>
+          <span className="meta-dot">·</span>
+          <span title="阅读量" className="meta-stat">👁 {post.views || 0}</span>
+          <span className="meta-dot">·</span>
+          <span title="评论" className="meta-stat">💬 {post.commentCount || 0}</span>
+          <span className="meta-dot">·</span>
+          <span title="点赞" className="meta-stat">❤ {post.likes || 0}</span>
         </div>
         <h3 className="card-title">{post.title}</h3>
         {post.summary && <p className="card-excerpt">{post.summary}</p>}
