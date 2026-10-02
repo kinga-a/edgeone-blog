@@ -612,6 +612,19 @@ export async function getViews(env, postId) {
   return cur?.count || 0;
 }
 
+/** 批量查 views（列表页用，避免 N+1） */
+export async function getViewsBatch(env, postIds) {
+  if (!postIds.length) return new Map();
+  const kv = getKv(env);
+  const results = await Promise.all(
+    postIds.map(async (id) => {
+      const cur = await kvGetJson(kv, Keys.statsView(id));
+      return [id, cur?.count || 0];
+    })
+  );
+  return new Map(results);
+}
+
 /** 文章点赞 +1 */
 export async function trackLike(env, postId) {
   const kv = getKv(env);

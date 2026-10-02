@@ -193,41 +193,30 @@ export default function HomeClient() {
         )}
       </Reveal>
 
-      {/* 分类速览 */}
-      {categories.length > 0 && (
-        <Reveal className="mt-12" delay={120}>
-          <div className="section-header">
-            <h2 className="section-title">
-              分类速览<span className="mono-num">03</span>
-            </h2>
-            <Link href="/categories/" className="section-link">全部分类 →</Link>
-          </div>
-          <div className="category-grid">
-            {categories.slice(0, 8).map((c) => {
-              const r = resolveCategoryIcon(c.icon);
-              const key = r.kind === 'key' ? r.value : (r.kind === 'none' ? 'doc' : '');
-              const inner = key ? CATEGORY_ICON_SET[key] : '';
-              const gradCls = r.kind === 'svg' ? '' : (categoryIconGradientClass(key || 'doc'));
-              return (
-                <Link key={c.id} href={`/categories/${c.slug}/`} className="category-card">
-                  <span className={`category-card-icon ${gradCls}`} aria-hidden="true">
-                    {r.kind === 'svg' ? (
-                      <span dangerouslySetInnerHTML={{ __html: r.value }} />
-                    ) : inner ? (
-                      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                        <g dangerouslySetInnerHTML={{ __html: sanitizeSvg(inner) }} />
-                      </svg>
-                    ) : null}
-                  </span>
-                  <span className="category-card-name">{c.name}</span>
-                  {c.description && <span className="category-card-desc">{c.description}</span>}
-                  <span className="category-card-count">{c.postCount || 0} 篇文章</span>
-                </Link>
-              );
-            })}
-          </div>
-        </Reveal>
-      )}
+      {/* 热门文章：按阅读量排序取 Top 6，排除精选与最新区块已展示的文章 */}
+      <Reveal className="mt-12" delay={120}>
+        <div className="section-header">
+          <h2 className="section-title">
+            热门文章<span className="mono-num">03</span>
+          </h2>
+        </div>
+        {(() => {
+          const shownIds = new Set<string>();
+          if (featured) shownIds.add(featured.id);
+          sidePosts.forEach((p) => shownIds.add(p.id));
+          latestPosts.forEach((p) => shownIds.add(p.id));
+          const hot = [...posts]
+            .filter((p) => !shownIds.has(p.id))
+            .sort((a, b) => (b.views || 0) - (a.views || 0))
+            .slice(0, 6);
+          if (!hot.length) return null;
+          return (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {hot.map((p) => <PostCard key={p.id} post={p} />)}
+            </div>
+          );
+        })()}
+      </Reveal>
     </div>
   );
 }

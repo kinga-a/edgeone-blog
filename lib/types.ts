@@ -23,6 +23,7 @@ export interface PostSummary {
   publishedAt: string;
   readingTime: number;
   categoryName?: string;
+  views?: number;
 }
 
 /** 文章详情（含正文、分类/标签/统计） */
