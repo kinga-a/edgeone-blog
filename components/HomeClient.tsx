@@ -4,6 +4,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import PostCard from './PostCard';
+import Reveal from './Reveal';
 import type { Category, PostSummary, SiteConfig } from '@/lib/types';
 import { api } from '@/lib/api';
 import { fmtDate, mediaUrl, coverClassFor } from '@/lib/utils';
@@ -172,7 +173,7 @@ export default function HomeClient() {
 
       {/* 精选文章 */}
       {featured && (
-        <section className="mt-2">
+        <Reveal className="mt-2">
           <div className="section-header">
             <h2 className="section-title">
               精选文章<span className="mono-num">01</span>
@@ -187,11 +188,11 @@ export default function HomeClient() {
               ))}
             </div>
           </div>
-        </section>
+        </Reveal>
       )}
 
       {/* 最新文章 */}
-      <section className="mt-12">
+      <Reveal className="mt-12" delay={80}>
         <div className="section-header">
           <h2 className="section-title">
             最新文章<span className="mono-num">02</span>
@@ -206,11 +207,11 @@ export default function HomeClient() {
             还没有文章，去后台发布第一篇吧～
           </div>
         )}
-      </section>
+      </Reveal>
 
       {/* 分类速览 */}
       {categories.length > 0 && (
-        <section className="mt-12">
+        <Reveal className="mt-12" delay={120}>
           <div className="section-header">
             <h2 className="section-title">
               分类速览<span className="mono-num">03</span>
@@ -241,7 +242,7 @@ export default function HomeClient() {
               );
             })}
           </div>
-        </section>
+        </Reveal>
       )}
     </div>
   );

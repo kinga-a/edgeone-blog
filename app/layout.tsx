@@ -4,6 +4,7 @@ import ThemeProvider from '@/components/ThemeProvider';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BackToTop from '@/components/BackToTop';
+import ReadingProgress from '@/components/ReadingProgress';
 import PageTransition from '@/components/PageTransition';
 import FaviconUpdater from '@/components/FaviconUpdater';
 import { DEFAULT_FAVICON } from '@/lib/constants';
@@ -41,6 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen flex flex-col">
         <ThemeProvider>
           <FaviconUpdater />
+          <ReadingProgress />
           <Header />
           <main className="flex-1">
             <PageTransition>{children}</PageTransition>
