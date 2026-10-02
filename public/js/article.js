@@ -137,6 +137,9 @@
   (function () {
     var codes = document.querySelectorAll('.article-body pre.code-block code');
     if (!codes.length) return;
+    for (var c = 0; c < codes.length; c++) {
+      codes[c].parentNode.dataset.raw = codes[c].textContent || '';
+    }
     function applyHighlight() {
       if (window.hljs) {
         for (var k = 0; k < codes.length; k++) {
@@ -159,26 +162,27 @@
     var pres = document.querySelectorAll('.article-body pre.code-block');
     if (!pres.length) return;
     var COLLAPSE_LINES = 6;
-    for (var i = 0; i < pres.length; i++) {
-      var pre = pres[i];
+    for (var idx = 0; idx < pres.length; idx++) {
+      const pre = pres[idx];
       if (pre.getAttribute('data-enhanced')) continue;
       pre.setAttribute('data-enhanced', '1');
-      var code = pre.querySelector('code');
+      const code = pre.querySelector('code');
       if (!code) continue;
-      var lang = pre.getAttribute('data-lang') || '';
-      var raw = code.textContent || '';
+      const lang = pre.getAttribute('data-lang') || '';
+      // 优先用高亮前缓存的原文，切断对高亮后 DOM 的隐性依赖
+      const raw = code.dataset.raw || code.textContent || '';
 
-      var wrap = document.createElement('div');
+      const wrap = document.createElement('div');
       wrap.className = 'code-block-wrap';
       pre.parentNode.insertBefore(wrap, pre);
       wrap.appendChild(pre);
 
-      var head = document.createElement('div');
+      const head = document.createElement('div');
       head.className = 'code-block-head';
-      var langLabel = document.createElement('span');
+      const langLabel = document.createElement('span');
       langLabel.className = 'code-lang';
       langLabel.textContent = lang || 'code';
-      var copyBtn = document.createElement('button');
+      const copyBtn = document.createElement('button');
       copyBtn.type = 'button';
       copyBtn.className = 'code-copy-btn';
       copyBtn.textContent = '复制';
@@ -192,16 +196,16 @@
       head.appendChild(langLabel);
       head.appendChild(copyBtn);
 
-      var lines = raw.split('\n').filter(function(l){ return l.trim(); }).length;
-      var expandBtn = null;
+      const lines = raw.split('\n').filter(function(l){ return l.trim(); }).length;
+      let expandBtn = null;
       if (lines > COLLAPSE_LINES) {
         expandBtn = document.createElement('button');
         expandBtn.type = 'button';
         expandBtn.className = 'code-expand-btn';
         expandBtn.textContent = '展开';
         expandBtn.addEventListener('click', function () {
-          var collapsed = wrap.classList.toggle('expanded');
-          expandBtn.textContent = collapsed ? '收起' : '展开';
+          const isExpanded = wrap.classList.toggle('expanded');
+          expandBtn.textContent = isExpanded ? '收起' : '展开';
         });
         head.appendChild(expandBtn);
         wrap.classList.add('collapsed');
