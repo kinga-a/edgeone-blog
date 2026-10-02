@@ -318,16 +318,20 @@ html.dark .theme-toggle .ico-moon { display: none; }
   box-shadow: var(--shadow-sm);
 }
 .code-block {
-  background: var(--code-bg); color: #ece5d9; padding: 1rem;
-  font-size: 0.875rem; line-height: 1.6;
+  background: var(--code-bg); color: #f5efe4; padding: 1rem;
+  font-size: 0.875rem; line-height: 1.65;
   white-space: pre-wrap; word-break: break-word; overflow-x: hidden;
   margin: 0;
 }
-.code-block-wrap.collapsed .code-block { max-height: 12em; overflow: hidden; position: relative; }
+.code-block-wrap.collapsed .code-block { max-height: 10em; overflow: hidden; position: relative; }
 .code-block-wrap.expanded .code-block { max-height: 50vh; overflow-y: auto; }
 .code-block-wrap.collapsed .code-block::after {
-  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3em;
-  background: linear-gradient(transparent, var(--code-bg));
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2em;
+  background: linear-gradient(rgba(43,38,30,0), rgba(43,38,30,0.95));
+  pointer-events: none;
+}
+html.dark .code-block-wrap.collapsed .code-block::after {
+  background: linear-gradient(rgba(18,16,12,0), rgba(18,16,12,0.95));
 }
 .code-block-head {
   display: flex; align-items: center; gap: 0.5rem;

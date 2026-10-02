@@ -237,7 +237,7 @@ export async function renderArticlePage(env, post, request) {
         <span class="meta-item" id="view-count">${views} 阅读</span>
         <span class="meta-item" id="like-count">${likes} 赞</span>
         <span class="meta-item">${approvedComments.length} 评论</span>
-        ${includePrivate ? `<a class="edit-post-link" href="/admin/#/posts/edit/${escapeHtml(post.id)}" title="编辑这篇文章">✎ 编辑</a>` : ''}
+        ${includePrivate ? `<a class="edit-post-link" href="/f-admin/#/posts/edit/${escapeHtml(post.id)}" title="编辑这篇文章">✎ 编辑</a>` : ''}
       </div>
       <div class="article-taxonomy">
         ${category ? `<a class="chip" href="/categories/${escapeHtml(category.slug)}/">${escapeHtml(category.name)}</a>` : ''}
