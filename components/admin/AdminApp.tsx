@@ -70,7 +70,7 @@ export default function AdminApp() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* 侧边栏 */}
-          <aside className="lg:w-52 shrink-0">
+          <aside className="lg:w-52 shrink-0 lg:pt-10">
             <div className="lg:sticky lg:top-20 bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/60 p-3">
               <div className="px-3 py-2 mb-2 flex items-center justify-between">
                 <span className="text-sm font-bold text-slate-900 dark:text-slate-100">后台管理</span>
