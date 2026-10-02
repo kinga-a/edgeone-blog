@@ -5,10 +5,9 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import PostCard from './PostCard';
 import Reveal from './Reveal';
-import type { Category, PostSummary, SiteConfig } from '@/lib/types';
+import type { PostSummary, SiteConfig } from '@/lib/types';
 import { api } from '@/lib/api';
 import { fmtDate, mediaUrl, defaultCoverFor } from '@/lib/utils';
-import { CATEGORY_ICON_SET, resolveCategoryIcon, sanitizeSvg, categoryIconGradientClass } from '@/lib/site-icons';
 
 function FeaturedCard({ post }: { post: PostSummary }) {
   const cover = post.coverUrl || (post.coverKey ? mediaUrl(post.coverKey) : '') || defaultCoverFor(post.id);
@@ -72,7 +71,6 @@ export default function HomeClient() {
   const [config, setConfig] = useState<SiteConfig | null>(null);
   const [posts, setPosts] = useState<PostSummary[]>([]);
   const [featuredList, setFeatured] = useState<PostSummary[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -80,14 +78,12 @@ export default function HomeClient() {
     Promise.all([
       api.getConfig().catch(() => null),
       api.listPosts({ page: 1, pageSize: 6, status: 'published' }).catch(() => null),
-      api.listCategories().catch(() => null),
       api.getFeaturedPosts().catch(() => null),
       api.trackVisit().catch(() => null),
-    ]).then(([cfg, list, cats, feat]) => {
+    ]).then(([cfg, list, feat]) => {
       if (!alive) return;
       if (cfg?.ok) setConfig(cfg.config);
       if (list?.ok) setPosts(list.items);
-      if (cats?.ok) setCategories(cats.items);
       if (feat?.ok && Array.isArray(feat.items)) setFeatured(feat.items);
       setLoading(false);
     });
