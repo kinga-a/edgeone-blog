@@ -21,7 +21,7 @@ function FeaturedCard({ post }: { post: PostSummary }) {
       <div className="card-body">
         <div className="card-meta">
           {post.categoryName && <span className="card-category">{post.categoryName}</span>}
-          <span className="meta-dot">·</span>
+          {post.categoryName && <span className="meta-dot">·</span>}
           <span>{fmtDate(post.publishedAt || post.createdAt)}</span>
           <span className="meta-dot">·</span>
           <span>{post.readingTime || 1} 分钟阅读</span>
@@ -50,7 +50,7 @@ function FeaturedSmall({ post }: { post: PostSummary }) {
       <div className="card-info">
         <div className="card-meta">
           {post.categoryName && <span className="card-category">{post.categoryName}</span>}
-          <span className="meta-dot">·</span>
+          {post.categoryName && <span className="meta-dot">·</span>}
           <span>{fmtDate(post.publishedAt || post.createdAt)}</span>
           <span className="meta-dot">·</span>
           <span>{post.readingTime || 1} 分钟阅读</span>

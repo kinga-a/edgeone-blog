@@ -86,7 +86,9 @@ export default function CategoriesClient() {
       ) : categories.length ? (
         <div className="space-y-4">
           {categories.map((c) => {
-            const posts = c.posts || [];
+            const allPosts = c.posts || [];
+            const posts = allPosts.slice(0, 4);
+            const hasMore = allPosts.length > 4;
             return (
               <div
                 key={c.id}
@@ -95,18 +97,20 @@ export default function CategoriesClient() {
                 <div className="flex items-start gap-4">
                   <CategoryIcon slug={c.slug} icon={c.icon} />
                   <div className="flex-1 min-w-0">
-                    <Link
-                      href={`/categories/${c.slug}/`}
-                      className="text-2xl font-semibold text-slate-900 dark:text-slate-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors"
-                    >
-                      {c.name}
-                    </Link>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <Link
+                        href={`/categories/${c.slug}/`}
+                        className="text-2xl font-semibold text-slate-900 dark:text-slate-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors"
+                      >
+                        {c.name}
+                      </Link>
+                      <span className="shrink-0 text-xs text-brand-600 dark:text-brand-400 font-mono">
+                        {c.postCount || 0} 篇文章
+                      </span>
+                    </div>
                     {c.description && (
                       <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 line-clamp-2">{c.description}</p>
                     )}
-                    <span className="mt-2 inline-block text-xs text-brand-600 dark:text-brand-400 font-mono">
-                      {c.postCount || 0} 篇文章
-                    </span>
                   </div>
                 </div>
 
@@ -127,6 +131,14 @@ export default function CategoriesClient() {
                       </li>
                     ))}
                   </ul>
+                )}
+                {hasMore && (
+                  <Link
+                    href={`/categories/${c.slug}/`}
+                    className="mt-3 inline-flex items-center gap-1 text-sm text-brand-600 dark:text-brand-400 hover:gap-2 transition-all"
+                  >
+                    查看全部 {c.postCount || allPosts.length} 篇 →
+                  </Link>
                 )}
               </div>
             );
