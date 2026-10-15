@@ -2,7 +2,7 @@
 
 /** 文章管理：列表 + 编辑器（Markdown 编辑/预览、封面上传、分类/标签） */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Btn, Card, Empty, Loading, RowBtn, SaveState, Table, Td, Th, Badge, useToast, Field, Input, Textarea, Select } from './ui';
+import { Btn, Card, Empty, Loading, RowBtn, SaveState, Table, Td, Th, Badge, useToast, Field, Input, Textarea, Select, AdminSpinner } from './ui';
 import { api } from '@/lib/api';
 import type { Category, Post, PostSummary, Tag } from '@/lib/types';
 import { fmtDate, mediaUrl, slugify } from '@/lib/utils';
@@ -19,6 +19,12 @@ export default function PostsManager({ route, navigate }: { route: string; navig
 }
 
 /* ---------------- 列表 ---------------- */
+
+const STATUS_TABS: Array<{ value: string; label: string }> = [
+  { value: '', label: '全部' },
+  { value: 'published', label: '已发布' },
+  { value: 'draft', label: '草稿' },
+];
 
 function PostsList({ navigate }: { navigate: (k: string) => void }) {
   const [items, setItems] = useState<PostSummary[]>([]);
@@ -58,18 +64,29 @@ function PostsList({ navigate }: { navigate: (k: string) => void }) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">文章管理</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">共 {total} 篇</p>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 font-display">文章管理</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">共 {total} 篇文章</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className="w-28">
-            <option value="">全部</option>
-            <option value="published">已发布</option>
-            <option value="draft">草稿</option>
-          </Select>
-          <Btn onClick={() => navigate('posts/new')}>＋ 新建</Btn>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 rounded-xl p-1 border border-slate-200 dark:border-slate-700">
+            {STATUS_TABS.map((t) => (
+              <button
+                key={t.value || 'all'}
+                type="button"
+                onClick={() => { setStatus(t.value); setPage(1); }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  status === t.value
+                    ? 'bg-[var(--t-card)] dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <Btn onClick={() => navigate('posts/new')}>＋ 新建文章</Btn>
         </div>
       </div>
 
@@ -89,10 +106,10 @@ function PostsList({ navigate }: { navigate: (k: string) => void }) {
               }
             >
               {items.map((p) => (
-                <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
                   <Td>
                     <div className="font-medium text-slate-800 dark:text-slate-200 max-w-72 truncate">{p.title}</div>
-                    <div className="text-xs text-slate-400 truncate max-w-72">/{p.slug}/</div>
+                    <div className="text-xs font-mono text-slate-400 truncate max-w-72 mt-0.5">/{p.slug}/</div>
                   </Td>
                   <Td>
                     <span className="inline-flex items-center gap-1.5">
@@ -101,10 +118,10 @@ function PostsList({ navigate }: { navigate: (k: string) => void }) {
                     </span>
                   </Td>
                   <Td className="text-slate-500 dark:text-slate-400">{p.categoryName || '—'}</Td>
-                  <Td className="text-slate-500 dark:text-slate-400 whitespace-nowrap">{fmtDate(p.publishedAt || p.createdAt)}</Td>
-                  <Td className="text-slate-500 dark:text-slate-400">{p.readingTime || 1} 分钟</Td>
+                  <Td className="text-slate-500 dark:text-slate-400 font-mono text-xs whitespace-nowrap">{fmtDate(p.publishedAt || p.createdAt)}</Td>
+                  <Td className="text-slate-500 dark:text-slate-400 font-mono text-xs">{p.readingTime || 1} 分钟</Td>
                   <Td className="text-right whitespace-nowrap">
-                    <div className="inline-flex items-center gap-1">
+                    <div className="inline-flex items-center gap-1.5">
                       {p.status === 'published' && (
                         <a href={`/posts/${p.slug}/`} target="_blank" rel="noopener noreferrer">
                           <RowBtn variant="ghost">查看</RowBtn>
@@ -118,15 +135,15 @@ function PostsList({ navigate }: { navigate: (k: string) => void }) {
               ))}
             </Table>
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 py-4 border-t border-slate-100 dark:border-slate-700/50">
+              <div className="flex items-center justify-center gap-2.5 py-4 border-t border-slate-100 dark:border-slate-700">
                 <Btn size="sm" variant="secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>上一页</Btn>
-                <span className="text-xs text-slate-400">{page} / {totalPages}</span>
+                <span className="text-xs font-mono text-slate-400">{page} / {totalPages}</span>
                 <Btn size="sm" variant="secondary" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>下一页</Btn>
               </div>
             )}
           </>
         ) : (
-          <Empty text="暂无文章，点击右上角「新建」开始创作" />
+          <Empty text="暂无文章，点击右上角「新建文章」开始创作" />
         )}
       </Card>
     </div>
@@ -151,6 +168,7 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
   const [categories, setCategories] = useState<Category[]>([]);
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [busy, setBusy] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
   const [loading, setLoading] = useState(mode === 'edit');
   const [dirty, setDirty] = useState(false);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
@@ -195,12 +213,10 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
         setStatus(p.status);
         setVisibility(p.visibility || 'public');
         setCategoryId(p.categoryId || '');
-        // tags 存的是 id，用 tagDetails 映射回名字，否则编辑页会显示一长串 id
         const tagIds = p.tags || [];
         const tagNames = (p.tagDetails || [])
           .filter((t: any) => tagIds.includes(t.id))
           .map((t: any) => t.name);
-        // 兜底：tagDetails 里没匹配上的（比如新加的还没刷新），保留 id 名字
         const missing = tagIds.filter((id: string) => !(p.tagDetails || []).some((t: any) => t.id === id));
         setTags([...tagNames, ...missing]);
         setCoverKey(p.coverKey || '');
@@ -216,6 +232,7 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
   }, [mode, postId, toast]);
 
   const uploadCover = async (file: File) => {
+    setUploadingCover(true);
     try {
       const { url, key } = await api.getUploadUrl({ name: file.name, type: 'cover', contentType: file.type });
       const res = await fetch(url, { method: 'PUT', body: file, headers: { 'Content-Type': file.type || 'application/octet-stream' } });
@@ -226,13 +243,13 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
     } catch (e) {
       toast(e instanceof Error ? e.message : '封面上传失败', 'error');
     }
+    setUploadingCover(false);
   };
 
   const save = async () => {
     if (!title.trim()) { toast('请填写文章标题', 'error'); return; }
     if (!content.trim()) { toast('请填写文章正文', 'error'); return; }
     setBusy(true);
-    // slug 留白（含纯空白）时根据标题自动生成
     const finalSlug = slug.trim() ? slugify(slug) : slugify(title);
     const body = {
       title, slug: finalSlug, summary, content, status, visibility, categoryId,
@@ -272,54 +289,56 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
 
   return (
     <div>
-      {/* 吸顶工具栏：标题 + 保存状态 + 返回/保存（滚动时始终可见，无需上滑） */}
-      <div className="sticky top-14 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 mb-5 bg-[#faf7f1]/95 dark:bg-[#292524]/95 backdrop-blur border-b border-slate-200/70 dark:border-slate-700/60">
+      {/* 吸顶工具栏：标题 + 保存状态 + 返回/保存 */}
+      <div className="sticky top-16 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 mb-5 bg-[#faf7f1]/90 dark:bg-[#1c1916]/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-700">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{mode === 'new' ? '新建文章' : '编辑文章'}</h1>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 font-display">{mode === 'new' ? '新建文章' : '编辑文章'}</h1>
             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">支持 Markdown：标题、列表、代码块、图片、链接等</p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2.5 shrink-0">
             <span className="hidden sm:block"><SaveState dirty={dirty} busy={busy} savedAt={savedAt} /></span>
             <Btn variant="secondary" onClick={() => navigate('posts')}>返回列表</Btn>
-            <Btn onClick={save} disabled={busy}>{busy ? (mode === 'new' ? '创建中…' : '保存中…') : mode === 'new' ? '创建' : '保存'}</Btn>
+            <Btn onClick={save} disabled={busy} loading={busy}>
+              {busy ? (mode === 'new' ? '创建中…' : '保存中…') : mode === 'new' ? '创建文章' : '保存修改'}
+            </Btn>
           </div>
         </div>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_300px]">
+      <div className="grid gap-5 lg:grid-cols-[1fr_310px]">
         <div className="min-w-0 space-y-4">
-          <Field label="标题">
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="文章标题" />
-          </Field>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="URL 别名（slug）" hint="留空则根据标题自动生成">
-              <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="my-first-post" />
+          <Card className="space-y-4">
+            <Field label="标题">
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="输入引人入胜的文章标题…" className="!text-base font-medium" />
             </Field>
-            <div className="space-y-4">
+            <div className="grid sm:grid-cols-3 gap-4">
+              <Field label="URL 别名（slug）" hint="留空则根据标题自动生成">
+                <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="my-first-post" className="font-mono text-xs" />
+              </Field>
               <Field label="状态">
                 <Select value={status} onChange={(e) => setStatus(e.target.value as 'draft' | 'published')}>
                   <option value="draft">草稿</option>
                   <option value="published">发布</option>
                 </Select>
               </Field>
-              <Field label="可见性" hint="私人文章仅管理员登录后可见">
+              <Field label="可见性" hint="私人文章仅管理员可见">
                 <Select value={visibility} onChange={(e) => setVisibility(e.target.value as 'public' | 'private')}>
                   <option value="public">公开</option>
                   <option value="private">私人</option>
                 </Select>
               </Field>
             </div>
-          </div>
-          <Field label="摘要" hint="用于列表页与 SEO 描述">
-            <Textarea value={summary} onChange={(e) => setSummary(e.target.value)} rows={2} className="!font-sans" placeholder="一句话概括文章内容" />
-          </Field>
+            <Field label="摘要" hint="用于列表页与 SEO 描述">
+              <Textarea value={summary} onChange={(e) => setSummary(e.target.value)} rows={2} className="!font-sans" placeholder="一句话概括文章核心内容…" />
+            </Field>
+          </Card>
 
           {/* 编辑器（Vditor：即时渲染 + 代码高亮 + 图片上传） */}
-          <div className="min-w-0 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-[var(--t-card)] dark:bg-slate-800">
-            <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40">
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">正文（Markdown · 即时渲染）</span>
-              <span className="text-xs text-slate-400">工具栏可上传图片 · 支持代码块 / 表格 / 公式</span>
+          <div className="min-w-0 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-[var(--t-card)] dark:bg-slate-800 shadow-[var(--shadow-xs)]">
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">正文（Markdown · 即时渲染）</span>
+              <span className="text-xs text-slate-400 hidden sm:inline">工具栏可上传图片 · 支持代码块 / 表格 / 公式</span>
             </div>
             <VditorEditor value={content} onChange={setContent} cacheId={mode === 'edit' ? (postId || 'edit') : 'new'} />
           </div>
@@ -332,28 +351,44 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
             {(() => {
               const previewSrc = coverUrl || (coverKey ? mediaUrl(coverKey) : '');
               return previewSrc ? (
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={previewSrc} alt="封面" className="w-full rounded-lg object-cover aspect-[16/9] bg-slate-100" />
+                  <img src={previewSrc} alt="封面" className="w-full rounded-xl object-cover aspect-[16/9] bg-slate-100 border border-slate-200 dark:border-slate-700" />
                   <div className="flex gap-2">
                     <Btn size="sm" variant="secondary" onClick={() => { setCoverKey(''); setCoverUrl(''); }}>移除</Btn>
                     <label className="cursor-pointer">
-                      <span className="inline-block px-2.5 py-1.5 rounded-lg text-xs bg-[var(--t-card)] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-brand-400 transition-colors">
-                        更换
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--t-card)] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-brand-400 transition-colors">
+                        {uploadingCover && <AdminSpinner className="w-3 h-3" />}
+                        {uploadingCover ? '上传中…' : '更换封面'}
                       </span>
-                      <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && uploadCover(e.target.files[0])} />
+                      <input type="file" accept="image/*" className="hidden" disabled={uploadingCover} onChange={(e) => e.target.files?.[0] && uploadCover(e.target.files[0])} />
                     </label>
                   </div>
                 </div>
               ) : (
-                <label className="block border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-6 text-center cursor-pointer hover:border-brand-400 transition-colors">
-                  <span className="text-sm text-slate-500 dark:text-slate-400">点击选择封面图片</span>
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && uploadCover(e.target.files[0])} />
+                <label className="flex flex-col items-center justify-center gap-1.5 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-6 text-center cursor-pointer hover:border-brand-400 hover:bg-brand-50 transition-all">
+                  {uploadingCover ? (
+                    <>
+                      <AdminSpinner className="w-5 h-5 text-brand-600" />
+                      <span className="text-xs text-slate-500">正在上传封面…</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" className="text-slate-400">
+                        <rect x="3" y="4" width="18" height="16" rx="2" />
+                        <circle cx="8.5" cy="9.5" r="1.5" />
+                        <path d="M21 15l-5-5L5 20" />
+                      </svg>
+                      <span className="text-sm font-medium text-slate-600 dark:text-slate-300">点击上传封面图片</span>
+                      <span className="text-xs text-slate-400">未设置时自动匹配精美默认封面</span>
+                    </>
+                  )}
+                  <input type="file" accept="image/*" className="hidden" disabled={uploadingCover} onChange={(e) => e.target.files?.[0] && uploadCover(e.target.files[0])} />
                 </label>
               );
             })()}
-            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/50">
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">或使用外部图片 URL（图床 / CDN / 其它站点图片）</p>
+            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">或使用外部图片 URL（图床 / CDN）</p>
               <div className="flex gap-2">
                 <Input value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="https://example.com/cover.jpg" className="flex-1 !font-mono text-xs" />
                 <Btn size="sm" variant="secondary" onClick={() => { setCoverUrl(coverUrl.trim()); setCoverKey(''); }}>应用</Btn>
@@ -372,22 +407,29 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
 
           <Card>
             <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">标签</h3>
-            <div className="flex flex-wrap gap-1.5 mb-3">
-              {tags.map((t) => (
-                <span key={t} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 text-xs">
-                  {t}
-                  <button onClick={() => setTags((arr) => arr.filter((x) => x !== t))} className="hover:text-rose-500">×</button>
-                </span>
-              ))}
-            </div>
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {tags.map((t) => (
+                  <span key={t} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-brand-50 text-brand-600 dark:text-brand-400 text-xs font-medium">
+                    #{t}
+                    <button type="button" onClick={() => setTags((arr) => arr.filter((x) => x !== t))} className="hover:text-rose-500 ml-0.5">×</button>
+                  </span>
+                ))}
+              </div>
+            )}
             <div className="flex gap-2">
               <Input value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (addTag(tagInput), e.preventDefault())} placeholder="输入标签回车添加" />
               <Btn size="sm" variant="secondary" onClick={() => addTag(tagInput)}>添加</Btn>
             </div>
             {allTags.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-1">
+              <div className="mt-3 flex flex-wrap gap-1.5">
                 {allTags.filter((t) => !tags.includes(t.name)).slice(0, 12).map((t) => (
-                  <button key={t.id} onClick={() => addTag(t.name)} className="px-2 py-0.5 rounded-full text-xs border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-brand-400 transition-colors">
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => addTag(t.name)}
+                    className="px-2.5 py-0.5 rounded-full text-xs border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-brand-400 hover:text-brand-600 transition-colors"
+                  >
                     #{t.name}
                   </button>
                 ))}

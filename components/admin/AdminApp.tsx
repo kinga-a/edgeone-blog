@@ -1,10 +1,10 @@
 'use client';
 
-/** 后台管理主应用：登录守卫 + Hash 路由 + 布局 */
+/** 后台管理主应用：登录守卫 + Hash 路由 + 响应式侧栏与过渡动画 */
 import { useEffect, useState } from 'react';
-import { ToastProvider, useToast, Loading } from './ui';
+import { ToastProvider, Loading } from './ui';
 import { api } from '@/lib/api';
-import { readHash } from '@/lib/utils';
+import { readHash, cx } from '@/lib/utils';
 import LoginView from './LoginView';
 import DashboardView from './DashboardView';
 import PostsManager from './PostsManager';
@@ -13,9 +13,8 @@ import TagsManager from './TagsManager';
 import CommentsManager from './CommentsManager';
 import MediaManager from './MediaManager';
 import SettingsView from './SettingsView';
-import { cx } from '@/lib/utils';
 
-/** 菜单图标（参考图左侧导航：图标 + 文字） */
+/** 菜单图标 */
 const MENU_ICONS: Record<string, string> = {
   dashboard: 'M3 13h4l2-7 4 14 2-8h6',
   posts: 'M6 3h9l4 4v14H6V3zM15 3v5h4M9 13h6M9 17h6',
@@ -64,14 +63,18 @@ export default function AdminApp() {
 
   if (authed === null) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="mx-auto max-w-4xl px-4 py-16">
         <Loading />
       </div>
     );
   }
 
   if (!authed) {
-    return <LoginView onLogin={() => setAuthed(true)} />;
+    return (
+      <ToastProvider>
+        <LoginView onLogin={() => setAuthed(true)} />
+      </ToastProvider>
+    );
   }
 
   const mainKey = route.split('/')[0] || 'dashboard';
@@ -81,32 +84,47 @@ export default function AdminApp() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* 侧边栏 */}
-          <aside className="lg:w-56 shrink-0 lg:pt-8">
-            <div className="lg:sticky lg:top-20 bg-[var(--t-card)] dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(28,26,23,0.04)] p-3">
-              <div className="px-3 py-2.5 mb-2 flex items-center justify-between">
+          <aside className="lg:w-60 shrink-0">
+            <div className="lg:sticky lg:top-20 bg-[var(--t-card)] dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-[var(--shadow-xs)] p-3.5">
+              <div className="px-2.5 py-2 mb-3 pb-3 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <span className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white text-sm font-bold shadow-sm">
+                  <span className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white text-sm font-bold font-display shadow-sm">
                     B
                   </span>
-                  <span className="text-sm font-bold text-slate-900 dark:text-slate-100 font-display">博客后台</span>
+                  <div>
+                    <div className="text-sm font-bold text-slate-900 dark:text-slate-100 font-display leading-tight">
+                      博客后台
+                    </div>
+                    <a
+                      href="/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
+                    >
+                      查看前台 ↗
+                    </a>
+                  </div>
                 </div>
-                <button onClick={logout} className="text-xs text-slate-400 hover:text-rose-500 transition-colors">
+                <button
+                  onClick={logout}
+                  className="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                >
                   退出
                 </button>
               </div>
-              <nav className="space-y-0.5">
+              <nav className="flex lg:flex-col gap-1 overflow-x-auto pb-1 lg:pb-0">
                 {MENU.map((m) => (
                   <button
                     key={m.key}
                     onClick={() => navigate(m.key)}
                     className={cx(
-                      'w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2.5',
+                      ' lg:w-full text-left px-3 py-2.5 rounded-xl text-sm transition-all flex items-center gap-2.5 shrink-0',
                       mainKey === m.key
-                        ? 'bg-brand-600 text-white font-medium shadow-sm'
-                        : 'text-slate-600 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-400',
+                        ? 'bg-brand-600 text-white font-medium shadow-[0_2px_8px_rgba(154,67,24,0.25)]'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-400',
                     )}
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
                       <path d={MENU_ICONS[m.key]} />
                     </svg>
                     {m.label}
@@ -116,8 +134,8 @@ export default function AdminApp() {
             </div>
           </aside>
 
-          {/* 内容区 */}
-          <div className="flex-1 min-w-0">
+          {/* 内容区（路由切换时触发平滑淡入） */}
+          <div key={mainKey} className="flex-1 min-w-0 fade-in-up">
             {mainKey === 'dashboard' && <DashboardView />}
             {mainKey === 'posts' && <PostsManager route={route} navigate={navigate} />}
             {mainKey === 'comments' && <CommentsManager />}

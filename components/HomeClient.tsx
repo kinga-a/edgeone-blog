@@ -13,19 +13,32 @@ function LedeItem({ post, index }: { post: PostSummary; index: number }) {
   const cover = post.coverUrl || (post.coverKey ? mediaUrl(post.coverKey) : '') || defaultCoverFor(post.id);
   const no = String(index + 1).padStart(2, '0');
   return (
-    <Link href={`/posts/${post.slug}/`} className="lede">
+    <Link href={`/posts/${post.slug}/`} className="lede group">
       <div className="lede-body">
-        <div className="lede-no">NO.{no}</div>
-        <h2 className="lede-title">{post.title}</h2>
+        <div className="flex items-center gap-2.5">
+          <span className="lede-no">FEATURED · NO.{no}</span>
+          {post.categoryName && (
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-50 text-brand-600 dark:text-brand-400">
+              {post.categoryName}
+            </span>
+          )}
+        </div>
+        <h2 className="lede-title font-display">{post.title}</h2>
         {post.summary && <p className="lede-excerpt">{post.summary}</p>}
-        <div className="card-meta">
-          {post.categoryName && <span className="card-category">{post.categoryName}</span>}
-          {post.categoryName && <span className="meta-dot">·</span>}
-          <span>{fmtDate(post.publishedAt || post.createdAt)}</span>
-          <span className="meta-dot">·</span>
-          <span>{post.readingTime || 1} 分钟阅读</span>
-          <span className="meta-dot">·</span>
-          <span title="阅读量">{post.views || 0} 阅读</span>
+        <div className="mt-auto pt-2 flex items-center justify-between gap-4 flex-wrap">
+          <div className="card-meta">
+            <span>{fmtDate(post.publishedAt || post.createdAt)}</span>
+            <span className="meta-dot">·</span>
+            <span>{post.readingTime || 1} 分钟阅读</span>
+            <span className="meta-dot">·</span>
+            <span title="阅读量">{post.views || 0} 阅读</span>
+          </div>
+          <span className="inline-flex items-center gap-1 text-sm font-medium text-brand-600 dark:text-brand-400 group-hover:translate-x-1 transition-transform">
+            阅读全文
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
         </div>
       </div>
       <div className="lede-cover">
@@ -39,13 +52,23 @@ function LedeItem({ post, index }: { post: PostSummary; index: number }) {
 /** 期刊目录条目（最新文章）：日期 + 标题 + 摘要 + 阅读时长 */
 function JournalItem({ post }: { post: PostSummary }) {
   return (
-    <Link href={`/posts/${post.slug}/`} className="journal-item">
+    <Link href={`/posts/${post.slug}/`} className="journal-item group">
       <div className="journal-date">{fmtDate(post.publishedAt || post.createdAt)}</div>
       <div className="journal-main">
-        <h3 className="journal-title">{post.title}</h3>
+        <div className="flex items-center gap-2 flex-wrap">
+          <h3 className="journal-title">{post.title}</h3>
+          {post.categoryName && (
+            <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+              {post.categoryName}
+            </span>
+          )}
+        </div>
         {post.summary && <p className="journal-excerpt">{post.summary}</p>}
       </div>
-      <div className="journal-meta">{post.readingTime || 1} 分钟</div>
+      <div className="journal-meta">
+        <span>{post.readingTime || 1} 分钟</span>
+        <span className="journal-arrow" aria-hidden="true">→</span>
+      </div>
     </Link>
   );
 }
@@ -57,7 +80,9 @@ function TopItem({ post, index }: { post: PostSummary; index: number }) {
       <div className="top-no">{String(index + 1).padStart(2, '0')}</div>
       <div className="top-main">
         <h3 className="top-title">{post.title}</h3>
-        <div className="top-meta">{post.views || 0} 阅读 · {fmtDate(post.publishedAt || post.createdAt)}</div>
+        <div className="top-meta">
+          {post.views || 0} 阅读 · {fmtDate(post.publishedAt || post.createdAt)}
+        </div>
       </div>
     </Link>
   );
@@ -88,30 +113,39 @@ export default function HomeClient() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 pb-10">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 pb-12">
         {/* 刊头骨架 */}
         <div className="py-14">
-          <div className="skeleton h-3 w-28 rounded mb-6" aria-hidden="true" />
-          <div className="skeleton h-12 w-3/4 rounded mb-4" aria-hidden="true" />
-          <div className="skeleton h-4 w-3/5 rounded mb-2" aria-hidden="true" />
-          <div className="skeleton h-4 w-2/5 rounded" aria-hidden="true" />
+          <div className="skeleton h-6 w-36 rounded-full mb-6" aria-hidden="true" />
+          <div className="skeleton h-12 w-3/4 max-w-md rounded-xl mb-5" aria-hidden="true" />
+          <div className="skeleton h-4 w-3/5 max-w-lg rounded mb-2.5" aria-hidden="true" />
+          <div className="skeleton h-4 w-2/5 max-w-sm rounded mb-7" aria-hidden="true" />
+          <div className="flex items-center gap-3">
+            <div className="skeleton h-11 w-32 rounded-xl" aria-hidden="true" />
+            <div className="skeleton h-11 w-28 rounded-xl" aria-hidden="true" />
+          </div>
         </div>
         {/* 头条骨架 */}
         <div className="lede">
-          <div className="space-y-3">
-            <div className="skeleton h-3 w-20 rounded" aria-hidden="true" />
-            <div className="skeleton h-8 w-4/5 rounded" aria-hidden="true" />
+          <div className="space-y-3.5 py-2">
+            <div className="skeleton h-4 w-28 rounded-full" aria-hidden="true" />
+            <div className="skeleton h-8 w-4/5 rounded-lg" aria-hidden="true" />
             <div className="skeleton h-4 w-full rounded" aria-hidden="true" />
             <div className="skeleton h-4 w-2/3 rounded" aria-hidden="true" />
+            <div className="pt-3 flex items-center justify-between">
+              <div className="skeleton h-3.5 w-40 rounded" aria-hidden="true" />
+              <div className="skeleton h-4 w-20 rounded" aria-hidden="true" />
+            </div>
           </div>
-          <div className="skeleton rounded-[10px] min-h-[220px]" aria-hidden="true" />
+          <div className="skeleton rounded-[14px] min-h-[230px]" aria-hidden="true" />
         </div>
         {/* 目录骨架 */}
-        <div className="mt-20">
+        <div className="mt-16 space-y-3">
+          <div className="skeleton h-7 w-32 rounded-md mb-4" aria-hidden="true" />
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
-              className="skeleton h-16 rounded-none border-b border-slate-200 dark:border-slate-800"
+              className="skeleton h-16 rounded-xl"
               aria-hidden="true"
             />
           ))}
@@ -143,24 +177,37 @@ export default function HomeClient() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 pb-10">
-      {/* 期刊刊头：眉题 + 大标题 + 一句话引言 + CTA（≤4 个文本元素，Taste-Skill hero 纪律） */}
+      {/* 期刊刊头：眉题 + 大标题 + 一句话引言 + CTA */}
       <section className="hero fade-in-up">
         <div className="hero-vol">VOL.{new Date().getFullYear()} · 记录与思考</div>
         <h1 className="hero-title font-display">{config?.title || '我的博客'}</h1>
         <p className="hero-desc">
-          技术踩坑记录 · 工具分享 · 网络观察随笔——用文字存档思考，把零散的认知沉淀成可回看的内容。
+          {config?.subtitle || '技术踩坑记录 · 工具分享 · 网络观察随笔——用文字存档思考，把零散的认知沉淀成可回看的内容。'}
         </p>
         <div className="hero-actions">
-          <Link href="/posts/" className="btn-primary">浏览文章</Link>
-          <Link href="/about/" className="btn-ghost">关于我 →</Link>
+          <Link href="/posts/" className="btn-primary">
+            <span>浏览文章</span>
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Link>
+          <Link href="/archives/" className="btn-secondary">
+            <span>时间归档</span>
+          </Link>
+          <Link href="/about/" className="btn-ghost">
+            <span>关于我 →</span>
+          </Link>
         </div>
       </section>
 
       {/* 精选头条 */}
       {featured && (
-        <Reveal className="mt-4">
+        <Reveal className="mt-2">
           <div className="section-header">
-            <h2 className="section-title">精选文章</h2>
+            <h2 className="section-title">
+              精选文章
+              <span className="mono-num">01</span>
+            </h2>
             <Link href="/posts/" className="section-link">全部文章 →</Link>
           </div>
           <LedeItem post={featured} index={0} />
@@ -168,9 +215,12 @@ export default function HomeClient() {
       )}
 
       {/* 最新目录 */}
-      <Reveal className="mt-20" delay={80}>
+      <Reveal className="mt-16" delay={80}>
         <div className="section-header">
-          <h2 className="section-title">最新文章</h2>
+          <h2 className="section-title">
+            最新文章
+            <span className="mono-num">02</span>
+          </h2>
           <Link href="/posts/" className="section-link">全部文章 →</Link>
         </div>
         {latest.length ? (
@@ -178,17 +228,20 @@ export default function HomeClient() {
             {latest.map((p) => <JournalItem key={p.id} post={p} />)}
           </div>
         ) : (
-          <div className="text-center py-16 text-slate-400">
-            还没有文章，去后台发布第一篇吧～
+          <div className="text-center py-16 rounded-2xl bg-[var(--t-card)] border border-slate-200 dark:border-slate-800 text-slate-400">
+            还没有更多文章，去后台发布新作品吧～
           </div>
         )}
       </Reveal>
 
       {/* 热门排行 */}
       {hot.length > 0 && (
-        <Reveal className="mt-20" delay={120}>
+        <Reveal className="mt-16" delay={120}>
           <div className="section-header">
-            <h2 className="section-title">热门文章</h2>
+            <h2 className="section-title">
+              热门文章
+              <span className="mono-num">03</span>
+            </h2>
           </div>
           <div className="top-list">
             {hot.map((p, i) => <TopItem key={p.id} post={p} index={i} />)}

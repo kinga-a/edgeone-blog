@@ -1,6 +1,6 @@
 'use client';
 
-/** 文章卡片（杂志式）：封面（真实图/分类渐变占位）+ 分类·日期·阅读时长 + 衬线标题 + 摘要 + 标签 */
+/** 文章卡片（杂志式）：封面（真实图/分类占位 + 悬浮角标）+ 日期·阅读时长 + 衬线标题 + 摘要 + 标签 + 底部互动指标 */
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { PostSummary, Tag } from '@/lib/types';
@@ -54,38 +54,65 @@ export default function PostCard({ post }: { post: PostSummary }) {
           loading="lazy"
           className="w-full h-full object-cover"
         />
+        {(post.visibility === 'private' || post.categoryName) && (
+          <div className="absolute top-3 left-3 flex items-center gap-1.5 z-10">
+            {post.visibility === 'private' && (
+              <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-amber-500/90 text-white backdrop-blur-sm shadow-sm">
+                私人
+              </span>
+            )}
+            {post.categoryName && (
+              <span className="px-2.5 py-0.5 rounded-md text-[11px] font-medium bg-black/55 text-white backdrop-blur-sm">
+                {post.categoryName}
+              </span>
+            )}
+          </div>
+        )}
       </Link>
       <div className="card-body">
         <div className="card-meta">
           {post.visibility === 'private' && <span className="card-private">私人</span>}
           {post.categoryName && <span className="card-category">{post.categoryName}</span>}
-          <span className="meta-dot">·</span>
+          {(post.visibility === 'private' || post.categoryName) && <span className="meta-dot">·</span>}
           <span>{fmtDate(post.publishedAt || post.createdAt)}</span>
           <span className="meta-dot">·</span>
           <span>{post.readingTime || 1} 分钟阅读</span>
-          <span className="meta-dot">·</span>
-          <span title="阅读量">{post.views || 0} 阅读</span>
-          <span className="meta-dot">·</span>
-          <span title="评论">{post.commentCount || 0} 评论</span>
-          <span className="meta-dot">·</span>
-          <span title="点赞">{post.likes || 0} 赞</span>
         </div>
-        <Link href={`/posts/${post.slug}/`}>
+
+        <Link href={`/posts/${post.slug}/`} className="block">
           <h3 className="card-title">{post.title}</h3>
         </Link>
+
         {post.summary && <p className="card-excerpt">{post.summary}</p>}
+
         {tagNames.length > 0 && (
-          <div className="mt-1.5 flex flex-wrap gap-1.5">
+          <div className="mt-1 flex flex-wrap gap-1.5">
             {tagNames.map((name) => (
               <span
                 key={name}
-                className="px-2 py-0.5 rounded text-xs bg-[var(--t-forest-soft)] text-[var(--t-forest)] dark:bg-[rgba(47,91,79,0.3)] dark:text-[#7fb5a4]"
+                className="px-2 py-0.5 rounded-md text-xs bg-[var(--t-forest-soft)] text-[var(--t-forest)] dark:bg-[rgba(47,91,79,0.3)] dark:text-[#7fb5a4]"
               >
                 #{name}
               </span>
             ))}
           </div>
         )}
+
+        <div className="mt-auto pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11.5px] text-slate-400 font-mono">
+          <div className="flex items-center gap-3">
+            <span title="阅读量">{post.views || 0} 阅读</span>
+            <span className="text-slate-300 dark:text-slate-700">·</span>
+            <span title="评论">{post.commentCount || 0} 评论</span>
+            <span className="text-slate-300 dark:text-slate-700">·</span>
+            <span title="点赞">{post.likes || 0} 赞</span>
+          </div>
+          <Link
+            href={`/posts/${post.slug}/`}
+            className="text-brand-600 dark:text-brand-400 font-sans font-medium opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200"
+          >
+            阅读 →
+          </Link>
+        </div>
       </div>
     </article>
   );

@@ -3,13 +3,9 @@
 /**
  * Vditor Markdown 编辑器（后台文章创作）
  * - 动态导入 vditor（SSR 安全），资源走本地 /vditor/（不依赖 unpkg CDN）
- * - 所见即所得模式（WYSIWYG）：粘贴网页 HTML（表格/图片等）直接渲染为真实元素；
- *   工具栏 edit-mode 可切换 所见即所得 / 即时渲染(IR) / 源码(SV) 三种模式
- * - 代码高亮 + 行号
- * - 图片上传：复用站内预签名直传（/api/media/upload-url + PUT Blob），成功后插入 Markdown 图片链接
- * - 自动跟随站点暗色/浅色主题
+ * - 加载期间展示平滑骨架占位，消除挂载闪烁
  */
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import 'vditor/dist/index.css';
 import { api } from '@/lib/api';
 
@@ -43,6 +39,7 @@ export default function VditorEditor({ value, onChange, cacheId = 'blog-post-new
   const editorRef = useRef<VditorInstance | null>(null);
   const changeRef = useRef(onChange);
   changeRef.current = onChange;
+  const [ready, setReady] = useState(false);
 
   // 挂载编辑器（仅客户端执行；依赖 cancelled 标志兼容 StrictMode 双挂载）
   useEffect(() => {
@@ -62,67 +59,64 @@ export default function VditorEditor({ value, onChange, cacheId = 'blog-post-new
 
         try {
           editor = new VditorCtor(mountRef.current, {
-          height: 520,
-          // 即时渲染模式（IR）：常规 Markdown 所见即所得，raw HTML 表格以源码块显示、
-          // 预览区渲染真实表格；工具栏 edit-mode 可切换 所见即所得/即时渲染/源码 三种模式
-          mode: 'ir',
-          // 预览/导出不对 HTML 二次过滤：raw HTML 表格等结构原样预览（内容管理员自写，
-          // 前台渲染由 md.js 白名单清洗兜底）
-          sanitize: (html: string) => html,
-          cache: { id: cacheId, enable: true },
-          theme: isDark() ? 'dark' : 'classic',
-          lang: 'zh_CN',
-          icon: 'material',
-          cdn: '/vditor',
-          placeholder: '开始写作吧…',
-          counter: { enable: true, type: 'text' },
-          toolbarConfig: { pin: true },
-          toolbar: TOOLBAR,
-          preview: {
-            theme: isDark() ? 'dark' : 'light',
-            hljs: { lineNumber: true, style: isDark() ? 'github-dark' : 'github' },
-          },
-          upload: {
-            multiple: true,
-            handler: async (files: File[]) => {
-              let failed = 0;
-              for (const file of files) {
-                try {
-                  const { url, key } = await api.getUploadUrl({
-                    name: file.name,
-                    type: 'image',
-                    contentType: file.type || 'image/png',
-                  });
-                  const put = await fetch(url, { method: 'PUT', body: file });
-                  if (!put.ok) throw new Error(`HTTP ${put.status}`);
-                  editor?.insertMD(`\n![${file.name.replace(/[\[\]]/g, '')}](${`/api/media/${key}`})\n`);
-                } catch {
-                  failed += 1;
-                }
-              }
-              return failed > 0 ? `有 ${failed} 张图片上传失败` : null;
+            height: 520,
+            mode: 'ir',
+            sanitize: (html: string) => html,
+            cache: { id: cacheId, enable: true },
+            theme: isDark() ? 'dark' : 'classic',
+            lang: 'zh_CN',
+            icon: 'material',
+            cdn: '/vditor',
+            placeholder: '开始写作吧…',
+            counter: { enable: true, type: 'text' },
+            toolbarConfig: { pin: true },
+            toolbar: TOOLBAR,
+            preview: {
+              theme: isDark() ? 'dark' : 'light',
+              hljs: { lineNumber: true, style: isDark() ? 'github-dark' : 'github' },
             },
-          },
-          input: (v: string) => changeRef.current(v || ''),
-          after: () => {
-            editorRef.current = editor;
-            // 初始化后用服务器内容覆盖本地草稿缓存（编辑模式），新建模式清空残留草稿
-            try {
-              editor?.setValue(value || '', true);
-            } catch {
-              /* ignore */
-            }
-          },
-        });
+            upload: {
+              multiple: true,
+              handler: async (files: File[]) => {
+                let failed = 0;
+                for (const file of files) {
+                  try {
+                    const { url, key } = await api.getUploadUrl({
+                      name: file.name,
+                      type: 'image',
+                      contentType: file.type || 'image/png',
+                    });
+                    const put = await fetch(url, { method: 'PUT', body: file });
+                    if (!put.ok) throw new Error(`HTTP ${put.status}`);
+                    editor?.insertMD(`\n![${file.name.replace(/[\[\]]/g, '')}](${`/api/media/${key}`})\n`);
+                  } catch {
+                    failed += 1;
+                  }
+                }
+                return failed > 0 ? `有 ${failed} 张图片上传失败` : null;
+              },
+            },
+            input: (v: string) => changeRef.current(v || ''),
+            after: () => {
+              editorRef.current = editor;
+              setReady(true);
+              try {
+                editor?.setValue(value || '', true);
+              } catch {
+                /* ignore */
+              }
+            },
+          });
         } catch (e) {
           console.error('[VditorEditor] 初始化失败:', e);
+          setReady(true);
         }
       })
-      .catch((e) => console.error('[VditorEditor] 加载失败:', e));
+      .catch((e) => {
+        console.error('[VditorEditor] 加载失败:', e);
+        setReady(true);
+      });
 
-    // 拦截粘贴：网页 HTML 表格（含 colspan/rowspan）以原始 HTML 块插入，
-    // 前台 md.js 白名单会透传表格标签并保留合并单元格；避免 Vditor 默认
-    // 转成 Lute 不支持的 kramdown 表格属性语法导致渲染丢失。
     const onPasteCapture = (e: ClipboardEvent) => {
       const html = e.clipboardData?.getData('text/html') || '';
       if (!/<table[\s>]/i.test(html)) return;
@@ -136,8 +130,6 @@ export default function VditorEditor({ value, onChange, cacheId = 'blog-post-new
         doc.querySelectorAll('[style]').forEach((el) => el.removeAttribute('style'));
         const body = doc.body.innerHTML.trim();
         if (body) {
-          // setValue 官方 API：不依赖光标位置，IR/WYSIWYG 均直接渲染；
-          // setValue 的 enableInput=false 不触发 input 回调，需手动同步 onChange
           const ed = editorRef.current;
           if (ed) {
             const cur = ed.getValue() || '';
@@ -194,5 +186,18 @@ export default function VditorEditor({ value, onChange, cacheId = 'blog-post-new
     return () => observer.disconnect();
   }, []);
 
-  return <div ref={mountRef} />;
+  return (
+    <div className="relative min-h-[520px]">
+      {!ready && (
+        <div className="absolute inset-0 p-5 space-y-4 bg-[var(--t-card)] dark:bg-slate-800 z-10" aria-hidden="true">
+          <div className="skeleton h-9 w-full rounded-lg" />
+          <div className="skeleton h-6 w-1/3 rounded-md mt-4" />
+          <div className="skeleton h-4 w-full rounded" />
+          <div className="skeleton h-4 w-5/6 rounded" />
+          <div className="skeleton h-4 w-2/3 rounded" />
+        </div>
+      )}
+      <div ref={mountRef} />
+    </div>
+  );
 }

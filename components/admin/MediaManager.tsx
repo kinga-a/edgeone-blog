@@ -1,6 +1,6 @@
 'use client';
 
-/** 媒体库：浏览器直传 Blob（presigned URL）+ 列表 + 删除 */
+/** 媒体库：浏览器直传 Blob（presigned URL）+ 分段筛选 + 列表 + 删除 */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Btn, Card, Empty, Loading, RowBtn, Table, Td, Th, useToast, Badge } from './ui';
 import { api } from '@/lib/api';
@@ -45,7 +45,7 @@ export default function MediaManager() {
     const kind = file.type.startsWith('image/') ? 'image' : 'attachment';
     setUploading(true);
     try {
-      const { url, key, uid } = await api.getUploadUrl({ name: file.name, type: kind, contentType: file.type });
+      const { url, key } = await api.getUploadUrl({ name: file.name, type: kind, contentType: file.type });
       const res = await fetch(url, {
         method: 'PUT',
         body: file,
@@ -79,20 +79,29 @@ export default function MediaManager() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">媒体库</h1>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 font-display">媒体库</h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">共 {total} 个文件 · 存储于 EdgeOne Blob，上传走浏览器直传</p>
         </div>
-        <div className="flex items-center gap-2">
-          <select
-            value={type}
-            onChange={(e) => { setType(e.target.value as typeof type); setPage(1); }}
-            className="px-3 py-2 rounded-lg bg-[var(--t-card)] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none"
-          >
-            {TYPES.map((t) => <option key={t.value || 'all'} value={t.value}>{t.label}</option>)}
-          </select>
-          <Btn onClick={() => fileRef.current?.click()} disabled={uploading}>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 rounded-xl p-1 border border-slate-200 dark:border-slate-700">
+            {TYPES.map((t) => (
+              <button
+                key={t.value || 'all'}
+                type="button"
+                onClick={() => { setType(t.value); setPage(1); }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  type === t.value
+                    ? 'bg-[var(--t-card)] dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <Btn onClick={() => fileRef.current?.click()} disabled={uploading} loading={uploading}>
             {uploading ? '上传中…' : '＋ 上传文件'}
           </Btn>
           <input ref={fileRef} type="file" className="hidden" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
@@ -102,12 +111,12 @@ export default function MediaManager() {
       <Card className="!p-0 overflow-hidden">
         {loading ? <Loading /> : items.length ? (
           <>
-            <Table head={<><Th>预览</Th><Th>文件名</Th><Th>类型</Th><Th>上传时间</Th><Th className="text-right">操作</Th></>}>
+            <Table head={<><Th>预览</Th><Th>文件名 / Key</Th><Th>类型</Th><Th>上传时间</Th><Th className="text-right">操作</Th></>}>
               {items.map((m) => (
-                <tr key={m.uid} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                <tr key={m.uid} className="hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
                   <Td>
                     {m.type === 'attachment' ? (
-                      <div className="w-16 h-10 rounded bg-slate-100 dark:bg-slate-700/50 flex items-center justify-center text-slate-400">
+                      <div className="w-16 h-11 rounded-lg bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                           <path d="M6 3h12a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="currentColor" strokeWidth="1.5" />
                           <path d="M9 8h6M9 12h6M9 16h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -115,22 +124,23 @@ export default function MediaManager() {
                       </div>
                     ) : (
                       /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={mediaUrl(m.key)} alt={m.name} loading="lazy" className="w-16 h-10 rounded object-cover bg-slate-100 dark:bg-slate-700/50" />
+                      <img src={mediaUrl(m.key)} alt={m.name} loading="lazy" className="w-16 h-11 rounded-lg object-cover bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-700" />
                     )}
                   </Td>
                   <Td>
                     <div className="font-medium text-slate-800 dark:text-slate-200 max-w-56 truncate">{m.name}</div>
-                    <button onClick={() => copyKey(m.key)} className="text-xs text-slate-400 hover:text-brand-500 font-mono truncate max-w-56 block" title="复制 key">
+                    <button onClick={() => copyKey(m.key)} className="mt-0.5 text-xs text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 font-mono truncate max-w-56 block transition-colors" title="点击复制 key">
                       {m.key}
                     </button>
                   </Td>
                   <Td><Badge tone={m.type === 'cover' ? 'blue' : m.type === 'image' ? 'green' : 'gray'}>{m.type === 'cover' ? '封面' : m.type === 'image' ? '图片' : '附件'}</Badge></Td>
-                  <Td className="text-slate-500 dark:text-slate-400 whitespace-nowrap">{fmtDate(m.uploadedAt)}</Td>
+                  <Td className="text-slate-500 dark:text-slate-400 font-mono text-xs whitespace-nowrap">{fmtDate(m.uploadedAt)}</Td>
                   <Td className="text-right whitespace-nowrap">
-                    <div className="inline-flex items-center gap-1">
+                    <div className="inline-flex items-center gap-1.5">
                       <a href={mediaUrl(m.key)} target="_blank" rel="noopener noreferrer">
                         <RowBtn variant="ghost">打开</RowBtn>
                       </a>
+                      <RowBtn onClick={() => copyKey(m.key)}>复制 Key</RowBtn>
                       <RowBtn variant="danger" onClick={() => remove(m)}>删除</RowBtn>
                     </div>
                   </Td>
@@ -138,9 +148,9 @@ export default function MediaManager() {
               ))}
             </Table>
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 py-4 border-t border-slate-100 dark:border-slate-700/50">
+              <div className="flex items-center justify-center gap-2.5 py-4 border-t border-slate-100 dark:border-slate-700">
                 <Btn size="sm" variant="secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>上一页</Btn>
-                <span className="text-xs text-slate-400">{page} / {totalPages}</span>
+                <span className="text-xs font-mono text-slate-400">{page} / {totalPages}</span>
                 <Btn size="sm" variant="secondary" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>下一页</Btn>
               </div>
             )}

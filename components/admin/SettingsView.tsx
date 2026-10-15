@@ -2,7 +2,7 @@
 
 /** 站点设置：基本信息 / SEO / 社交 / 评论策略 / TOTP 安全验证 / 备份 */
 import { useEffect, useRef, useState } from 'react';
-import { Btn, Card, Field, Input, SaveState, Textarea, useToast } from './ui';
+import { Btn, Card, Field, Input, Loading, SaveState, Textarea, useToast } from './ui';
 import { api } from '@/lib/api';
 import type { PostSummary, SiteConfig } from '@/lib/types';
 
@@ -12,7 +12,6 @@ export default function SettingsView() {
   const [dirty, setDirty] = useState(false);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const toast = useToast();
-  // 已保存基线（config + 精选勾选顺序），用于未保存修改判定
   const baseRef = useRef<{ config: SiteConfig; featured: string[] } | null>(null);
 
   // TOTP
@@ -20,12 +19,11 @@ export default function SettingsView() {
   const [totpSecret, setTotpSecret] = useState('');
   const [totpUri, setTotpUri] = useState('');
   const [totpCode, setTotpCode] = useState('');
-  const [totpStep, setTotpStep] = useState<'idle' | 'pending'>('idle'); // idle=未启用流程 | pending=已生成密钥待验证
+  const [totpStep, setTotpStep] = useState<'idle' | 'pending'>('idle');
   const [totpBusy, setTotpBusy] = useState(false);
 
   // 备份
   const [backupBusy, setBackupBusy] = useState(false);
-  // 备份文件选择 input（必须在早期 return 之前声明，保持 Hook 顺序稳定）
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 首页精选文章
@@ -44,7 +42,6 @@ export default function SettingsView() {
     api.me().then((d) => {
       if (d?.ok) setTotpEnabled(Boolean(d.totpEnabled));
     }).catch(() => {});
-    // 加载全部文章供精选勾选（分页拉取，直到取完）
     (async () => {
       const all: PostSummary[] = [];
       let page = 1;
@@ -63,27 +60,19 @@ export default function SettingsView() {
     })();
   }, []);
 
-  // 与已保存基线比较：任一字段或精选顺序变化 → 有未保存修改
   useEffect(() => {
     if (!config) return;
     const b = baseRef.current;
     if (!b) return;
     const c = config;
-    const dirty =
+    const isDirty =
       JSON.stringify(c) !== JSON.stringify(b.config) ||
       featuredChecked.length !== b.featured.length ||
       featuredChecked.some((id, i) => id !== b.featured[i]);
-    setDirty(dirty);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setDirty(isDirty);
   }, [config, featuredChecked]);
 
-  if (!config) return (
-    <div className="py-10 space-y-3" aria-hidden="true">
-      <div className="skeleton h-6 w-1/3 rounded" />
-      <div className="skeleton h-4 w-2/3 rounded" />
-      <div className="skeleton h-4 w-1/2 rounded" />
-    </div>
-  );
+  if (!config) return <Loading />;
 
   const set = (patch: Partial<SiteConfig>) => setConfig({ ...config, ...patch });
   const setNested = <K extends 'seo' | 'social'>(key: K, patch: Partial<SiteConfig[K]>) =>
@@ -91,7 +80,6 @@ export default function SettingsView() {
   const setBackup = (patch: Partial<NonNullable<SiteConfig['backup']>>) =>
     setConfig({ ...config, backup: { ...(config.backup || {}), ...patch } } as SiteConfig);
 
-  /** 精选文章勾选切换：保持勾选顺序（先勾的在前） */
   const toggleFeatured = (id: string) => {
     setFeaturedChecked((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
@@ -132,7 +120,7 @@ export default function SettingsView() {
     if (!totpCode.trim()) { toast('请输入 6 位验证码', 'error'); return; }
     setTotpBusy(true);
     try {
-      const d = await api.totpAction('verify', totpCode.trim());
+      await api.totpAction('verify', totpCode.trim());
       setTotpEnabled(true);
       setTotpStep('idle');
       setTotpSecret('');
@@ -149,7 +137,7 @@ export default function SettingsView() {
     if (!totpCode.trim()) { toast('请输入当前验证码以确认关闭', 'error'); return; }
     setTotpBusy(true);
     try {
-      const d = await api.totpAction('disable', totpCode.trim());
+      await api.totpAction('disable', totpCode.trim());
       setTotpEnabled(false);
       setTotpCode('');
       toast('TOTP 二次验证已关闭');
@@ -226,16 +214,16 @@ export default function SettingsView() {
 
   return (
     <div>
-      {/* 吸顶工具栏：标题 + 保存状态 + 保存设置（滚动时始终可见） */}
-      <div className="sticky top-14 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 mb-5 bg-[#faf7f1]/95 dark:bg-[#292524]/95 backdrop-blur border-b border-slate-200/70 dark:border-slate-700/60">
+      {/* 吸顶工具栏：标题 + 保存状态 + 保存设置 */}
+      <div className="sticky top-16 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 mb-5 bg-[#faf7f1]/90 dark:bg-[#1c1916]/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-700">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">站点设置</h1>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 font-display">站点设置</h1>
             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">配置展示在首页、页脚、SEO 与订阅源中的站点信息</p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2.5 shrink-0">
             <span className="hidden sm:block"><SaveState dirty={dirty} busy={busy} savedAt={savedAt} /></span>
-            <Btn onClick={save} disabled={busy}>{busy ? '保存中…' : '保存设置'}</Btn>
+            <Btn onClick={save} disabled={busy} loading={busy}>{busy ? '保存中…' : '保存设置'}</Btn>
           </div>
         </div>
       </div>
@@ -254,7 +242,7 @@ export default function SettingsView() {
               <Input value={config.author} onChange={(e) => set({ author: e.target.value })} />
             </Field>
             <Field label="站点 URL" hint="用于 canonical / sitemap / RSS 的绝对地址，如 https://blog.example.com">
-              <Input value={config.siteUrl} onChange={(e) => set({ siteUrl: e.target.value })} placeholder="https://…" />
+              <Input value={config.siteUrl} onChange={(e) => set({ siteUrl: e.target.value })} placeholder="https://…" className="font-mono text-xs" />
             </Field>
             <Field label="站点描述">
               <Input value={config.description} onChange={(e) => set({ description: e.target.value })} />
@@ -270,8 +258,8 @@ export default function SettingsView() {
             </Field>
           </div>
           <div className="mt-4">
-            <Field label="网站图标 URL（favicon）" hint="填写图片 URL 作为浏览器标签页/收藏夹图标，如 https://example.com/favicon.png；留空使用默认图标">
-              <Input value={config.faviconUrl || ''} onChange={(e) => set({ faviconUrl: e.target.value })} placeholder="https://…" />
+            <Field label="网站图标 URL（favicon）" hint="填写图片 URL 作为浏览器标签页/收藏夹图标；留空使用默认图标">
+              <Input value={config.faviconUrl || ''} onChange={(e) => set({ faviconUrl: e.target.value })} placeholder="https://…" className="font-mono text-xs" />
             </Field>
           </div>
           <div className="mt-4">
@@ -291,9 +279,9 @@ export default function SettingsView() {
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
             勾选要展示在首页「精选文章 01」区的文章，按勾选顺序排列（第一篇为精选大卡，后两篇为侧边小卡）；留空则自动取最新文章。
           </p>
-          <div className="max-h-64 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-lg divide-y divide-slate-100 dark:divide-slate-800">
+          <div className="max-h-64 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-xl divide-y divide-slate-100 dark:divide-slate-800">
             {allPosts.length === 0 ? (
-              <div className="px-3 py-4 text-sm text-slate-400 text-center">文章加载中…</div>
+              <div className="px-3 py-6 text-sm text-slate-400 text-center">文章加载中…</div>
             ) : (
               allPosts.map((p) => {
                 const idx = featuredChecked.indexOf(p.id);
@@ -301,7 +289,7 @@ export default function SettingsView() {
                 return (
                   <label
                     key={p.id}
-                    className={`flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors ${checked ? 'bg-brand-50 dark:bg-brand-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'}`}
+                    className={`flex items-center gap-3 px-3.5 py-2.5 cursor-pointer transition-colors ${checked ? 'bg-brand-50 dark:bg-brand-900' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}
                   >
                     <input
                       type="checkbox"
@@ -311,7 +299,9 @@ export default function SettingsView() {
                     />
                     <span className="flex-1 text-sm text-slate-800 dark:text-slate-200 truncate">{p.title}</span>
                     {checked && (
-                      <span className="text-xs font-mono text-brand-600 dark:text-brand-400 shrink-0">精选 #{idx + 1}</span>
+                      <span className="px-2 py-0.5 rounded-full bg-brand-100 dark:bg-brand-500 text-xs font-mono text-brand-600 dark:text-brand-400 shrink-0">
+                        精选 #{idx + 1}
+                      </span>
                     )}
                     <span className="text-xs text-slate-400 shrink-0">{p.status === 'published' ? '已发布' : p.status === 'draft' ? '草稿' : '私人'}</span>
                   </label>
@@ -324,11 +314,11 @@ export default function SettingsView() {
         <Card>
           <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">评论策略</h2>
           <div className="space-y-3">
-            <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+            <label className="flex items-center gap-2.5 text-sm text-slate-700 dark:text-slate-300 cursor-pointer">
               <input type="checkbox" checked={config.commentEnabled !== false} onChange={(e) => set({ commentEnabled: e.target.checked })} className="accent-brand-600" />
               启用评论功能
             </label>
-            <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+            <label className="flex items-center gap-2.5 text-sm text-slate-700 dark:text-slate-300 cursor-pointer">
               <input type="checkbox" checked={config.commentModeration !== false} onChange={(e) => set({ commentModeration: e.target.checked })} className="accent-brand-600" />
               新评论需要审核后才展示
             </label>
@@ -342,7 +332,7 @@ export default function SettingsView() {
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 为后台登录启用 TOTP 二次验证：登录时除密码外还需输入身份验证器（Google Authenticator / 1Password 等）中的 6 位动态验证码。
               </p>
-              <Btn onClick={startTotp} disabled={totpBusy}>{totpBusy ? '生成中…' : '生成密钥并启用'}</Btn>
+              <Btn onClick={startTotp} disabled={totpBusy} loading={totpBusy}>{totpBusy ? '生成中…' : '生成密钥并启用'}</Btn>
             </div>
           ) : !totpEnabled && totpStep === 'pending' ? (
             <div className="space-y-4">
@@ -355,33 +345,35 @@ export default function SettingsView() {
                   <img
                     src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(totpUri)}`}
                     alt="TOTP 二维码"
-                    className="w-44 h-44 rounded-lg border border-slate-200 dark:border-slate-700 bg-[var(--t-card)] p-2"
+                    className="w-44 h-44 rounded-xl border border-slate-200 dark:border-slate-700 bg-[var(--t-card)] p-2 shadow-sm"
                   />
                 </div>
               )}
               <div className="flex items-center gap-2">
-                <code className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-sm break-all">{totpSecret}</code>
+                <code className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-sm font-mono break-all border border-slate-200 dark:border-slate-700">{totpSecret}</code>
                 <Btn size="sm" variant="secondary" onClick={() => copyText(totpSecret, '密钥')}>复制</Btn>
               </div>
-              <div className="flex items-end gap-2">
-                <Field label="动态验证码" >
-                  <Input value={totpCode} onChange={(e) => setTotpCode(e.target.value)} placeholder="6 位验证码" inputMode="numeric" className="w-40" />
+              <div className="flex flex-wrap items-end gap-2">
+                <Field label="动态验证码">
+                  <Input value={totpCode} onChange={(e) => setTotpCode(e.target.value)} placeholder="6 位验证码" inputMode="numeric" className="w-40 font-mono text-center tracking-widest" />
                 </Field>
-                <Btn onClick={verifyTotp} disabled={totpBusy}>{totpBusy ? '验证中…' : '验证并启用'}</Btn>
+                <Btn onClick={verifyTotp} disabled={totpBusy} loading={totpBusy}>{totpBusy ? '验证中…' : '验证并启用'}</Btn>
                 <Btn variant="secondary" onClick={() => { setTotpStep('idle'); setTotpSecret(''); setTotpUri(''); }}>取消</Btn>
               </div>
             </div>
           ) : (
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-sm">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">已启用</span>
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-500/20">
+                  已启用
+                </span>
                 <span className="text-slate-500 dark:text-slate-400">登录时需要输入动态验证码</span>
               </div>
-              <div className="flex items-end gap-2">
+              <div className="flex flex-wrap items-end gap-2">
                 <Field label="输入当前验证码以关闭">
-                  <Input value={totpCode} onChange={(e) => setTotpCode(e.target.value)} placeholder="6 位验证码" inputMode="numeric" className="w-40" />
+                  <Input value={totpCode} onChange={(e) => setTotpCode(e.target.value)} placeholder="6 位验证码" inputMode="numeric" className="w-40 font-mono text-center tracking-widest" />
                 </Field>
-                <Btn variant="danger" onClick={disableTotp} disabled={totpBusy}>{totpBusy ? '处理中…' : '关闭 TOTP'}</Btn>
+                <Btn variant="danger" onClick={disableTotp} disabled={totpBusy} loading={totpBusy}>{totpBusy ? '处理中…' : '关闭 TOTP'}</Btn>
               </div>
             </div>
           )}
@@ -390,26 +382,26 @@ export default function SettingsView() {
         <Card>
           <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">备份与恢复</h2>
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm text-slate-700 dark:text-slate-300">全量导出（KV 全部数据）</p>
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">全量导出（KV 全部数据）</p>
                 <p className="text-xs text-slate-400 mt-0.5">下载 JSON 备份文件，包含文章、分类、标签、评论、媒体元数据、配置与统计</p>
               </div>
-              <Btn variant="secondary" onClick={doExport} disabled={backupBusy}>立即导出</Btn>
+              <Btn variant="secondary" onClick={doExport} disabled={backupBusy} loading={backupBusy}>立即导出</Btn>
             </div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm text-slate-700 dark:text-slate-300">从文件恢复</p>
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">从文件恢复</p>
                 <p className="text-xs text-slate-400 mt-0.5">选择之前导出的 JSON 备份，合并式覆盖恢复（同键覆盖，缺失键保留）</p>
               </div>
               <input ref={fileInputRef} type="file" accept="application/json,.json" className="hidden" onChange={onPickBackupFile} />
               <Btn variant="secondary" onClick={() => fileInputRef.current?.click()} disabled={backupBusy}>选择文件恢复</Btn>
             </div>
-            <div className="border-t border-slate-100 dark:border-slate-700/50 pt-4">
-              <p className="text-sm text-slate-700 dark:text-slate-300 mb-3">WebDAV 备份 / 恢复</p>
+            <div className="border-t border-slate-100 dark:border-slate-700 pt-4">
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">WebDAV 备份 / 恢复</p>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="WebDAV 地址" hint="完整文件 URL，如 https://dav.example.com/backup/blog.json">
-                  <Input value={config.backup?.webdavUrl || ''} onChange={(e) => setBackup({ webdavUrl: e.target.value })} placeholder="https://dav.example.com/backup/blog.json" />
+                  <Input value={config.backup?.webdavUrl || ''} onChange={(e) => setBackup({ webdavUrl: e.target.value })} placeholder="https://dav.example.com/backup/blog.json" className="font-mono text-xs" />
                 </Field>
                 <Field label="用户名">
                   <Input value={config.backup?.webdavUsername || ''} onChange={(e) => setBackup({ webdavUsername: e.target.value })} />
@@ -418,12 +410,12 @@ export default function SettingsView() {
                   <Input value={config.backup?.webdavPassword || ''} onChange={(e) => setBackup({ webdavPassword: e.target.value })} type="password" />
                 </Field>
                 <Field label="子目录（可选）">
-                  <Input value={config.backup?.webdavPath || ''} onChange={(e) => setBackup({ webdavPath: e.target.value })} placeholder="/backups" />
+                  <Input value={config.backup?.webdavPath || ''} onChange={(e) => setBackup({ webdavPath: e.target.value })} placeholder="/backups" className="font-mono text-xs" />
                 </Field>
               </div>
               <p className="text-xs text-slate-400 mt-2">保存设置后，点击「立即备份」将当前全部数据推送到 WebDAV（PUT 覆盖）；「从 WebDAV 恢复」拉取该文件并合并式覆盖恢复</p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <Btn onClick={doWebdav} disabled={backupBusy}>{backupBusy ? '处理中…' : '立即备份到 WebDAV'}</Btn>
+                <Btn onClick={doWebdav} disabled={backupBusy} loading={backupBusy}>{backupBusy ? '处理中…' : '立即备份到 WebDAV'}</Btn>
                 <Btn variant="secondary" onClick={doRestoreWebdav} disabled={backupBusy}>{backupBusy ? '处理中…' : '从 WebDAV 恢复'}</Btn>
                 <Btn variant="secondary" onClick={save} disabled={busy}>保存 WebDAV 配置</Btn>
               </div>
@@ -435,7 +427,7 @@ export default function SettingsView() {
           <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">SEO</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="默认分享图（OG 图片 URL）">
-              <Input value={config.seo.ogImage} onChange={(e) => setNested('seo', { ogImage: e.target.value })} placeholder="https://…/og.png" />
+              <Input value={config.seo.ogImage} onChange={(e) => setNested('seo', { ogImage: e.target.value })} placeholder="https://…/og.png" className="font-mono text-xs" />
             </Field>
             <Field label="Twitter 账号">
               <Input value={config.seo.twitterHandle} onChange={(e) => setNested('seo', { twitterHandle: e.target.value })} placeholder="username" />
@@ -450,16 +442,16 @@ export default function SettingsView() {
           <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">社交链接</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="GitHub">
-              <Input value={config.social.github} onChange={(e) => setNested('social', { github: e.target.value })} placeholder="https://github.com/…" />
+              <Input value={config.social.github} onChange={(e) => setNested('social', { github: e.target.value })} placeholder="https://github.com/…" className="font-mono text-xs" />
             </Field>
             <Field label="Twitter / X">
-              <Input value={config.social.twitter} onChange={(e) => setNested('social', { twitter: e.target.value })} placeholder="https://twitter.com/…" />
+              <Input value={config.social.twitter} onChange={(e) => setNested('social', { twitter: e.target.value })} placeholder="https://twitter.com/…" className="font-mono text-xs" />
             </Field>
             <Field label="微信">
               <Input value={config.social.wechat} onChange={(e) => setNested('social', { wechat: e.target.value })} />
             </Field>
             <Field label="邮箱">
-              <Input value={config.social.email} onChange={(e) => setNested('social', { email: e.target.value })} placeholder="hello@example.com" />
+              <Input value={config.social.email} onChange={(e) => setNested('social', { email: e.target.value })} placeholder="hello@example.com" className="font-mono text-xs" />
             </Field>
           </div>
         </Card>

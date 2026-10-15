@@ -60,17 +60,22 @@ export default function CommentsManager() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">评论审核</h1>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 font-display">评论审核</h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">新评论默认进入待审核队列，通过后展示在文章页</p>
         </div>
-        <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+        <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 rounded-xl p-1 border border-slate-200 dark:border-slate-700 self-start sm:self-auto">
           {STATUS_FILTERS.map((f) => (
             <button
               key={f.value || 'all'}
+              type="button"
               onClick={() => { setStatus(f.value); setPage(1); }}
-              className={`px-3 py-1.5 rounded-md text-xs transition-colors ${status === f.value ? 'bg-[var(--t-card)] dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                status === f.value
+                  ? 'bg-[var(--t-card)] dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
             >
               {f.label}
             </button>
@@ -81,16 +86,18 @@ export default function CommentsManager() {
       <Card className="!p-0 overflow-hidden">
         {loading ? <Loading /> : items.length ? (
           <>
-            <Table head={<><Th>评论内容</Th><Th>文章</Th><Th>状态</Th><Th>时间</Th><Th className="text-right">操作</Th></>}>
+            <Table head={<><Th>评论内容</Th><Th>所属文章</Th><Th>状态</Th><Th>时间</Th><Th className="text-right">操作</Th></>}>
               {items.map((c) => (
-                <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
                   <Td className="max-w-md">
-                    <div className="font-medium text-slate-800 dark:text-slate-200">{c.author}</div>
-                    <div className="mt-1 text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{c.content}</div>
-                    {c.email && <div className="mt-1 text-xs text-slate-400">{c.email}</div>}
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-slate-800 dark:text-slate-200">{c.author}</span>
+                      {c.email && <span className="text-xs font-mono text-slate-400">{c.email}</span>}
+                    </div>
+                    <div className="mt-1 text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">{c.content}</div>
                   </Td>
                   <Td className="text-slate-500 dark:text-slate-400">
-                    <a href={`/posts/${c.postSlug}/`} target="_blank" rel="noopener noreferrer" className="hover:text-brand-600 dark:hover:text-brand-400">
+                    <a href={`/posts/${c.postSlug}/`} target="_blank" rel="noopener noreferrer" className="hover:text-brand-600 dark:hover:text-brand-400 font-medium">
                       <span className="max-w-40 block truncate">{c.postTitle}</span>
                     </a>
                   </Td>
@@ -99,9 +106,9 @@ export default function CommentsManager() {
                       {c.status === 'approved' ? '已通过' : c.status === 'pending' ? '待审核' : '已拒绝'}
                     </Badge>
                   </Td>
-                  <Td className="text-slate-500 dark:text-slate-400 whitespace-nowrap">{fmtDate(c.createdAt)}</Td>
+                  <Td className="text-slate-500 dark:text-slate-400 font-mono text-xs whitespace-nowrap">{fmtDate(c.createdAt)}</Td>
                   <Td className="text-right whitespace-nowrap">
-                    <div className="inline-flex items-center gap-1">
+                    <div className="inline-flex items-center gap-1.5">
                       {c.status !== 'approved' && (
                         <RowBtn variant="ghost" onClick={() => moderate(c, 'approved')}>通过</RowBtn>
                       )}
@@ -115,9 +122,9 @@ export default function CommentsManager() {
               ))}
             </Table>
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 py-4 border-t border-slate-100 dark:border-slate-700/50">
+              <div className="flex items-center justify-center gap-2.5 py-4 border-t border-slate-100 dark:border-slate-700">
                 <Btn size="sm" variant="secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>上一页</Btn>
-                <span className="text-xs text-slate-400">{page} / {totalPages}</span>
+                <span className="text-xs font-mono text-slate-400">{page} / {totalPages}</span>
                 <Btn size="sm" variant="secondary" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>下一页</Btn>
               </div>
             )}

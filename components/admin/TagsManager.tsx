@@ -10,6 +10,7 @@ import { fmtDate } from '@/lib/utils';
 export default function TagsManager() {
   const [items, setItems] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<Tag | null>(null);
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
@@ -34,6 +35,7 @@ export default function TagsManager() {
 
   const save = async () => {
     if (!name.trim()) { toast('请输入标签名称', 'error'); return; }
+    setBusy(true);
     try {
       const body = { name, slug, sort: Number(sort) || 0 };
       if (editing) {
@@ -48,6 +50,7 @@ export default function TagsManager() {
     } catch (e) {
       toast(e instanceof Error ? e.message : '操作失败', 'error');
     }
+    setBusy(false);
   };
 
   const remove = async (t: Tag) => {
@@ -63,23 +66,26 @@ export default function TagsManager() {
 
   return (
     <div>
-      <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-5">标签管理</h1>
+      <div className="mb-5">
+        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 font-display">标签管理</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">管理文章关联标签与展示排序</p>
+      </div>
 
       <div className="grid gap-5 lg:grid-cols-[320px_1fr]">
         <Card>
           <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">{editing ? '编辑标签' : '新建标签'}</h2>
-          <div className="space-y-3">
+          <div className="space-y-3.5">
             <Field label="名称">
               <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="如：Next.js" />
             </Field>
             <Field label="别名（slug）" hint="留空自动生成">
-              <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="nextjs" />
+              <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="nextjs" className="font-mono text-xs" />
             </Field>
             <Field label="排序" hint="数字越小越靠前，默认 0">
               <Input type="number" value={sort} onChange={(e) => setSort(e.target.value)} placeholder="0" />
             </Field>
             <div className="flex gap-2 pt-1">
-              <Btn onClick={save}>{editing ? '保存修改' : '创建标签'}</Btn>
+              <Btn onClick={save} loading={busy}>{editing ? '保存修改' : '创建标签'}</Btn>
               {editing && <Btn variant="secondary" onClick={() => startEdit()}>取消</Btn>}
             </div>
           </div>
@@ -89,14 +95,18 @@ export default function TagsManager() {
           {loading ? <Loading /> : items.length ? (
             <Table head={<><Th>名称</Th><Th>别名</Th><Th>排序</Th><Th>文章数</Th><Th>创建时间</Th><Th className="text-right">操作</Th></>}>
               {items.map((t) => (
-                <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                  <Td className="font-medium text-slate-800 dark:text-slate-200">#{t.name}</Td>
-                  <Td className="text-slate-500 dark:text-slate-400 text-xs">/{t.slug}/</Td>
-                  <Td className="text-slate-500 dark:text-slate-400 font-mono">{t.sort || 0}</Td>
-                  <Td className="text-slate-500 dark:text-slate-400">{t.postCount || 0}</Td>
-                  <Td className="text-slate-500 dark:text-slate-400 whitespace-nowrap">{fmtDate(t.createdAt)}</Td>
+                <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                  <Td className="font-medium text-slate-800 dark:text-slate-200">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-brand-50 text-brand-600 dark:text-brand-400 text-xs font-medium">
+                      #{t.name}
+                    </span>
+                  </Td>
+                  <Td className="text-slate-500 dark:text-slate-400 font-mono text-xs">/{t.slug}/</Td>
+                  <Td className="text-slate-500 dark:text-slate-400 font-mono text-xs">{t.sort || 0}</Td>
+                  <Td className="text-slate-500 dark:text-slate-400 font-mono text-xs">{t.postCount || 0}</Td>
+                  <Td className="text-slate-500 dark:text-slate-400 font-mono text-xs whitespace-nowrap">{fmtDate(t.createdAt)}</Td>
                   <Td className="text-right whitespace-nowrap">
-                    <div className="inline-flex items-center gap-1">
+                    <div className="inline-flex items-center gap-1.5">
                       <RowBtn onClick={() => startEdit(t)}>编辑</RowBtn>
                       <RowBtn variant="danger" onClick={() => remove(t)}>删除</RowBtn>
                     </div>

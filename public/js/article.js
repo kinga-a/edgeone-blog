@@ -1,5 +1,6 @@
 /**
  * 服务端渲染文章页交互脚本（原生 JS，无依赖）：
+ * - 顶部阅读进度条 + 回到顶部进度环
  * - 阅读量统计（每次会话一次）
  * - 点赞（localStorage 防重复）
  * - 评论提交与审核提示
@@ -59,6 +60,11 @@
   (function () {
     var btn = document.getElementById('btn-like');
     if (!btn) return;
+    try {
+      if (localStorage.getItem('blog-liked-' + postId) === '1') {
+        btn.classList.add('liked');
+      }
+    } catch (e) {}
     btn.addEventListener('click', function () {
       var key = 'blog-liked-' + postId;
       var liked = false;
@@ -90,7 +96,6 @@
       var author = document.getElementById('c-author');
       var email = document.getElementById('c-email');
       var content = document.getElementById('c-content');
-      var tip = document.getElementById('form-tip');
       if (!author.value.trim() || !content.value.trim()) { setTip('请填写昵称和评论内容'); return; }
       var btn = form.querySelector('.btn-submit');
       btn.disabled = true;
@@ -153,7 +158,7 @@
     s.src = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js';
     s.async = true;
     s.onload = applyHighlight;
-    s.onerror = applyHighlight; // CDN 失败也补行号/复制，只是无高亮
+    s.onerror = applyHighlight;
     document.head.appendChild(s);
   })();
 
@@ -169,7 +174,6 @@
       const code = pre.querySelector('code');
       if (!code) continue;
       const lang = pre.getAttribute('data-lang') || '';
-      // 优先用高亮前缓存的原文，切断对高亮后 DOM 的隐性依赖
       const raw = code.dataset.raw || code.textContent || '';
 
       const wrap = document.createElement('div');
@@ -247,8 +251,13 @@
     }
   })();
 
-  /* ---------- 回到顶部（带阅读进度环） ---------- */
+  /* ---------- 顶部阅读进度条 + 回到顶部（带阅读进度环） ---------- */
   (function () {
+    var topBar = document.createElement('div');
+    topBar.className = 'reading-progress-bar';
+    topBar.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(topBar);
+
     var btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'back-to-top';
@@ -271,6 +280,7 @@
         var total = el.scrollHeight - el.clientHeight;
         var p = total > 0 ? Math.min(1, Math.max(0, el.scrollTop / total)) : 0;
         ring.style.strokeDashoffset = C * (1 - p);
+        topBar.style.width = (p * 100).toFixed(1) + '%';
         btn.classList.toggle('show', window.scrollY > 400);
       });
     }

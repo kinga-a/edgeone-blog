@@ -1,12 +1,12 @@
 'use client';
 
-/** 仪表盘：欢迎区 + 核心指标 + 访问趋势 + 热门文章 TOP5 + 快捷入口/待办（参考浅蓝清新后台风格） */
+/** 仪表盘：欢迎区 + 核心指标 + 访问趋势（带柔和面积渐变填充） + 热门文章 TOP5 + 快捷入口/待办 */
 import { useEffect, useState } from 'react';
 import { Card, Loading, Empty, Badge } from './ui';
 import type { AdminStats } from '@/lib/types';
 import { api } from '@/lib/api';
 
-/** 近 30 天访问趋势：折线图（悬停显示数值，点击固定数值，再点取消） */
+/** 近 30 天访问趋势：折线图 + 面积渐变填充（悬停显示数值，点击固定数值，再点取消） */
 function TrendChart({ data }: { data: [string, number][] }) {
   const [hover, setHover] = useState<number | null>(null);
   const [pinned, setPinned] = useState<number | null>(null);
@@ -16,7 +16,7 @@ function TrendChart({ data }: { data: [string, number][] }) {
   const padX = 4;
   const padY = 12;
   const pos = (i: number) => {
-    const x = padX + (i / (n - 1)) * (100 - padX * 2);
+    const x = n <= 1 ? 50 : padX + (i / (n - 1)) * (100 - padX * 2);
     const y = padY + (1 - data[i][1] / max) * (100 - padY * 2);
     return { x, y };
   };
@@ -26,22 +26,35 @@ function TrendChart({ data }: { data: [string, number][] }) {
       return `${i === 0 ? 'M' : 'L'}${x.toFixed(2)} ${y.toFixed(2)}`;
     })
     .join(' ');
+  const firstPos = pos(0);
+  const lastPos = pos(Math.max(0, n - 1));
+  const area = `${line} L${lastPos.x.toFixed(2)} 96 L${firstPos.x.toFixed(2)} 96 Z`;
   const active = pinned ?? hover;
 
   return (
     <div
-      className="relative h-36 select-none"
+      className="relative h-40 select-none"
       role="img"
       aria-label={`近 30 天访问趋势，共 ${n} 天，峰值 ${max} 次访问`}
       onMouseLeave={() => { if (pinned === null) setHover(null); }}
     >
-      {/* 折线（纸墨朱砂，2px 非缩放描边） */}
+      {/* 折线 + 柔和面积填充 */}
       <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="trendAreaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--t-brand-500)" stopOpacity="0.22" />
+            <stop offset="100%" stopColor="var(--t-brand-500)" stopOpacity="0.0" />
+          </linearGradient>
+        </defs>
+        <line x1="4" y1="25" x2="96" y2="25" stroke="currentColor" className="text-slate-200 dark:text-slate-700" strokeDasharray="2 2" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+        <line x1="4" y1="55" x2="96" y2="55" stroke="currentColor" className="text-slate-200 dark:text-slate-700" strokeDasharray="2 2" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+        <line x1="4" y1="85" x2="96" y2="85" stroke="currentColor" className="text-slate-200 dark:text-slate-700" strokeDasharray="2 2" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+        {n > 1 && <path d={area} fill="url(#trendAreaGrad)" />}
         <path
           d={line}
           fill="none"
           stroke="var(--t-brand-600)"
-          strokeWidth="2"
+          strokeWidth="2.2"
           vectorEffect="non-scaling-stroke"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -55,7 +68,7 @@ function TrendChart({ data }: { data: [string, number][] }) {
           <div key={date}>
             {on && (
               <div
-                className="absolute z-10 px-2 py-1 rounded-md bg-[var(--t-slate-900)] text-[var(--t-slate-50)] dark:bg-[var(--t-slate-50)] dark:text-[var(--t-slate-900)] text-[11px] leading-none shadow-lg pointer-events-none whitespace-nowrap tabular-nums"
+                className="absolute z-10 px-2.5 py-1 rounded-lg bg-[var(--t-slate-900)] text-[var(--t-slate-50)] dark:bg-[var(--t-slate-50)] dark:text-[var(--t-slate-900)] text-[11px] font-mono leading-none shadow-lg pointer-events-none whitespace-nowrap tabular-nums"
                 style={{
                   left: `${x}%`,
                   top: `${y}%`,
@@ -69,10 +82,10 @@ function TrendChart({ data }: { data: [string, number][] }) {
               </div>
             )}
             <div
-              className={`absolute rounded-full transition-all duration-150 ${
+              className={`absolute rounded-full cursor-pointer transition-all duration-150 ${
                 on
-                  ? 'w-3 h-3 bg-brand-600 dark:bg-brand-400 ring-2 ring-white dark:ring-[var(--t-slate-900)] shadow'
-                  : 'w-2 h-2 bg-brand-400/70 dark:bg-brand-500/80 hover:bg-brand-600 dark:hover:bg-brand-400'
+                  ? 'w-3.5 h-3.5 bg-brand-600 dark:bg-brand-400 ring-2 ring-white dark:ring-[var(--t-slate-900)] shadow'
+                  : 'w-2 h-2 bg-brand-400 dark:bg-brand-500 hover:bg-brand-600 dark:hover:bg-brand-400 hover:scale-125'
               }`}
               style={{ left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)' }}
               onMouseEnter={() => setHover(i)}
@@ -86,11 +99,11 @@ function TrendChart({ data }: { data: [string, number][] }) {
   );
 }
 
-/** 统计卡图标：浅蓝渐变底（参考图风格） */
+/** 统计卡图标 */
 function StatIcon({ d }: { d: string }) {
   return (
-    <span className="w-10 h-10 rounded-lg bg-brand-600 text-white flex items-center justify-center shadow-sm shrink-0">
-      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+    <span className="w-11 h-11 rounded-xl bg-brand-600 text-white flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_2px_6px_rgba(154,67,24,0.2)] shrink-0">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
         <path d={d} />
       </svg>
     </span>
@@ -108,7 +121,7 @@ const ICONS = {
   tags: 'M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8zM7.5 7.5h.01',
 };
 
-/** 快捷入口（真实后台路由，参考图右侧「快捷入口」） */
+/** 快捷入口 */
 const QUICK = [
   { label: '写文章', hash: '#/posts/new', icon: 'M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z' },
   { label: '文章管理', hash: '#/posts', icon: 'M6 3h9l4 4v14H6V3zM15 3v5h4M9 13h6M9 17h6' },
@@ -152,19 +165,27 @@ export default function DashboardView() {
 
   return (
     <div className="space-y-6">
-      {/* 欢迎区（参考图 B2B 工作台问候） */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
+      {/* 欢迎区 */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-[var(--t-card)] dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-[var(--shadow-xs)]">
         <div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 font-display">您好，欢迎回来</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">博客内容与访问数据总览</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">博客内容与实时访问数据总览</p>
         </div>
-        <Badge tone="blue">数据已更新</Badge>
+        <div className="flex items-center gap-2.5 self-start sm:self-auto">
+          <Badge tone="blue">数据已同步</Badge>
+          <a
+            href="#/posts/new"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-medium bg-brand-600 text-white hover:bg-brand-700 transition-all shadow-sm"
+          >
+            ＋ 写新文章
+          </a>
+        </div>
       </div>
 
-      {/* 核心指标（参考图 4 主卡） */}
+      {/* 核心指标 */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {mainCards.map((c) => (
-          <Card key={c.label} className="!p-4 flex items-center gap-3">
+          <Card key={c.label} className="!p-4 flex items-center gap-3.5 hover:-translate-y-0.5 transition-transform">
             <StatIcon d={c.icon} />
             <div className="min-w-0">
               <div className="text-xs text-slate-400">{c.label}</div>
@@ -174,59 +195,61 @@ export default function DashboardView() {
         ))}
       </div>
 
-      {/* 次级指标（参考图「销售额/采购额/库存总值」行） */}
+      {/* 次级指标 */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {subCards.map((c) => (
-          <Card key={c.label} className="!p-4 flex items-center gap-3">
-            <span className="w-8 h-8 rounded-lg bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center shrink-0">
+          <Card key={c.label} className="!p-4 flex items-center gap-3 hover:-translate-y-0.5 transition-transform">
+            <span className="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 dark:text-brand-400 flex items-center justify-center shrink-0">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
                 <path d={c.icon} />
               </svg>
             </span>
             <div className="min-w-0">
               <div className="text-xs text-slate-400">{c.label}</div>
-              <div className={`mt-0.5 text-xl font-bold truncate tabular-nums ${c.warn ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-slate-100'}`}>{c.value}</div>
+              <div className={`mt-0.5 text-xl font-bold truncate tabular-nums ${c.warn ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-slate-100'}`}>
+                {c.value}
+              </div>
             </div>
           </Card>
         ))}
       </div>
 
-      {/* 左区：趋势 + 排行；右区：快捷入口 + 待办（参考图两栏布局） */}
+      {/* 左区：趋势 + 排行；右区：快捷入口 + 待办 */}
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          {/* 近 30 天访问趋势（折线图，悬停/点击显示具体数值） */}
+          {/* 近 30 天访问趋势 */}
           {trendData.length > 0 && (
             <Card>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">近 30 天访问趋势</h2>
-                <span className="text-xs text-slate-400 tabular-nums">峰值 {Math.max(...trendData.map(([, v]) => v))} 次</span>
+                <span className="text-xs font-mono text-slate-400 tabular-nums">峰值 {Math.max(...trendData.map(([, v]) => v))} 次</span>
               </div>
               <TrendChart data={trendData} />
-              <div className="mt-2 flex justify-between text-[10px] text-slate-400 tabular-nums">
+              <div className="mt-2 flex justify-between text-[11px] font-mono text-slate-400 tabular-nums">
                 <span>{trendData[0]?.[0]}</span>
                 <span>{trendData[trendData.length - 1]?.[0]}</span>
               </div>
             </Card>
           )}
 
-          {/* 热门文章 TOP5（参考图「热销商品 TOP5」大号编号） */}
+          {/* 热门文章 TOP5 */}
           <Card>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">热门文章 TOP5</h2>
-              <a href="#/posts" className="text-xs text-brand-600 dark:text-brand-400 hover:underline">查看全部</a>
+              <a href="#/posts" className="text-xs text-brand-600 dark:text-brand-400 hover:underline">查看全部 →</a>
             </div>
             {topPosts.length ? (
               <div className="space-y-1">
                 {topPosts.map((p, i) => (
-                  <div key={p.id} className="flex items-center gap-4 py-2 border-b border-slate-100 dark:border-slate-700/50 last:border-0">
-                    <span className={`w-8 text-lg font-bold text-slate-200 dark:text-slate-600 ${i < 3 ? 'text-brand-500 dark:text-brand-400' : ''}`}>
-                      {i + 1}
+                  <div key={p.id} className="flex items-center gap-4 py-2.5 px-2 -mx-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 border-b border-slate-100 dark:border-slate-700 last:border-0 transition-colors">
+                    <span className={`w-7 text-lg font-display font-bold ${i < 3 ? 'text-brand-600 dark:text-brand-400' : 'text-slate-300 dark:text-slate-600'}`}>
+                      {String(i + 1).padStart(2, '0')}
                     </span>
-                    <a href={`/posts/${p.slug}/`} target="_blank" rel="noopener noreferrer" className="flex-1 truncate text-sm text-slate-700 dark:text-slate-200 hover:text-brand-600 dark:hover:text-brand-400">
+                    <a href={`/posts/${p.slug}/`} target="_blank" rel="noopener noreferrer" className="flex-1 truncate text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-brand-600 dark:hover:text-brand-400">
                       {p.title}
                     </a>
                     <Badge tone={p.status === 'published' ? 'green' : 'gray'}>{p.status === 'published' ? '已发布' : '草稿'}</Badge>
-                    <span className="text-xs text-slate-400 w-16 text-right shrink-0 tabular-nums">{p.views} 阅读</span>
+                    <span className="text-xs font-mono text-slate-400 w-16 text-right shrink-0 tabular-nums">{p.views} 阅读</span>
                   </div>
                 ))}
               </div>
@@ -238,51 +261,53 @@ export default function DashboardView() {
 
         {/* 右栏 */}
         <div className="space-y-6">
-          {/* 快捷入口（参考图 2×3 网格） */}
+          {/* 快捷入口 */}
           <Card>
             <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">快捷入口</h2>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2.5">
               {QUICK.map((q) => (
                 <a
                   key={q.label}
                   href={q.hash}
-                  className="flex flex-col items-center gap-2 px-2 py-3 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
+                  className="flex flex-col items-center gap-2 px-2 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-brand-50 hover:border-brand-200 dark:hover:border-brand-500 hover:text-brand-600 dark:hover:text-brand-400 hover:-translate-y-0.5 transition-all"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
                     <path d={q.icon} />
                   </svg>
-                  <span className="text-xs">{q.label}</span>
+                  <span className="text-xs font-medium">{q.label}</span>
                 </a>
               ))}
             </div>
           </Card>
 
-          {/* 待办（参考图「今日待办」列表） */}
+          {/* 待办 */}
           <Card>
             <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">待办事项</h2>
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {[
                 { label: '草稿文章', value: stats.draftPosts, href: '#/posts' },
                 { label: '待审核评论', value: stats.pendingComments, href: '#/comments', warn: stats.pendingComments > 0 },
                 { label: '已发布文章', value: stats.publishedPosts, href: '#/posts' },
                 { label: '分类 / 标签', value: `${stats.totalCategories} / ${stats.totalTags}`, href: '#/categories' },
               ].map((t) => (
-                <a key={t.label} href={t.href} className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-700/50 last:border-0">
+                <a key={t.label} href={t.href} className="flex items-center justify-between py-2 px-2.5 -mx-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 border-b border-slate-100 dark:border-slate-700 last:border-0 transition-colors">
                   <span className="text-sm text-slate-600 dark:text-slate-300">{t.label}</span>
-                  <span className={`text-sm font-semibold tabular-nums ${t.warn ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-slate-100'}`}>{t.value}</span>
+                  <span className={`text-sm font-mono font-semibold tabular-nums ${t.warn ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-slate-100'}`}>
+                    {t.value}
+                  </span>
                 </a>
               ))}
             </div>
           </Card>
 
-          {/* 平台信息（参考图「平台公告」；展示真实技术栈，不编造公告） */}
+          {/* 平台信息 */}
           <Card>
             <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">平台信息</h2>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-slate-400">框架</span><span className="text-slate-700 dark:text-slate-200">Next.js</span></div>
-              <div className="flex justify-between"><span className="text-slate-400">样式</span><span className="text-slate-700 dark:text-slate-200">Tailwind CSS</span></div>
-              <div className="flex justify-between"><span className="text-slate-400">托管</span><span className="text-slate-700 dark:text-slate-200">EdgeOne Pages</span></div>
-              <div className="flex justify-between"><span className="text-slate-400">存储</span><span className="text-slate-700 dark:text-slate-200">EdgeOne KV / Blob</span></div>
+            <div className="space-y-2.5 text-sm">
+              <div className="flex justify-between"><span className="text-slate-400">框架</span><span className="font-mono text-xs text-slate-700 dark:text-slate-200">Next.js</span></div>
+              <div className="flex justify-between"><span className="text-slate-400">样式</span><span className="font-mono text-xs text-slate-700 dark:text-slate-200">Tailwind CSS</span></div>
+              <div className="flex justify-between"><span className="text-slate-400">托管</span><span className="font-mono text-xs text-slate-700 dark:text-slate-200">EdgeOne Pages</span></div>
+              <div className="flex justify-between"><span className="text-slate-400">存储</span><span className="font-mono text-xs text-slate-700 dark:text-slate-200">EdgeOne KV / Blob</span></div>
             </div>
           </Card>
         </div>

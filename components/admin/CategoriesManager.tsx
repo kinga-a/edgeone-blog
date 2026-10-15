@@ -14,7 +14,6 @@ function IconPreview({ icon, size = 20 }: { icon?: string; size?: number }) {
   const key = r.kind === 'key' ? r.value : '';
   const inner = key ? CATEGORY_ICON_SET[key] : '';
   if (r.kind === 'svg') {
-    // 自定义 SVG：直接渲染清洗后的内容
     return <span dangerouslySetInnerHTML={{ __html: r.value }} />;
   }
   if (inner) {
@@ -30,6 +29,7 @@ function IconPreview({ icon, size = 20 }: { icon?: string; size?: number }) {
 export default function CategoriesManager() {
   const [items, setItems] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
@@ -79,6 +79,7 @@ export default function CategoriesManager() {
 
   const save = async () => {
     if (!name.trim()) { toast('请输入分类名称', 'error'); return; }
+    setBusy(true);
     try {
       const body = { name, slug, description, icon, sort: Number(sort) || 0 };
       if (editing) {
@@ -93,6 +94,7 @@ export default function CategoriesManager() {
     } catch (e) {
       toast(e instanceof Error ? e.message : '操作失败', 'error');
     }
+    setBusy(false);
   };
 
   const remove = async (c: Category) => {
@@ -108,31 +110,34 @@ export default function CategoriesManager() {
 
   return (
     <div>
-      <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-5">分类管理</h1>
+      <div className="mb-5">
+        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 font-display">分类管理</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">管理文章所属专栏分类与自定义图标</p>
+      </div>
 
       <div className="grid gap-5 lg:grid-cols-[360px_1fr]">
         <Card>
           <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">{editing ? '编辑分类' : '新建分类'}</h2>
-          <div className="space-y-3">
+          <div className="space-y-3.5">
             <Field label="名称">
               <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="如：前端开发" />
             </Field>
             <Field label="别名（slug）" hint="留空自动生成">
-              <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="frontend" />
+              <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="frontend" className="font-mono text-xs" />
             </Field>
             <Field label="描述">
-              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="!font-sans" />
+              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="!font-sans" placeholder="分类简介…" />
             </Field>
             <Field label="排序" hint="数字越小越靠前，默认 0">
               <Input type="number" value={sort} onChange={(e) => setSort(e.target.value)} placeholder="0" />
             </Field>
-            <Field label="图标" hint="点击选择内置图标，或在下框粘贴自定义 SVG（页面将使用该图标，不再显示汉字）">
+            <Field label="图标" hint="点击选择内置图标，或在下框粘贴自定义 SVG">
               <div className="grid grid-cols-6 gap-1.5">
                 <button
                   type="button"
                   onClick={clearIcon}
                   title="无图标（按分类名兜底）"
-                  className={`h-10 rounded-[10px] border flex items-center justify-center text-[11px] font-mono transition-colors ${!icon ? 'border-brand-600 text-brand-600 bg-brand-50' : 'border-slate-200 dark:border-slate-700 text-slate-400 hover:border-brand-400'}`}
+                  className={`h-10 rounded-xl border flex items-center justify-center text-[11px] font-mono transition-all ${!icon ? 'border-brand-600 text-brand-600 bg-brand-50 dark:text-brand-400 shadow-sm' : 'border-slate-200 dark:border-slate-700 text-slate-400 hover:border-brand-400'}`}
                 >
                   默认
                 </button>
@@ -142,7 +147,7 @@ export default function CategoriesManager() {
                     type="button"
                     onClick={() => pickIcon(k)}
                     title={k}
-                    className={`h-10 rounded-[10px] border flex items-center justify-center transition-colors ${icon === k ? 'border-brand-600 text-brand-600 bg-brand-50' : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300 hover:border-brand-400 hover:text-brand-600'}`}
+                    className={`h-10 rounded-xl border flex items-center justify-center transition-all ${icon === k ? 'border-brand-600 text-brand-600 bg-brand-50 dark:text-brand-400 shadow-sm scale-105' : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300 hover:border-brand-400 hover:text-brand-600'}`}
                   >
                     <IconPreview icon={k} size={18} />
                   </button>
@@ -157,7 +162,7 @@ export default function CategoriesManager() {
               />
               <div className="flex items-center gap-2 mt-2">
                 <span className="text-xs text-slate-500 dark:text-slate-400">预览：</span>
-                <span className="w-8 h-8 rounded-[8px] bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center">
+                <span className="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 dark:text-brand-400 flex items-center justify-center">
                   <IconPreview icon={icon} size={16} />
                 </span>
                 {icon && (
@@ -168,7 +173,7 @@ export default function CategoriesManager() {
               </div>
             </Field>
             <div className="flex gap-2 pt-1">
-              <Btn onClick={save}>{editing ? '保存修改' : '创建分类'}</Btn>
+              <Btn onClick={save} loading={busy}>{editing ? '保存修改' : '创建分类'}</Btn>
               {editing && <Btn variant="secondary" onClick={() => startEdit()}>取消</Btn>}
             </div>
           </div>
@@ -178,19 +183,19 @@ export default function CategoriesManager() {
           {loading ? <Loading /> : items.length ? (
             <Table head={<><Th>名称</Th><Th>图标</Th><Th>别名</Th><Th>排序</Th><Th>文章数</Th><Th>创建时间</Th><Th className="text-right">操作</Th></>}>
               {items.map((c) => (
-                <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
                   <Td className="font-medium text-slate-800 dark:text-slate-200">{c.name}</Td>
                   <Td>
-                    <span className="w-8 h-8 inline-flex items-center justify-center rounded-[8px] bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400">
+                    <span className="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-brand-50 text-brand-600 dark:text-brand-400">
                       <IconPreview icon={c.icon} size={16} />
                     </span>
                   </Td>
-                  <Td className="text-slate-500 dark:text-slate-400 text-xs">/{c.slug}/</Td>
-                  <Td className="text-slate-500 dark:text-slate-400 font-mono">{c.sort || 0}</Td>
-                  <Td className="text-slate-500 dark:text-slate-400">{c.postCount || 0}</Td>
-                  <Td className="text-slate-500 dark:text-slate-400 whitespace-nowrap">{fmtDate(c.createdAt)}</Td>
+                  <Td className="text-slate-500 dark:text-slate-400 font-mono text-xs">/{c.slug}/</Td>
+                  <Td className="text-slate-500 dark:text-slate-400 font-mono text-xs">{c.sort || 0}</Td>
+                  <Td className="text-slate-500 dark:text-slate-400 font-mono text-xs">{c.postCount || 0}</Td>
+                  <Td className="text-slate-500 dark:text-slate-400 font-mono text-xs whitespace-nowrap">{fmtDate(c.createdAt)}</Td>
                   <Td className="text-right whitespace-nowrap">
-                    <div className="inline-flex items-center gap-1">
+                    <div className="inline-flex items-center gap-1.5">
                       <RowBtn onClick={() => startEdit(c)}>编辑</RowBtn>
                       <RowBtn variant="danger" onClick={() => remove(c)}>删除</RowBtn>
                     </div>
