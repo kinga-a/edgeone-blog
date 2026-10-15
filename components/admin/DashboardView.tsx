@@ -9,7 +9,7 @@ import { api } from '@/lib/api';
 /** 统计卡图标：浅蓝渐变底（参考图风格） */
 function StatIcon({ d }: { d: string }) {
   return (
-    <span className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-sm shrink-0">
+    <span className="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-sm shrink-0">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
         <path d={d} />
       </svg>
@@ -123,7 +123,7 @@ export default function DashboardView() {
                   <div key={date} className="flex-1 flex flex-col items-center gap-1 min-w-0">
                     <span className="text-[10px] text-slate-400">{count}</span>
                     <div
-                      className="w-full rounded-t bg-gradient-to-t from-blue-600 to-sky-400 dark:from-blue-700 dark:to-sky-500"
+                      className="w-full rounded-t bg-blue-600 dark:bg-blue-500"
                       style={{ height: `${Math.max(4, (count / maxDay) * 100)}%` }}
                       title={`${date}: ${count}`}
                     />

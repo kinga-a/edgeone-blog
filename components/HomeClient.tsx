@@ -108,7 +108,7 @@ export default function HomeClient() {
           <div className="skeleton rounded-[10px] min-h-[220px]" aria-hidden="true" />
         </div>
         {/* 目录骨架 */}
-        <div className="mt-12">
+        <div className="mt-20">
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
@@ -162,7 +162,7 @@ export default function HomeClient() {
 
       {/* 精选头条 */}
       {featured && (
-        <Reveal className="mt-2">
+        <Reveal className="mt-4">
           <div className="section-header">
             <h2 className="section-title">精选文章</h2>
             <Link href="/posts/" className="section-link">查看全部 →</Link>
@@ -172,7 +172,7 @@ export default function HomeClient() {
       )}
 
       {/* 最新目录 */}
-      <Reveal className="mt-12" delay={80}>
+      <Reveal className="mt-20" delay={80}>
         <div className="section-header">
           <h2 className="section-title">最新文章</h2>
           <Link href="/posts/" className="section-link">全部文章 →</Link>
@@ -190,7 +190,7 @@ export default function HomeClient() {
 
       {/* 热门排行 */}
       {hot.length > 0 && (
-        <Reveal className="mt-12" delay={120}>
+        <Reveal className="mt-20" delay={120}>
           <div className="section-header">
             <h2 className="section-title">热门文章</h2>
           </div>

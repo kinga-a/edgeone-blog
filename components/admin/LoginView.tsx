@@ -59,7 +59,7 @@ export default function LoginView({ onLogin }: { onLogin: () => void }) {
       <div className="w-full max-w-sm">
         <div className="bg-white dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60 p-8 shadow-[0_8px_30px_rgba(37,99,235,0.08)]">
           <div className="text-center mb-6">
-            <div className="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xl font-bold">B</div>
+            <div className="w-12 h-12 mx-auto rounded-xl bg-blue-600 flex items-center justify-center text-white text-xl font-bold">B</div>
             <h1 className="mt-4 text-lg font-bold text-slate-900 dark:text-slate-100">博客后台管理</h1>
             <p className="mt-1 text-xs text-slate-400">
               {totpRequired ? '请输入身份验证器中的 6 位动态验证码' : mode === 'login' ? '登录以继续' : '首次部署：创建管理员账号'}

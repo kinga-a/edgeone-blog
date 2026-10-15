@@ -85,7 +85,7 @@ export default function AdminApp() {
             <div className="lg:sticky lg:top-20 bg-white dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-3">
               <div className="px-3 py-2.5 mb-2 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold shadow-sm">
+                  <span className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white text-sm font-bold shadow-sm">
                     B
                   </span>
                   <span className="text-sm font-bold text-slate-900 dark:text-slate-100">博客后台</span>
