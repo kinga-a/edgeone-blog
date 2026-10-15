@@ -88,7 +88,7 @@ export default function DashboardView() {
             <StatIcon d={c.icon} />
             <div className="min-w-0">
               <div className="text-xs text-slate-400">{c.label}</div>
-              <div className="mt-0.5 text-2xl font-bold text-slate-900 dark:text-slate-100 truncate">{c.value}</div>
+              <div className="mt-0.5 text-2xl font-bold text-slate-900 dark:text-slate-100 truncate tabular-nums">{c.value}</div>
             </div>
           </Card>
         ))}
@@ -105,7 +105,7 @@ export default function DashboardView() {
             </span>
             <div className="min-w-0">
               <div className="text-xs text-slate-400">{c.label}</div>
-              <div className={`mt-0.5 text-xl font-bold truncate ${c.warn ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-slate-100'}`}>{c.value}</div>
+              <div className={`mt-0.5 text-xl font-bold truncate tabular-nums ${c.warn ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-slate-100'}`}>{c.value}</div>
             </div>
           </Card>
         ))}
@@ -121,7 +121,7 @@ export default function DashboardView() {
               <div className="flex items-end gap-1 h-32">
                 {days.slice(-30).map(([date, count]) => (
                   <div key={date} className="flex-1 flex flex-col items-center gap-1 min-w-0">
-                    <span className="text-[10px] text-slate-400">{count}</span>
+                    <span className="text-[10px] text-slate-400 tabular-nums">{count}</span>
                     <div
                       className="w-full rounded-t bg-brand-600 dark:bg-brand-500"
                       style={{ height: `${Math.max(4, (count / maxDay) * 100)}%` }}
@@ -130,7 +130,7 @@ export default function DashboardView() {
                   </div>
                 ))}
               </div>
-              <div className="mt-2 flex justify-between text-[10px] text-slate-400">
+              <div className="mt-2 flex justify-between text-[10px] text-slate-400 tabular-nums">
                 <span>{days[0]?.[0]}</span>
                 <span>{days[days.length - 1]?.[0]}</span>
               </div>
@@ -154,7 +154,7 @@ export default function DashboardView() {
                       {p.title}
                     </a>
                     <Badge tone={p.status === 'published' ? 'green' : 'gray'}>{p.status === 'published' ? '已发布' : '草稿'}</Badge>
-                    <span className="text-xs text-slate-400 w-16 text-right shrink-0">{p.views} 阅读</span>
+                    <span className="text-xs text-slate-400 w-16 text-right shrink-0 tabular-nums">{p.views} 阅读</span>
                   </div>
                 ))}
               </div>
@@ -197,7 +197,7 @@ export default function DashboardView() {
               ].map((t) => (
                 <a key={t.label} href={t.href} className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-700/50 last:border-0">
                   <span className="text-sm text-slate-600 dark:text-slate-300">{t.label}</span>
-                  <span className={`text-sm font-semibold ${t.warn ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-slate-100'}`}>{t.value}</span>
+                  <span className={`text-sm font-semibold tabular-nums ${t.warn ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-slate-100'}`}>{t.value}</span>
                 </a>
               ))}
             </div>

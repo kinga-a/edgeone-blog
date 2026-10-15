@@ -23,9 +23,10 @@
   --t-slate-100: #f3eee6;
   --t-slate-200: #e6dfd2;
   --t-slate-300: #d5cab8;
-  --t-slate-400: #b0a696;
-  --t-slate-500: #8a817a;
-  --t-slate-600: #6e655c;
+  /* 亮色暖灰阶：按 WCAG AA 重标定（4.5:1+），小字 meta 不再发虚 */
+  --t-slate-400: #786d5f;
+  --t-slate-500: #6e6357;
+  --t-slate-600: #665c50;
   --t-slate-700: #554d45;
   --t-slate-800: #3b352e;
   --t-slate-900: #1c1a17;
@@ -65,14 +66,21 @@ html.dark {
   --t-brand-700: #ec9d70;
   --t-brand-800: #f0ac82;
   --t-brand-900: #f5bd98;
+
+  /* 暗色暖灰阶：深底上提亮，保证 4.5:1+ 对比（400 保持原值已达标） */
+  --t-slate-400: #b0a696;
+  --t-slate-500: #bdb2a4;
+  --t-slate-600: #d0c7ba;
 }
 
 html {
   scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 body {
   @apply bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-200 antialiased;
+  overflow-x: clip;
   font-feature-settings: 'rlig' 1, 'calt' 1, 'ss01' 1;
   line-height: 1.75;
   -webkit-font-smoothing: antialiased;
@@ -237,14 +245,6 @@ html.dark .hero-vol::before { background: var(--t-brand-400); }
   font-weight: 600;
 }
 .dark .hero-title { color: var(--t-slate-100); }
-.hero-subtitle {
-  font-size: clamp(19px, 2.6vw, 26px);
-  line-height: 1.45;
-  color: var(--t-slate-600);
-  margin-bottom: 16px;
-  font-weight: 400;
-}
-.dark .hero-subtitle { color: var(--t-slate-400); }
 .hero-desc {
   font-size: 15px;
   color: var(--t-slate-500);
@@ -431,6 +431,12 @@ html.dark .top-item:hover .top-title { color: var(--t-brand-400); }
 }
 .btn-primary:hover {
   background-color: var(--t-brand-700);
+}
+/* 按压反馈（Taste-Skill tactile）：按下轻微下沉 */
+.btn-primary:active,
+.btn-secondary:active,
+.btn-ghost:active {
+  transform: translateY(1px);
 }
 .btn-ghost {
   @apply inline-flex items-center gap-1 px-1 py-1.5 text-brand-600 dark:text-brand-400 text-[15px] font-medium bg-transparent border-none cursor-pointer;
@@ -797,7 +803,7 @@ html.dark .category-card-icon { color: var(--t-brand-400); }
   border-radius: 999px;
   border: none;
   cursor: pointer;
-  background: #ffffff;
+  background: var(--t-card);
   color: #57534e;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   opacity: 0;
@@ -853,7 +859,7 @@ html:not(.dark) .progress-ring .ring-fill { stroke: var(--t-brand-600); }
   to { opacity: 1; transform: translateY(0); }
 }
 .fade-in-up {
-  animation: fade-in-up 0.35s ease both;
+  animation: fade-in-up 0.3s ease both;
 }
 
 /* ========== 滚动入场（Reveal）：一次性淡入上移，交错 delay ========== */

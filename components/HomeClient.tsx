@@ -93,7 +93,6 @@ export default function HomeClient() {
         <div className="py-14">
           <div className="skeleton h-3 w-28 rounded mb-6" aria-hidden="true" />
           <div className="skeleton h-12 w-3/4 rounded mb-4" aria-hidden="true" />
-          <div className="skeleton h-6 w-1/2 rounded mb-5" aria-hidden="true" />
           <div className="skeleton h-4 w-3/5 rounded mb-2" aria-hidden="true" />
           <div className="skeleton h-4 w-2/5 rounded" aria-hidden="true" />
         </div>
@@ -144,15 +143,12 @@ export default function HomeClient() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 pb-10">
-      {/* 期刊刊头 */}
+      {/* 期刊刊头：眉题 + 大标题 + 一句话引言 + CTA（≤4 个文本元素，Taste-Skill hero 纪律） */}
       <section className="hero fade-in-up">
         <div className="hero-vol">VOL.{new Date().getFullYear()} · 记录与思考</div>
         <h1 className="hero-title font-display">{config?.title || '我的博客'}</h1>
-        <p className="hero-subtitle font-display" style={{ fontWeight: 400 }}>
-          {config?.subtitle || '记录思考，分享知识'}
-        </p>
         <p className="hero-desc">
-          互联网干货 · 技术踩坑记录 · 工具分享 · 网络观察随笔——用文字存档思考，把零散的认知沉淀成可回看的内容。
+          技术踩坑记录 · 工具分享 · 网络观察随笔——用文字存档思考，把零散的认知沉淀成可回看的内容。
         </p>
         <div className="hero-actions">
           <Link href="/posts/" className="btn-primary">浏览文章</Link>
@@ -165,7 +161,7 @@ export default function HomeClient() {
         <Reveal className="mt-4">
           <div className="section-header">
             <h2 className="section-title">精选文章</h2>
-            <Link href="/posts/" className="section-link">查看全部 →</Link>
+            <Link href="/posts/" className="section-link">全部文章 →</Link>
           </div>
           <LedeItem post={featured} index={0} />
         </Reveal>
