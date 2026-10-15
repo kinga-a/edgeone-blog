@@ -338,7 +338,7 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
                   <div className="flex gap-2">
                     <Btn size="sm" variant="secondary" onClick={() => { setCoverKey(''); setCoverUrl(''); }}>移除</Btn>
                     <label className="cursor-pointer">
-                      <span className="inline-block px-2.5 py-1.5 rounded-lg text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-brand-400 transition-colors">
+                      <span className="inline-block px-2.5 py-1.5 rounded-lg text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-blue-400 transition-colors">
                         更换
                       </span>
                       <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && uploadCover(e.target.files[0])} />
@@ -346,7 +346,7 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
                   </div>
                 </div>
               ) : (
-                <label className="block border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-6 text-center cursor-pointer hover:border-brand-400 transition-colors">
+                <label className="block border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-6 text-center cursor-pointer hover:border-blue-400 transition-colors">
                   <span className="text-sm text-slate-500 dark:text-slate-400">点击选择封面图片</span>
                   <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && uploadCover(e.target.files[0])} />
                 </label>
@@ -374,7 +374,7 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
             <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">标签</h3>
             <div className="flex flex-wrap gap-1.5 mb-3">
               {tags.map((t) => (
-                <span key={t} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 text-xs">
+                <span key={t} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs">
                   {t}
                   <button onClick={() => setTags((arr) => arr.filter((x) => x !== t))} className="hover:text-rose-500">×</button>
                 </span>
@@ -387,7 +387,7 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
             {allTags.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-1">
                 {allTags.filter((t) => !tags.includes(t.name)).slice(0, 12).map((t) => (
-                  <button key={t.id} onClick={() => addTag(t.name)} className="px-2 py-0.5 rounded-full text-xs border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-brand-400 transition-colors">
+                  <button key={t.id} onClick={() => addTag(t.name)} className="px-2 py-0.5 rounded-full text-xs border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-blue-400 transition-colors">
                     #{t.name}
                   </button>
                 ))}

@@ -90,7 +90,7 @@ export default function CommentsManager() {
                     {c.email && <div className="mt-1 text-xs text-slate-400">{c.email}</div>}
                   </Td>
                   <Td className="text-slate-500 dark:text-slate-400">
-                    <a href={`/posts/${c.postSlug}/`} target="_blank" rel="noopener noreferrer" className="hover:text-brand-600 dark:hover:text-brand-400">
+                    <a href={`/posts/${c.postSlug}/`} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 dark:hover:text-blue-400">
                       <span className="max-w-40 block truncate">{c.postTitle}</span>
                     </a>
                   </Td>

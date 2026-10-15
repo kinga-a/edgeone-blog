@@ -120,7 +120,7 @@ export default function MediaManager() {
                   </Td>
                   <Td>
                     <div className="font-medium text-slate-800 dark:text-slate-200 max-w-56 truncate">{m.name}</div>
-                    <button onClick={() => copyKey(m.key)} className="text-xs text-slate-400 hover:text-brand-500 font-mono truncate max-w-56 block" title="复制 key">
+                    <button onClick={() => copyKey(m.key)} className="text-xs text-slate-400 hover:text-blue-500 font-mono truncate max-w-56 block" title="复制 key">
                       {m.key}
                     </button>
                   </Td>

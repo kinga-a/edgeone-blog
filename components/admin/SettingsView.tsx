@@ -301,17 +301,17 @@ export default function SettingsView() {
                 return (
                   <label
                     key={p.id}
-                    className={`flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors ${checked ? 'bg-brand-50 dark:bg-brand-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'}`}
+                    className={`flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors ${checked ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'}`}
                   >
                     <input
                       type="checkbox"
                       checked={checked}
                       onChange={() => toggleFeatured(p.id)}
-                      className="accent-brand-600"
+                      className="accent-blue-600"
                     />
                     <span className="flex-1 text-sm text-slate-800 dark:text-slate-200 truncate">{p.title}</span>
                     {checked && (
-                      <span className="text-xs font-mono text-brand-600 dark:text-brand-400 shrink-0">精选 #{idx + 1}</span>
+                      <span className="text-xs font-mono text-blue-600 dark:text-blue-400 shrink-0">精选 #{idx + 1}</span>
                     )}
                     <span className="text-xs text-slate-400 shrink-0">{p.status === 'published' ? '已发布' : p.status === 'draft' ? '草稿' : '私人'}</span>
                   </label>
@@ -325,11 +325,11 @@ export default function SettingsView() {
           <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">评论策略</h2>
           <div className="space-y-3">
             <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-              <input type="checkbox" checked={config.commentEnabled !== false} onChange={(e) => set({ commentEnabled: e.target.checked })} className="accent-brand-600" />
+              <input type="checkbox" checked={config.commentEnabled !== false} onChange={(e) => set({ commentEnabled: e.target.checked })} className="accent-blue-600" />
               启用评论功能
             </label>
             <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-              <input type="checkbox" checked={config.commentModeration !== false} onChange={(e) => set({ commentModeration: e.target.checked })} className="accent-brand-600" />
+              <input type="checkbox" checked={config.commentModeration !== false} onChange={(e) => set({ commentModeration: e.target.checked })} className="accent-blue-600" />
               新评论需要审核后才展示
             </label>
           </div>

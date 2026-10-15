@@ -132,7 +132,7 @@ export default function CategoriesManager() {
                   type="button"
                   onClick={clearIcon}
                   title="无图标（按分类名兜底）"
-                  className={`h-10 rounded-[10px] border flex items-center justify-center text-[11px] font-mono transition-colors ${!icon ? 'border-brand-600 text-brand-600 bg-brand-50' : 'border-slate-200 dark:border-slate-700 text-slate-400 hover:border-brand-400'}`}
+                  className={`h-10 rounded-[10px] border flex items-center justify-center text-[11px] font-mono transition-colors ${!icon ? 'border-blue-600 text-blue-600 bg-blue-50' : 'border-slate-200 dark:border-slate-700 text-slate-400 hover:border-blue-400'}`}
                 >
                   默认
                 </button>
@@ -142,7 +142,7 @@ export default function CategoriesManager() {
                     type="button"
                     onClick={() => pickIcon(k)}
                     title={k}
-                    className={`h-10 rounded-[10px] border flex items-center justify-center transition-colors ${icon === k ? 'border-brand-600 text-brand-600 bg-brand-50' : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300 hover:border-brand-400 hover:text-brand-600'}`}
+                    className={`h-10 rounded-[10px] border flex items-center justify-center transition-colors ${icon === k ? 'border-blue-600 text-blue-600 bg-blue-50' : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300 hover:border-blue-400 hover:text-blue-600'}`}
                   >
                     <IconPreview icon={k} size={18} />
                   </button>
@@ -157,11 +157,11 @@ export default function CategoriesManager() {
               />
               <div className="flex items-center gap-2 mt-2">
                 <span className="text-xs text-slate-500 dark:text-slate-400">预览：</span>
-                <span className="w-8 h-8 rounded-[8px] bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center">
+                <span className="w-8 h-8 rounded-[8px] bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
                   <IconPreview icon={icon} size={16} />
                 </span>
                 {icon && (
-                  <button type="button" onClick={clearIcon} className="text-xs text-slate-400 hover:text-brand-600">
+                  <button type="button" onClick={clearIcon} className="text-xs text-slate-400 hover:text-blue-600">
                     清除
                   </button>
                 )}
@@ -181,7 +181,7 @@ export default function CategoriesManager() {
                 <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
                   <Td className="font-medium text-slate-800 dark:text-slate-200">{c.name}</Td>
                   <Td>
-                    <span className="w-8 h-8 inline-flex items-center justify-center rounded-[8px] bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400">
+                    <span className="w-8 h-8 inline-flex items-center justify-center rounded-[8px] bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400">
                       <IconPreview icon={c.icon} size={16} />
                     </span>
                   </Td>
