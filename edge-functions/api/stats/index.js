@@ -1,7 +1,10 @@
 import { json, fail } from '../_lib/response.js';
-import { getVisitStats, getPostList, getComments, getViews, getLikes, getCategories, getTags } from '../_lib/data.js';
+import { getVisitStats, getPostList, getComments, getViews, getLikes, getCategories, getTags, buildVisitSeries, summarizeVisitSeries } from '../_lib/data.js';
 import { requireAdmin } from '../_lib/auth.js';
 import { getKv } from '../_lib/kv.js';
+
+/** 趋势图窗口长度（自然日，含今天） */
+const TREND_SPAN = 30;
 
 /** GET /api/stats — 后台访问统计总览（管理员） */
 export async function onRequestGet({ request, env }) {
@@ -23,10 +26,15 @@ export async function onRequestGet({ request, env }) {
   }
   postStats.sort((a, b) => b.views - a.views);
 
+  // 近 TREND_SPAN 个自然日的访问序列：KV 只存有访问的日子，这里按日历补 0，
+  // 保证前端曲线的每个点都对得上真实日期。
+  const series = buildVisitSeries(visit.days, { span: TREND_SPAN });
+
   return json({
     ok: true,
     stats: {
       visits: visit,
+      trend: { span: TREND_SPAN, series, ...summarizeVisitSeries(series) },
       totalPosts: posts.length,
       publishedPosts: posts.filter((p) => p.status === 'published').length,
       draftPosts: posts.filter((p) => p.status === 'draft').length,
