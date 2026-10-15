@@ -55,7 +55,7 @@ export default function Header() {
       <header className={`site-header ${scrolled ? 'scrolled' : ''}`}>
         <div className="mx-auto max-w-5xl px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 tracking-tight group">
-            <span className="w-9 h-9 rounded-lg bg-brand-600 flex items-center justify-center text-white text-lg font-bold font-display">
+            <span className="w-9 h-9 rounded-[6px] bg-brand-600 flex items-center justify-center text-white text-lg font-bold font-display shadow-[inset_0_0_0_1px_rgba(255,255,255,0.25)]">
               B
             </span>
             <span className="text-[17px] font-display font-semibold text-slate-900 dark:text-slate-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">

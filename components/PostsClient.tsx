@@ -87,9 +87,9 @@ export default function PostsClient() {
             onChange={(e) => setKeyword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && submitSearch()}
             placeholder="搜索文章…"
-            className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:border-brand-500"
+            className="flex-1 sm:flex-none px-4 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:border-brand-500"
           />
-          <button onClick={submitSearch} className="px-4 py-2 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition-colors">
+          <button onClick={submitSearch} className="px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition-colors">
             搜索
           </button>
         </div>
@@ -103,7 +103,7 @@ export default function PostsClient() {
               <span className="text-xs text-slate-400 w-12 shrink-0">分类</span>
               <button
                 onClick={() => router.push(buildHref(1).replace(/category=[^&]*&?/, ''))}
-                className={`px-3 py-1 rounded-full text-xs border transition-colors ${!category ? 'bg-brand-600 text-white border-brand-600' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'}`}
+                className={`px-3 py-1 rounded-md text-xs border transition-colors ${!category ? 'bg-brand-600 text-white border-brand-600' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'}`}
               >
                 全部
               </button>
@@ -118,7 +118,7 @@ export default function PostsClient() {
                     params.set('page', '1');
                     router.push(`/posts/?${params.toString()}`);
                   }}
-                  className={`px-3 py-1 rounded-full text-xs border transition-colors ${category === c.id ? 'bg-brand-600 text-white border-brand-600' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'}`}
+                  className={`px-3 py-1 rounded-md text-xs border transition-colors ${category === c.id ? 'bg-brand-600 text-white border-brand-600' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'}`}
                 >
                   {c.name}
                   <span className={`ml-1 ${category === c.id ? 'text-white/70' : 'text-slate-400'}`}>{c.postCount || 0}</span>
@@ -131,7 +131,7 @@ export default function PostsClient() {
               <span className="text-xs text-slate-400 w-12 shrink-0">标签</span>
               <button
                 onClick={() => router.push(buildHref(1).replace(/tag=[^&]*&?/, ''))}
-                className={`px-3 py-1 rounded-full text-xs border transition-colors ${!tag ? 'bg-brand-600 text-white border-brand-600' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'}`}
+                className={`px-3 py-1 rounded-md text-xs border transition-colors ${!tag ? 'bg-brand-600 text-white border-brand-600' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'}`}
               >
                 全部
               </button>
@@ -146,7 +146,7 @@ export default function PostsClient() {
                     params.set('page', '1');
                     router.push(`/posts/?${params.toString()}`);
                   }}
-                  className={`px-3 py-1 rounded-full text-xs border transition-colors ${tag === t.id ? 'bg-brand-600 text-white border-brand-600' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'}`}
+                  className={`px-3 py-1 rounded-md text-xs border transition-colors ${tag === t.id ? 'bg-brand-600 text-white border-brand-600' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'}`}
                 >
                   #{t.name}
                   <span className={`ml-1 ${tag === t.id ? 'text-white/70' : 'text-slate-400'}`}>{t.postCount || 0}</span>
@@ -170,7 +170,7 @@ export default function PostsClient() {
           <p>{error}</p>
           <button
             onClick={() => setReloadKey((k) => k + 1)}
-            className="mt-4 px-4 py-2 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition-colors"
+            className="mt-4 px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition-colors"
           >
             点击重试
           </button>

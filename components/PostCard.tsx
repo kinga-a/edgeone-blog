@@ -79,7 +79,7 @@ export default function PostCard({ post }: { post: PostSummary }) {
             {tagNames.map((name) => (
               <span
                 key={name}
-                className="px-2 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400"
+                className="px-2 py-0.5 rounded text-xs bg-slate-100 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400"
               >
                 #{name}
               </span>
