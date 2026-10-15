@@ -610,6 +610,79 @@ export async function getVisitStats(env) {
   return stats;
 }
 
+/**
+ * 本地日历日偏移：与 fmtDate(nowIso()) 同一时区口径，避免 UTC 位移导致日期错位。
+ * @param {string} dateStr 2026-10-15
+ * @param {number} offsetDays 向前（负）或向后（正）偏移的天数
+ */
+function shiftDate(dateStr, offsetDays) {
+  const [y, m, d] = String(dateStr).split('-').map(Number);
+  if (!y || !m || !d) return '';
+  const dt = new Date(y, m - 1, d + offsetDays);
+  const p = (v) => String(v).padStart(2, '0');
+  return `${dt.getFullYear()}-${p(dt.getMonth() + 1)}-${p(dt.getDate())}`;
+}
+
+/**
+ * 构造近 span 个自然日的访问序列（含今天），无访问的日期补 0。
+ *
+ * KV 里的 stats.days 只记录“发生过访问”的日子，直接取末尾 N 条会得到一条
+ * 横轴被压瘪、形状与真实日期无关的曲线（例如 30 天里只有 12 天有数据，
+ * 12 个点会被铺满整个宽度）。这里按日历补全，使曲线与真实访问数据对应。
+ *
+ * @param {Record<string, number>} days stats.days
+ * @param {{ span?: number, today?: string }} [opts]
+ */
+export function buildVisitSeries(days, opts = {}) {
+  const span = Math.max(1, Math.min(90, Number(opts.span) || 30));
+  const today = opts.today || fmtDate(nowIso());
+  const map = days && typeof days === 'object' ? days : {};
+  const series = [];
+  for (let i = span - 1; i >= 0; i -= 1) {
+    const date = shiftDate(today, -i);
+    if (!date) continue;
+    series.push({ date, visits: Number(map[date]) || 0 });
+  }
+  return series;
+}
+
+/**
+ * 访问趋势汇总：近 span 天 + 前一个 span 天（环比）+ 7 日均值。
+ * 全部由 stats.days 实时推导，不存任何写死的样例数据。
+ */
+export function summarizeVisitSeries(series) {
+  const values = series.map((s) => s.visits);
+  const n = values.length;
+  const total = values.reduce((a, b) => a + b, 0);
+  let peakIndex = 0;
+  values.forEach((v, i) => { if (v > values[peakIndex]) peakIndex = i; });
+  const half = Math.floor(n / 2);
+  const recent = half ? values.slice(n - half).reduce((a, b) => a + b, 0) : 0;
+  const previous = half ? values.slice(0, half).reduce((a, b) => a + b, 0) : 0;
+  const activeDays = values.filter((v) => v > 0).length;
+  let movingTotal = 0;
+  const movingAverage = values.map((_, i) => {
+    const from = Math.max(0, i - 6);
+    movingTotal = 0;
+    for (let k = from; k <= i; k += 1) movingTotal += values[k];
+    return Math.round((movingTotal / (i - from + 1)) * 100) / 100;
+  });
+  return {
+    total,
+    average: n ? Math.round((total / n) * 10) / 10 : 0,
+    peak: values[peakIndex] || 0,
+    peakDate: series[peakIndex]?.date || '',
+    activeDays,
+    recentTotal: recent,
+    previousTotal: previous,
+    /** 后半段相对前半段的变化率；前半段为 0 时为 null（无可比基数） */
+    changeRatio: previous > 0 ? Math.round(((recent - previous) / previous) * 1000) / 1000 : null,
+    movingAverage,
+    from: series[0]?.date || '',
+    to: series[n - 1]?.date || '',
+  };
+}
+
 /** 文章阅读量 +1 */
 export async function trackView(env, postId) {
   const kv = getKv(env);
