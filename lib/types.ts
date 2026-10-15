@@ -115,8 +115,34 @@ export interface VisitStats {
   days: Record<string, number>;
 }
 
+/** 近 N 天趋势：单个自然日的访问数据点（无访问的日子由服务端补 0） */
+export interface TrendPoint {
+  date: string;
+  visits: number;
+}
+
+/** 趋势汇总：全部由真实访问记录推导，用于图表标注与副指标 */
+export interface VisitTrend {
+  span: number;
+  from: string;
+  to: string;
+  series: TrendPoint[];
+  total: number;
+  average: number;
+  peak: number;
+  peakDate: string;
+  activeDays: number;
+  recentTotal: number;
+  previousTotal: number;
+  /** 近半程相对前半程的变化率；前半程为 0 时为 null（无可比基数） */
+  changeRatio: number | null;
+  /** 7 日移动平均，与 series 等长同序 */
+  movingAverage: number[];
+}
+
 export interface AdminStats {
   visits: VisitStats;
+  trend: VisitTrend;
   totalPosts: number;
   publishedPosts: number;
   draftPosts: number;
