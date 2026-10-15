@@ -299,6 +299,30 @@ await test('管理员查看统计总览', async () => {
   assert.equal(d.stats.totalComments, 1);
   assert.equal(d.stats.pendingComments, 0);
 });
+await test('近 30 天趋势按自然日补全（缺失日补 0）', async () => {
+  // 造出「中间断档」的历史：9 天前 5 次、今天 2 次，其余日子无记录
+  // mock KV 与 trackVisit 同为 UTC 口径，这里用同一套取日逻辑
+  const dayKey = (offset) => new Date(Date.now() - offset * 86400000).toISOString().slice(0, 10);
+  const today = dayKey(0);
+  await globalThis.__BLOG_KV__.put('stats_visit', JSON.stringify({
+    total: 120, today: 2, lastDate: today,
+    days: { [dayKey(9)]: 5, [dayKey(4)]: 0, [today]: 2 },
+  }));
+  const r = await call('api/stats/index.js', 'GET', `${BASE}/api/stats`, { cookie });
+  const d = await parse(r);
+  const t = d.stats.trend;
+  assert.equal(t.span, 30);
+  assert.equal(t.series.length, 30, '必须凑满 30 个自然日');
+  assert.ok(t.series.every((p) => /^\d{4}-\d{2}-\d{2}$/.test(p.date)), '每项都是日期');
+  assert.ok(t.series.every((p, i) => i === 0 || Number(new Date(p.date)) > Number(new Date(t.series[i - 1].date))), '日期严格递增且无缺口');
+  assert.equal(t.series[t.series.length - 1].date, today, '末点必须是今天');
+  assert.equal(t.series[t.series.length - 1].visits, 2);
+  assert.equal(t.total, 7, '区间合计 = 5 + 0 + 2');
+  assert.equal(t.series[t.series.length - 10].visits, 5, '9 天前那天应落在正确日期位上');
+  assert.equal(t.activeDays, 2, '只有 2 天有访问');
+  assert.equal(t.peak, 5);
+  assert.equal(t.movingAverage.length, 30);
+});
 await test('获取站点配置', async () => {
   const r = await call('api/config/index.js', 'GET', `${BASE}/api/config`);
   const d = await parse(r);
