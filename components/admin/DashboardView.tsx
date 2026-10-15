@@ -6,6 +6,86 @@ import { Card, Loading, Empty, Badge } from './ui';
 import type { AdminStats } from '@/lib/types';
 import { api } from '@/lib/api';
 
+/** 近 30 天访问趋势：折线图（悬停显示数值，点击固定数值，再点取消） */
+function TrendChart({ data }: { data: [string, number][] }) {
+  const [hover, setHover] = useState<number | null>(null);
+  const [pinned, setPinned] = useState<number | null>(null);
+
+  const n = data.length;
+  const max = Math.max(1, ...data.map(([, v]) => v));
+  const padX = 4;
+  const padY = 12;
+  const pos = (i: number) => {
+    const x = padX + (i / (n - 1)) * (100 - padX * 2);
+    const y = padY + (1 - data[i][1] / max) * (100 - padY * 2);
+    return { x, y };
+  };
+  const line = data
+    .map((_, i) => {
+      const { x, y } = pos(i);
+      return `${i === 0 ? 'M' : 'L'}${x.toFixed(2)} ${y.toFixed(2)}`;
+    })
+    .join(' ');
+  const active = pinned ?? hover;
+
+  return (
+    <div
+      className="relative h-36 select-none"
+      role="img"
+      aria-label={`近 30 天访问趋势，共 ${n} 天，峰值 ${max} 次访问`}
+      onMouseLeave={() => { if (pinned === null) setHover(null); }}
+    >
+      {/* 折线（纸墨朱砂，2px 非缩放描边） */}
+      <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <path
+          d={line}
+          fill="none"
+          stroke="var(--t-brand-600)"
+          strokeWidth="2"
+          vectorEffect="non-scaling-stroke"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+      {/* 数据点 + tooltip */}
+      {data.map(([date, count], i) => {
+        const { x, y } = pos(i);
+        const on = active === i;
+        return (
+          <div key={date}>
+            {on && (
+              <div
+                className="absolute z-10 px-2 py-1 rounded-md bg-[var(--t-slate-900)] text-[var(--t-slate-50)] dark:bg-[var(--t-slate-50)] dark:text-[var(--t-slate-900)] text-[11px] leading-none shadow-lg pointer-events-none whitespace-nowrap tabular-nums"
+                style={{
+                  left: `${x}%`,
+                  top: `${y}%`,
+                  transform:
+                    i === 0 ? 'translate(0, calc(-100% - 10px))'
+                      : i === n - 1 ? 'translate(-100%, calc(-100% - 10px))'
+                      : 'translate(-50%, calc(-100% - 10px))',
+                }}
+              >
+                {date.slice(5).replace('-', '/')} · {count} 次
+              </div>
+            )}
+            <div
+              className={`absolute rounded-full transition-all duration-150 ${
+                on
+                  ? 'w-3 h-3 bg-brand-600 dark:bg-brand-400 ring-2 ring-white dark:ring-[var(--t-slate-900)] shadow'
+                  : 'w-2 h-2 bg-brand-400/70 dark:bg-brand-500/80 hover:bg-brand-600 dark:hover:bg-brand-400'
+              }`}
+              style={{ left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)' }}
+              onMouseEnter={() => setHover(i)}
+              onClick={() => setPinned(pinned === i ? null : i)}
+              aria-hidden="true"
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 /** 统计卡图标：浅蓝渐变底（参考图风格） */
 function StatIcon({ d }: { d: string }) {
   return (
@@ -53,7 +133,7 @@ export default function DashboardView() {
   if (!stats) return <Loading />;
 
   const days = Object.entries(stats.visits.days || {}).sort((a, b) => (a[0] < b[0] ? -1 : 1));
-  const maxDay = Math.max(1, ...days.map(([, v]) => v));
+  const trendData = days.slice(-30);
 
   const mainCards = [
     { label: '总访问量', value: stats.visits.total, icon: ICONS.visits },
@@ -114,25 +194,17 @@ export default function DashboardView() {
       {/* 左区：趋势 + 排行；右区：快捷入口 + 待办（参考图两栏布局） */}
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          {/* 近 30 天访问趋势（参考图渐变图表） */}
-          {days.length > 0 && (
+          {/* 近 30 天访问趋势（折线图，悬停/点击显示具体数值） */}
+          {trendData.length > 0 && (
             <Card>
-              <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">近 30 天访问趋势</h2>
-              <div className="flex items-end gap-1 h-32">
-                {days.slice(-30).map(([date, count]) => (
-                  <div key={date} className="flex-1 flex flex-col items-center gap-1 min-w-0">
-                    <span className="text-[10px] text-slate-400 tabular-nums">{count}</span>
-                    <div
-                      className="w-full rounded-t bg-brand-600 dark:bg-brand-500"
-                      style={{ height: `${Math.max(4, (count / maxDay) * 100)}%` }}
-                      title={`${date}: ${count}`}
-                    />
-                  </div>
-                ))}
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">近 30 天访问趋势</h2>
+                <span className="text-xs text-slate-400 tabular-nums">峰值 {Math.max(...trendData.map(([, v]) => v))} 次</span>
               </div>
+              <TrendChart data={trendData} />
               <div className="mt-2 flex justify-between text-[10px] text-slate-400 tabular-nums">
-                <span>{days[0]?.[0]}</span>
-                <span>{days[days.length - 1]?.[0]}</span>
+                <span>{trendData[0]?.[0]}</span>
+                <span>{trendData[trendData.length - 1]?.[0]}</span>
               </div>
             </Card>
           )}
