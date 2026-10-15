@@ -82,13 +82,13 @@ export default function AdminApp() {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* 侧边栏 */}
           <aside className="lg:w-56 shrink-0 lg:pt-8">
-            <div className="lg:sticky lg:top-20 bg-white dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-3">
+            <div className="lg:sticky lg:top-20 bg-[var(--t-card)] dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(28,26,23,0.04)] p-3">
               <div className="px-3 py-2.5 mb-2 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <span className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white text-sm font-bold shadow-sm">
+                  <span className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white text-sm font-bold shadow-sm">
                     B
                   </span>
-                  <span className="text-sm font-bold text-slate-900 dark:text-slate-100">博客后台</span>
+                  <span className="text-sm font-bold text-slate-900 dark:text-slate-100 font-display">博客后台</span>
                 </div>
                 <button onClick={logout} className="text-xs text-slate-400 hover:text-rose-500 transition-colors">
                   退出
@@ -102,8 +102,8 @@ export default function AdminApp() {
                     className={cx(
                       'w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2.5',
                       mainKey === m.key
-                        ? 'bg-blue-600 text-white font-medium shadow-sm'
-                        : 'text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-400',
+                        ? 'bg-brand-600 text-white font-medium shadow-sm'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-400',
                     )}
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">

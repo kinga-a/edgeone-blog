@@ -88,7 +88,7 @@ export default function MediaManager() {
           <select
             value={type}
             onChange={(e) => { setType(e.target.value as typeof type); setPage(1); }}
-            className="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none"
+            className="px-3 py-2 rounded-lg bg-[var(--t-card)] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none"
           >
             {TYPES.map((t) => <option key={t.value || 'all'} value={t.value}>{t.label}</option>)}
           </select>
@@ -120,7 +120,7 @@ export default function MediaManager() {
                   </Td>
                   <Td>
                     <div className="font-medium text-slate-800 dark:text-slate-200 max-w-56 truncate">{m.name}</div>
-                    <button onClick={() => copyKey(m.key)} className="text-xs text-slate-400 hover:text-blue-500 font-mono truncate max-w-56 block" title="复制 key">
+                    <button onClick={() => copyKey(m.key)} className="text-xs text-slate-400 hover:text-brand-500 font-mono truncate max-w-56 block" title="复制 key">
                       {m.key}
                     </button>
                   </Td>

@@ -55,12 +55,12 @@ export default function LoginView({ onLogin }: { onLogin: () => void }) {
   };
 
   return (
-    <div className="min-h-[70vh] flex items-center justify-center px-4 bg-gradient-to-b from-blue-50/60 via-transparent to-transparent dark:from-blue-500/5">
+    <div className="min-h-[70vh] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <div className="bg-white dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60 p-8 shadow-[0_8px_30px_rgba(37,99,235,0.08)]">
+        <div className="bg-[var(--t-card)] dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/60 p-8 shadow-[0_8px_30px_rgba(154,67,24,0.08)]">
           <div className="text-center mb-6">
-            <div className="w-12 h-12 mx-auto rounded-xl bg-blue-600 flex items-center justify-center text-white text-xl font-bold">B</div>
-            <h1 className="mt-4 text-lg font-bold text-slate-900 dark:text-slate-100">博客后台管理</h1>
+            <div className="w-12 h-12 mx-auto rounded-xl bg-brand-600 flex items-center justify-center text-white text-xl font-bold">B</div>
+            <h1 className="mt-4 text-lg font-bold text-slate-900 dark:text-slate-100 font-display">博客后台管理</h1>
             <p className="mt-1 text-xs text-slate-400">
               {totpRequired ? '请输入身份验证器中的 6 位动态验证码' : mode === 'login' ? '登录以继续' : '首次部署：创建管理员账号'}
             </p>
@@ -87,20 +87,20 @@ export default function LoginView({ onLogin }: { onLogin: () => void }) {
           </div>
           <p className="mt-5 text-center text-xs text-slate-400">
             {totpRequired ? (
-              <button className="text-blue-600 dark:text-blue-400 hover:underline" onClick={() => { setTotpRequired(false); setTotp(''); }}>
+              <button className="text-brand-600 dark:text-brand-400 hover:underline" onClick={() => { setTotpRequired(false); setTotp(''); }}>
                 返回上一步
               </button>
             ) : mode === 'login' ? (
               <>
                 还没有管理员账号？
-                <button className="text-blue-600 dark:text-blue-400 hover:underline ml-1" onClick={() => setMode('setup')}>
+                <button className="text-brand-600 dark:text-brand-400 hover:underline ml-1" onClick={() => setMode('setup')}>
                   首次初始化
                 </button>
               </>
             ) : (
               <>
                 已有账号？
-                <button className="text-blue-600 dark:text-blue-400 hover:underline ml-1" onClick={() => setMode('login')}>
+                <button className="text-brand-600 dark:text-brand-400 hover:underline ml-1" onClick={() => setMode('login')}>
                   返回登录
                 </button>
               </>

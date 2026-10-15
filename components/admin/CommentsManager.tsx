@@ -70,7 +70,7 @@ export default function CommentsManager() {
             <button
               key={f.value || 'all'}
               onClick={() => { setStatus(f.value); setPage(1); }}
-              className={`px-3 py-1.5 rounded-md text-xs transition-colors ${status === f.value ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
+              className={`px-3 py-1.5 rounded-md text-xs transition-colors ${status === f.value ? 'bg-[var(--t-card)] dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
             >
               {f.label}
             </button>
@@ -90,7 +90,7 @@ export default function CommentsManager() {
                     {c.email && <div className="mt-1 text-xs text-slate-400">{c.email}</div>}
                   </Td>
                   <Td className="text-slate-500 dark:text-slate-400">
-                    <a href={`/posts/${c.postSlug}/`} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 dark:hover:text-blue-400">
+                    <a href={`/posts/${c.postSlug}/`} target="_blank" rel="noopener noreferrer" className="hover:text-brand-600 dark:hover:text-brand-400">
                       <span className="max-w-40 block truncate">{c.postTitle}</span>
                     </a>
                   </Td>

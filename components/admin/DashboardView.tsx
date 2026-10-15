@@ -9,7 +9,7 @@ import { api } from '@/lib/api';
 /** 统计卡图标：浅蓝渐变底（参考图风格） */
 function StatIcon({ d }: { d: string }) {
   return (
-    <span className="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-sm shrink-0">
+    <span className="w-10 h-10 rounded-lg bg-brand-600 text-white flex items-center justify-center shadow-sm shrink-0">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
         <path d={d} />
       </svg>
@@ -75,7 +75,7 @@ export default function DashboardView() {
       {/* 欢迎区（参考图 B2B 工作台问候） */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">您好，欢迎回来</h1>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 font-display">您好，欢迎回来</h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">博客内容与访问数据总览</p>
         </div>
         <Badge tone="blue">数据已更新</Badge>
@@ -98,7 +98,7 @@ export default function DashboardView() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {subCards.map((c) => (
           <Card key={c.label} className="!p-4 flex items-center gap-3">
-            <span className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+            <span className="w-8 h-8 rounded-lg bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center shrink-0">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
                 <path d={c.icon} />
               </svg>
@@ -123,7 +123,7 @@ export default function DashboardView() {
                   <div key={date} className="flex-1 flex flex-col items-center gap-1 min-w-0">
                     <span className="text-[10px] text-slate-400">{count}</span>
                     <div
-                      className="w-full rounded-t bg-blue-600 dark:bg-blue-500"
+                      className="w-full rounded-t bg-brand-600 dark:bg-brand-500"
                       style={{ height: `${Math.max(4, (count / maxDay) * 100)}%` }}
                       title={`${date}: ${count}`}
                     />
@@ -141,16 +141,16 @@ export default function DashboardView() {
           <Card>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">热门文章 TOP5</h2>
-              <a href="#/posts" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">查看全部</a>
+              <a href="#/posts" className="text-xs text-brand-600 dark:text-brand-400 hover:underline">查看全部</a>
             </div>
             {topPosts.length ? (
               <div className="space-y-1">
                 {topPosts.map((p, i) => (
                   <div key={p.id} className="flex items-center gap-4 py-2 border-b border-slate-100 dark:border-slate-700/50 last:border-0">
-                    <span className={`w-8 text-lg font-bold text-slate-200 dark:text-slate-600 ${i < 3 ? 'text-blue-500 dark:text-blue-400' : ''}`}>
+                    <span className={`w-8 text-lg font-bold text-slate-200 dark:text-slate-600 ${i < 3 ? 'text-brand-500 dark:text-brand-400' : ''}`}>
                       {i + 1}
                     </span>
-                    <a href={`/posts/${p.slug}/`} target="_blank" rel="noopener noreferrer" className="flex-1 truncate text-sm text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400">
+                    <a href={`/posts/${p.slug}/`} target="_blank" rel="noopener noreferrer" className="flex-1 truncate text-sm text-slate-700 dark:text-slate-200 hover:text-brand-600 dark:hover:text-brand-400">
                       {p.title}
                     </a>
                     <Badge tone={p.status === 'published' ? 'green' : 'gray'}>{p.status === 'published' ? '已发布' : '草稿'}</Badge>
@@ -174,7 +174,7 @@ export default function DashboardView() {
                 <a
                   key={q.label}
                   href={q.hash}
-                  className="flex flex-col items-center gap-2 px-2 py-3 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  className="flex flex-col items-center gap-2 px-2 py-3 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
                     <path d={q.icon} />
