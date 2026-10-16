@@ -36,6 +36,9 @@
 - **TOTP**：管理员可开启二次验证
 - **CORS**：仅公开只读 GET 接口下发 `Access-Control-Allow-Origin: *`（无 credentials），管理接口不带 CORS 头
 
+## 页面
+![首页方形](老版本-最新热门文章方形.jpeg)
+
 ## 技术栈
 
 | 层 | 技术 |
