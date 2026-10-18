@@ -17,6 +17,19 @@ export default function SearchClient() {
 
   useEffect(() => {
     inputRef.current?.focus();
+    // 支持 URL ?q= 直达：从顶部搜索浮层提交后自动填充并检索
+    const initial = new URLSearchParams(window.location.search).get('q')?.trim();
+    if (initial) {
+      setQ(initial);
+      api.search(initial)
+        .then((d) => setItems(d.items))
+        .catch(() => setItems([]))
+        .finally(() => {
+          setSearched(true);
+          setLoading(false);
+        });
+      setLoading(true);
+    }
   }, []);
 
   const doSearch = async () => {

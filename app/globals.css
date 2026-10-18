@@ -1581,6 +1581,55 @@ html.dark .icon-btn:hover {
   transform: translateY(0) scale(0.95);
 }
 
+/* ========== 搜索浮层（顶部 🔍 弹出，可 × / ESC / 遮罩关闭） ========== */
+.search-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  inset: 0;
+  background: rgba(28, 25, 22, 0.48);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 150;
+  opacity: 0;
+  transition: opacity 0.28s var(--ease-out);
+}
+.search-overlay.open {
+  display: block;
+  opacity: 1;
+}
+.search-pop {
+  position: fixed;
+  top: 96px;
+  left: 50%;
+  transform: translate(-50%, -12px) scale(0.98);
+  width: min(560px, calc(100vw - 32px));
+  background: var(--t-slate-50);
+  border: 1px solid var(--t-slate-200);
+  border-radius: 16px;
+  padding: 20px;
+  z-index: 160;
+  opacity: 0;
+  box-shadow: 0 24px 64px rgba(28, 25, 22, 0.22);
+  transition: transform 0.28s var(--ease-out), opacity 0.24s var(--ease-out);
+}
+html.dark .search-pop {
+  background: var(--t-slate-900);
+  border-color: var(--t-slate-800);
+}
+.search-pop.open {
+  transform: translate(-50%, 0) scale(1);
+  opacity: 1;
+}
+@media (max-width: 640px) {
+  .search-pop {
+    top: 72px;
+  }
+}
+
 /* ========== 移动端抽屉导航（右侧滑出 + 毛玻璃遮罩） ========== */
 .drawer-overlay {
   display: none;

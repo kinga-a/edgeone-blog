@@ -1,8 +1,8 @@
 'use client';
 
-/** 站点导航头部：当前路径高亮 + 主题切换 + 移动端抽屉菜单（支持 ESC 关闭与图标导航） */
+/** 站点导航头部：当前路径高亮 + 主题切换 + 搜索浮层 + 移动端抽屉菜单（支持 ESC 关闭与图标导航） */
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import ThemeToggle from './ThemeToggle';
 
@@ -15,7 +15,10 @@ const NAV = [
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQ, setSearchQ] = useState('');
   const [title, setTitle] = useState('我的博客');
   const [scrolled, setScrolled] = useState(false);
 
@@ -39,18 +42,21 @@ export default function Header() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // 抽屉打开时锁定页面滚动 + 支持 ESC 关闭
+  // 抽屉 / 搜索浮层打开时锁定页面滚动 + 支持 ESC 关闭
   useEffect(() => {
-    document.body.style.overflow = open ? 'hidden' : '';
+    document.body.style.overflow = open || searchOpen ? 'hidden' : '';
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape') {
+        setOpen(false);
+        setSearchOpen(false);
+      }
     };
-    if (open) window.addEventListener('keydown', onKey);
+    if (open || searchOpen) window.addEventListener('keydown', onKey);
     return () => {
       document.body.style.overflow = '';
       window.removeEventListener('keydown', onKey);
     };
-  }, [open]);
+  }, [open, searchOpen]);
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/' || pathname === '';
@@ -81,8 +87,8 @@ export default function Header() {
               </Link>
             ))}
             <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-1.5" aria-hidden="true" />
-            <Link
-              href="/search/"
+            <button
+              onClick={() => setSearchOpen(true)}
               aria-label="搜索"
               title="搜索文章"
               className={`icon-btn ${pathname.startsWith('/search') ? '!border-brand-500 !text-brand-600 dark:!text-brand-400' : ''}`}
@@ -91,15 +97,15 @@ export default function Header() {
                 <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.7" />
                 <path d="M14 14l4 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
               </svg>
-            </Link>
+            </button>
             <span className="ml-1 flex items-center">
               <ThemeToggle />
             </span>
           </nav>
 
           <div className="md:hidden flex items-center gap-1.5">
-            <Link
-              href="/search/"
+            <button
+              onClick={() => setSearchOpen(true)}
               aria-label="搜索"
               title="搜索"
               className="icon-btn"
@@ -108,7 +114,7 @@ export default function Header() {
                 <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.7" />
                 <path d="M14 14l4 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
               </svg>
-            </Link>
+            </button>
             <ThemeToggle />
             <button
               className="icon-btn"
@@ -162,24 +168,59 @@ export default function Header() {
                   </Link>
                 </li>
               ))}
-              <li className="pt-2 mt-2 border-t border-slate-200 dark:border-slate-800">
-                <Link
-                  href="/search/"
-                  onClick={() => setOpen(false)}
-                  className={pathname.startsWith('/search') ? 'active' : ''}
-                >
-                  <span className="inline-flex items-center gap-2.5">
-                    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" className="opacity-75">
-                      <circle cx="9" cy="9" r="6" />
-                      <path d="M14 14l4 4" />
-                    </svg>
-                    搜索文章
-                  </span>
-                  <span className="text-xs opacity-50">→</span>
-                </Link>
-              </li>
             </ul>
           </aside>
+        </>
+      )}
+
+      {/* 搜索浮层：× / ESC / 点击遮罩关闭；回车跳转 /search/?q= 直达结果 */}
+      {searchOpen && (
+        <>
+          <div className="search-overlay open" onClick={() => setSearchOpen(false)} />
+          <div className="search-pop open" role="dialog" aria-label="站内搜索">
+            <div className="flex items-center justify-between pb-3.5 border-b border-slate-200 dark:border-slate-800">
+              <span className="text-sm font-display font-semibold text-slate-900 dark:text-slate-100">站内搜索</span>
+              <button
+                className="icon-btn"
+                onClick={() => setSearchOpen(false)}
+                aria-label="关闭搜索"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16" aria-hidden="true">
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <form
+              className="flex items-center gap-2 mt-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const kw = searchQ.trim();
+                if (!kw) return;
+                setSearchOpen(false);
+                router.push(`/search/?q=${encodeURIComponent(kw)}`);
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" className="text-slate-400 shrink-0" aria-hidden="true">
+                <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.7" />
+                <path d="M14 14l4 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+              </svg>
+              <input
+                autoFocus
+                value={searchQ}
+                onChange={(e) => setSearchQ(e.target.value)}
+                placeholder="搜索文章标题、摘要、正文…"
+                aria-label="搜索关键词"
+                className="flex-1 min-w-0 bg-transparent text-sm text-slate-800 dark:text-slate-200 outline-none placeholder:text-slate-400"
+              />
+              <button
+                type="submit"
+                disabled={!searchQ.trim()}
+                className="px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+              >
+                搜索
+              </button>
+            </form>
+          </div>
         </>
       )}
     </>
