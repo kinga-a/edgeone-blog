@@ -6,8 +6,9 @@
  * - 返回 545/404：线上仍是旧构建（push 未触发部署 / 构建失败）
  * 注意：本端点不依赖 KV，任何绑定缺失都不应影响它；若仅它 200 而同站 /api/config 545 → 缺 KV 绑定实锤。
  */
-export async function onRequestGet() {
+export async function onRequestGet(context) {
   const hasCrypto = typeof globalThis.crypto !== 'undefined';
+  const env = (context && context.env) || {};
   return new Response(
     JSON.stringify({
       ok: true,
@@ -18,6 +19,10 @@ export async function onRequestGet() {
         hasGetRandomValues: hasCrypto && typeof (globalThis.crypto || {}).getRandomValues === 'function',
         hasProcess: typeof process !== 'undefined',
         nodeVersion: typeof process !== 'undefined' ? process.version : null,
+      },
+      env: {
+        keys: Object.keys(env),
+        hasAdminResetToken: Boolean(env.ADMIN_RESET_TOKEN),
       },
       ts: new Date().toISOString(),
     }),
