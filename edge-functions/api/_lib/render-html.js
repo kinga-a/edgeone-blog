@@ -178,8 +178,8 @@ ${body}
   var btn=document.getElementById('theme-toggle');
   if(btn){btn.addEventListener('click',function(){setTheme(!document.documentElement.classList.contains('dark'));});}
   var menu=document.getElementById('site-menu'),ov=document.getElementById('drawer-overlay'),dr=document.getElementById('site-drawer'),cl=document.getElementById('drawer-close');
-  function openDrawer(){if(ov){ov.classList.add('open');ov.setAttribute('aria-hidden','false');}if(dr){dr.classList.add('open');}document.body.style.overflow='hidden';}
-  function closeDrawer(){if(ov){ov.classList.remove('open');ov.setAttribute('aria-hidden','true');}if(dr){dr.classList.remove('open');}document.body.style.overflow='';}
+  function openDrawer(){if(ov){ov.classList.add('open');ov.setAttribute('aria-hidden','false');}if(dr){dr.classList.add('open');}document.body.style.overflow='hidden';document.documentElement.style.overflow='hidden';}
+  function closeDrawer(){if(ov){ov.classList.remove('open');ov.setAttribute('aria-hidden','true');}if(dr){dr.classList.remove('open');}document.body.style.overflow='';document.documentElement.style.overflow='';}
   if(menu){menu.addEventListener('click',openDrawer);}
   if(cl){cl.addEventListener('click',closeDrawer);}
   if(ov){ov.addEventListener('click',closeDrawer);}
@@ -190,8 +190,9 @@ ${body}
         e.preventDefault();
         var pl=document.getElementById('page-loading');if(pl){pl.classList.add('show');}
         closeDrawer();
-        /* 显式导航：绕开移动端 overflow/手势等默认行为兼容问题，全设备一致 */
-        window.location.href=href;
+        /* 显式导航：延迟 60ms 让 loading/抽屉动画先渲染再跳转。
+           规避 iOS Safari 同帧内改样式+导航被吞、安卓 Via/Chrome 手势兼容问题，三端一致 */
+        setTimeout(function(){window.location.href=href;},60);
       });
       try{var l=document.createElement('link');l.rel='prefetch';l.href=href;document.head.appendChild(l);}catch(e){}
     })(links[i]);
