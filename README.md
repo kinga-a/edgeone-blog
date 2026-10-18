@@ -90,7 +90,8 @@ curl -s -b /tmp/blog_cookies -X DELETE "https://<你的域名>/api/mcp-keys/<id>
 - `crypto-soft.js`：纯 JS SHA-256 / SHA-1 / HMAC / PBKDF2，与 WebCrypto 输出逐字节一致（`npm run test:compat` 对拍验证），老/新运行时生成的哈希**跨模式互认**，账号与 MCP Key 可无缝迁移
 - `crypto-polyfill.js`：启动时自动补齐 `getRandomValues/randomUUID`；subtle 调用全部带「失败降级」保护
 - 所有登录/初始化/MCP 入口套 `withErrorGuard`：意外异常返回 500 + JSON 原始报错，不再是黑盒 545
-- 临时诊断端点（排障完成后删除这两个文件即可）：
+- 版本信标 `GET /api/ping`：与 KV/加密无关，返回 200 且 `ver=compat-v3.1` 即新构建已上线；若它 200 而其它 /api 全 545 → 部署丢失了 BLOG_KV 绑定
+- 临时诊断端点（排障完成后删除这三个文件即可）：
   - `GET /api/diag` —— 运行时能力、双实现一致性自检
   - `GET /api/diag-sdk` —— MCP SDK 在你的运行时能否完成一次真实协议往返
 
