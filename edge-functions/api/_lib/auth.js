@@ -8,7 +8,13 @@ import { pbkdf2Sha256, hmacSha1Bytes, toHex } from './crypto-soft.js';
 
 export const SESSION_COOKIE = 'blog_admin';
 const SESSION_TTL_MS = 7 * 24 * 3600 * 1000; // 7 天
-const PBKDF2_ITERATIONS = 100000;
+// PBKDF2 迭代次数：EdgeOne 边缘函数有 CPU 时间预算（约 200ms），本运行时实测
+// 纯 JS 实现约 22ms/千次迭代（WebCrypto PBKDF2 在该运行时不可用，自动降级软实现）。
+// 100000 次会超出预算导致函数被杀（登录表现为 545），故软路径取 5000（约 110ms），
+// 配合登录失败限速（每 IP 15 分钟 5 次）与可选 TOTP 作为补偿。
+// 注意：修改本值后需对存量管理员执行一次密码重置（见 /api/auth/admin-reset），
+// 否则旧哈希（旧迭代次数）无法通过校验。
+const PBKDF2_ITERATIONS = 5000;
 
 /** PBKDF2-SHA256 哈希密码，返回十六进制串。WebCrypto 可用走原生；缺失/不支持自动降级纯 JS 实现（输出一致） */
 export async function hashPassword(password, salt, iterations = PBKDF2_ITERATIONS) {
