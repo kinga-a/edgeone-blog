@@ -95,6 +95,8 @@ export interface SiteConfig {
   author: string;
   about: string;
   footerText: string;
+  /** 首页 hero 纸卡文字：填 https 接口 URL 则每日自动拉取（如每日诗词），填普通文字则固定显示；留空隐藏 */
+  heroQuote: string;
   language: string;
   siteUrl: string;
   perPage: number;

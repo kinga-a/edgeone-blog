@@ -18,6 +18,8 @@ export const DEFAULT_SITE_CONFIG = {
   author: '博主',
   about: '## 关于我\n\n这是我的个人博客。\n\n- 用 EdgeOne Pages + Next.js + Tailwind CSS 构建\n- 内容存储于 EdgeOne KV，媒体存储于 EdgeOne Blob\n',
   footerText: 'Powered by EdgeOne Pages',
+  /** 首页 hero 纸卡文字：填 https 接口 URL 则每日自动拉取（如 https://v1.jinrishici.com/rensheng.txt），填普通文字则固定显示；留空隐藏 */
+  heroQuote: '',
   language: 'zh-CN',
   perPage: 10,
   commentEnabled: true,

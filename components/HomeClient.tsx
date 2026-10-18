@@ -93,6 +93,7 @@ export default function HomeClient() {
   const [posts, setPosts] = useState<PostSummary[]>([]);
   const [featuredList, setFeatured] = useState<PostSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [heroQuote, setHeroQuote] = useState('');
 
   useEffect(() => {
     let alive = true;
@@ -110,6 +111,21 @@ export default function HomeClient() {
     });
     return () => { alive = false; };
   }, []);
+
+  // 首页装饰卡文字：heroQuote 为 https 接口 URL 则拉取每日诗句，否则直接显示固定文字
+  useEffect(() => {
+    const q = (config?.heroQuote || '').trim();
+    if (!q) { setHeroQuote(''); return; }
+    if (/^https?:\/\//i.test(q)) {
+      let alive = true;
+      fetch(q, { headers: { accept: 'text/plain' } })
+        .then((r) => (r.ok ? r.text() : ''))
+        .then((t) => { if (alive) setHeroQuote((t || '').trim()); })
+        .catch(() => { if (alive) setHeroQuote(''); });
+      return () => { alive = false; };
+    }
+    setHeroQuote(q);
+  }, [config]);
 
   if (loading) {
     return (
@@ -203,7 +219,9 @@ export default function HomeClient() {
           </div>
           <div className="hero-deco" aria-hidden="true">
             <div className="hero-deco-paper"></div>
-            <div className="hero-deco-paper-2"></div>
+            <div className="hero-deco-paper-2">
+              {heroQuote ? <p className="hero-deco-quote">{heroQuote}</p> : null}
+            </div>
           </div>
         </div>
       </section>

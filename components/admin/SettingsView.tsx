@@ -318,6 +318,14 @@ export default function SettingsView() {
               <Input value={config.footerText} onChange={(e) => set({ footerText: e.target.value })} />
             </Field>
           </div>
+          <div className="mt-4">
+            <Field
+              label="首页装饰卡文字（每日诗词 / 固定文字）"
+              hint="填 https 接口 URL 则每日自动拉取一句（如 https://v1.jinrishici.com/rensheng.txt）；填普通文字则固定显示；留空隐藏"
+            >
+              <Input value={config.heroQuote || ''} onChange={(e) => set({ heroQuote: e.target.value })} placeholder="https://v1.jinrishici.com/rensheng.txt 或一句文字" className="font-mono text-xs" />
+            </Field>
+          </div>
         </Card>
 
         <Card>
