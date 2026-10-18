@@ -113,9 +113,9 @@ ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
     </a>
     <nav class="site-nav">
       ${NAV_ITEMS.map((n) => `<a href="${n.href}" class="${n.key === navKey ? 'active' : ''}">${n.label}</a>`).join('')}
-      <a class="search-link" href="/search/" aria-label="搜索" title="搜索">
+      <button type="button" class="search-link" id="search-open" aria-label="搜索" title="搜索">
         <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.6"/><path d="M14 14l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-      </a>
+      </button>
       <button type="button" class="theme-toggle" id="theme-toggle" aria-label="切换主题" title="切换主题">
         <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
@@ -135,6 +135,23 @@ ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
     ${NAV_ITEMS.map((n) => `<li><a href="${n.href}" class="${n.key === navKey ? 'active' : ''}">${n.label}</a></li>`).join('')}
   </ul>
 </aside>
+<div class="search-overlay" id="search-overlay" aria-hidden="true"></div>
+<div class="search-pop" id="search-pop" role="dialog" aria-label="站内搜索">
+  <div class="search-pop-head">
+    <span class="search-pop-title">站内搜索</span>
+    <button type="button" class="icon-btn search-pop-close" id="search-close" aria-label="关闭搜索">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <form class="search-pop-form" id="search-form">
+    <div class="search-pop-input">
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.6"/><path d="M14 14l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <input id="search-input" type="text" placeholder="搜索文章标题、摘要、正文…" autocomplete="off" aria-label="搜索关键词">
+    </div>
+    <button type="submit" class="search-pop-btn" id="search-btn">搜索</button>
+  </form>
+  <div class="search-pop-results" id="search-results"></div>
+</div>
 <main class="site-main">
 ${body}
 </main>
@@ -158,6 +175,39 @@ ${body}
   if(cl){cl.addEventListener('click',closeDrawer);}
   if(ov){ov.addEventListener('click',closeDrawer);}
   if(dr){var links=dr.querySelectorAll('a');for(var i=0;i<links.length;i++){links[i].addEventListener('click',closeDrawer);}}
+
+  /* ---- 搜索浮层：× / ESC / 遮罩关闭，输入防抖 300ms 实时检索 ---- */
+  var so=document.getElementById('search-open'),sov=document.getElementById('search-overlay'),spop=document.getElementById('search-pop'),scl=document.getElementById('search-close'),sinp=document.getElementById('search-input'),sbtn=document.getElementById('search-btn'),sres=document.getElementById('search-results'),sfrm=document.getElementById('search-form');
+  var sTimer=null,sBusy=false;
+  function openSearch(){if(sov){sov.classList.add('open');sov.setAttribute('aria-hidden','false');}if(spop){spop.classList.add('open');}document.body.style.overflow='hidden';if(sinp){sinp.focus();} }
+  function closeSearch(){if(sov){sov.classList.remove('open');sov.setAttribute('aria-hidden','true');}if(spop){spop.classList.remove('open');}document.body.style.overflow='';}
+  function esc(){var q=sinp.value.replace(/\s+$/,'').trim();if(!q){sres.innerHTML='';return;}
+    sBusy=true;sres.innerHTML='<div class="search-loading"><span></span><span></span><span></span></div>';
+    fetch('/api/search?q='+encodeURIComponent(q)).then(function(r){return r.json();}).then(function(d){
+      sBusy=false;
+      var items=d&&d.items||[];
+      var html='<div class="search-count">找到 <strong>'+items.length+'</strong> 篇与「'+q.replace(/[<>&"']/g,'')+'」相关的文章</div>';
+      if(items.length){html+='<div class="search-list">';
+        for(var i=0;i<items.length;i++){var p=items[i];
+          var date=(p.publishedAt||p.createdAt||'').slice(0,10);
+          var cat=p.categoryName?'<span class="search-tag">'+p.categoryName+'</span>':'';
+          html+='<a class="search-card" href="/posts/'+encodeURIComponent(p.slug)+'/" data-search-go><div class="search-card-head"><span class="search-card-title">'+p.title+'</span><span class="search-card-date">'+date+'</span></div>'+(p.summary?'<p class="search-card-desc">'+p.summary+'</p>':'')+'<div class="search-card-meta">'+cat+'<span>'+(p.readingTime||1)+' 分钟阅读</span></div></a>';
+        }
+        html+='</div>';
+      }else{
+        html+='<div class="search-empty"><p>没有找到匹配的文章</p><span>试试缩短关键词或更换其它搜索词</span></div>';
+      }
+      sres.innerHTML=html;
+      // 结果卡片点击即跳转，无需额外绑定
+    }).catch(function(){sBusy=false;sres.innerHTML='<div class="search-empty"><p>搜索失败，请稍后重试</p></div>';});
+  }
+  if(so){so.addEventListener('click',openSearch);}
+  if(scl){scl.addEventListener('click',closeSearch);}
+  if(sov){sov.addEventListener('click',closeSearch);}
+  if(sinp){sinp.addEventListener('input',function(){clearTimeout(sTimer);sTimer=setTimeout(esc,300);});sinp.addEventListener('keydown',function(e){if(e.key==='Escape')closeSearch();});}
+  if(sfrm){sfrm.addEventListener('submit',function(e){e.preventDefault();clearTimeout(sTimer);esc();});}
+  if(sbtn){sbtn.addEventListener('click',function(e){e.preventDefault();clearTimeout(sTimer);esc();});}
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeDrawer();closeSearch();}});
 })();
 </script>
 </body>
