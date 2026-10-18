@@ -9,7 +9,8 @@
     "start": "next start",
     "check:functions": "node scripts/check-functions.mjs",
     "test:functions": "node scripts/smoke-functions.mjs",
-    "test:mcp": "node scripts/smoke-mcp.mjs"
+    "test:mcp": "node scripts/smoke-mcp.mjs",
+    "test:compat": "node scripts/test-crypto-compat.mjs"
   },
   "dependencies": {
     "@edgeone/pages-blob": "^0.0.16",

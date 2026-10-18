@@ -83,6 +83,17 @@ curl -s -b /tmp/blog_cookies -X DELETE "https://<你的域名>/api/mcp-keys/<id>
 > 若开启了 `ADMIN_PATH` 或失败限速，登录步骤请注意对应路径与 15 分钟锁定窗口；开启 TOTP 时登录还需通过 `/api/auth/totp` 流程。
 
 
+## 运行时兼容（WebCrypto 缺失自动降级）
+
+个别部署形态（容器 Node<19 等）不提供全局 WebCrypto，早期版本会导致登录/MCP 鉴权抛未捕获异常（平台表现为 **545 Error return from script**）。本版修复：
+
+- `crypto-soft.js`：纯 JS SHA-256 / SHA-1 / HMAC / PBKDF2，与 WebCrypto 输出逐字节一致（`npm run test:compat` 对拍验证），老/新运行时生成的哈希**跨模式互认**，账号与 MCP Key 可无缝迁移
+- `crypto-polyfill.js`：启动时自动补齐 `getRandomValues/randomUUID`；subtle 调用全部带「失败降级」保护
+- 所有登录/初始化/MCP 入口套 `withErrorGuard`：意外异常返回 500 + JSON 原始报错，不再是黑盒 545
+- 临时诊断端点（排障完成后删除这两个文件即可）：
+  - `GET /api/diag` —— 运行时能力、双实现一致性自检
+  - `GET /api/diag-sdk` —— MCP SDK 在你的运行时能否完成一次真实协议往返
+
 ## 安全设计
 
 - **安全响应头**：CSP（白名单 frame-src 含 B 站/YouTube/腾讯/Vimeo）、HSTS（1 年 + includeSubDomains）、X-Frame-Options SAMEORIGIN、X-Content-Type-Options nosniff、Referrer-Policy、Permissions-Policy（静态 edgeone.json 与 SSR render-html.js 双处下发）

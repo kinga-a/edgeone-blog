@@ -3,27 +3,34 @@
  */
 import { getKv, Keys, kvGetJson, kvPutJson } from './kv.js';
 import { uid } from './ids.js';
+import { webcryptoPbkdf2, webcryptoHmacSha1 } from './crypto-polyfill.js';
+import { pbkdf2Sha256, hmacSha1Bytes, toHex } from './crypto-soft.js';
 
 export const SESSION_COOKIE = 'blog_admin';
 const SESSION_TTL_MS = 7 * 24 * 3600 * 1000; // 7 天
 const PBKDF2_ITERATIONS = 100000;
 
-/** PBKDF2-SHA256 哈希密码，返回十六进制串 */
+/** PBKDF2-SHA256 哈希密码，返回十六进制串。WebCrypto 可用走原生；缺失/不支持自动降级纯 JS 实现（输出一致） */
 export async function hashPassword(password, salt, iterations = PBKDF2_ITERATIONS) {
   const enc = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey(
-    'raw',
-    enc.encode(String(password)),
-    'PBKDF2',
-    false,
-    ['deriveBits'],
-  );
-  const bits = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', salt: enc.encode(salt), iterations, hash: 'SHA-256' },
-    keyMaterial,
-    256,
-  );
-  return Array.from(new Uint8Array(bits), (b) => b.toString(16).padStart(2, '0')).join('');
+  const pw = String(password);
+  if (await webcryptoPbkdf2()) {
+    try {
+      const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveBits']);
+      const bits = await crypto.subtle.deriveBits(
+        { name: 'PBKDF2', salt: enc.encode(salt), iterations, hash: 'SHA-256' },
+        keyMaterial,
+        256,
+      );
+      return toHex(new Uint8Array(bits));
+    } catch { /* 运行时声称支持但抛错 → 降级 */ }
+  }
+  return toHex(pbkdf2Soft(pw, String(salt), iterations));
+}
+
+function pbkdf2Soft(password, salt, iterations) {
+  const enc = new TextEncoder();
+  return pbkdf2Sha256(enc.encode(password), enc.encode(salt), iterations, 32);
 }
 
 /** 从请求 Cookie 中解析会话 token */
@@ -218,9 +225,14 @@ export function totpUri(secret, account, issuer = 'EdgeOne Blog') {
 }
 
 async function hmacSha1(keyBytes, msgBytes) {
-  const key = await crypto.subtle.importKey('raw', keyBytes, { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
-  const sig = await crypto.subtle.sign('HMAC', key, msgBytes);
-  return new Uint8Array(sig);
+  if (await webcryptoHmacSha1()) {
+    try {
+      const key = await crypto.subtle.importKey('raw', keyBytes, { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
+      const sig = await crypto.subtle.sign('HMAC', key, msgBytes);
+      return new Uint8Array(sig);
+    } catch { /* 降级 */ }
+  }
+  return hmacSha1Bytes(keyBytes, msgBytes);
 }
 
 /** 计算某一时刻的 6 位 TOTP 验证码 */

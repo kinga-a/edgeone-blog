@@ -9,7 +9,9 @@
  * - 校验失败按 IP 限速（15 分钟窗口最多 10 次），防爆破
  * - lastUsedAt 记录（>1 小时才回写，避免每次调用都产生 KV 写）
  */
+import './crypto-polyfill.js';
 import { getKv, Keys, kvGetJson, kvPutJson, rateLimitHit } from './kv.js';
+import { sha256 as softSha256, toHex } from './crypto-soft.js';
 import { uid, nowIso } from './ids.js';
 import { clientIp } from './auth.js';
 
@@ -20,10 +22,16 @@ const MCP_FAIL_LIMIT = 10;
 const MCP_FAIL_WINDOW_MS = 15 * 60 * 1000;
 const TOKEN_RE = /^eob_[0-9a-f]{64}$/;
 
-/** SHA-256 -> hex */
+/** SHA-256 -> hex（WebCrypto 优先，缺失/不支持时降级纯 JS） */
 async function sha256Hex(text) {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
+  const data = new TextEncoder().encode(text);
+  if (typeof crypto?.subtle?.digest === 'function') {
+    try {
+      const digest = await crypto.subtle.digest('SHA-256', data);
+      return toHex(new Uint8Array(digest));
+    } catch { /* 降级 */ }
+  }
+  return toHex(softSha256(data));
 }
 
 /** 读取 key 列表（内部存储结构） */

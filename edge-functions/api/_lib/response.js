@@ -72,3 +72,14 @@ export function handleOptions() {
     },
   });
 }
+
+/** 把未捕获异常转成干净的 500 JSON（避免平台层 545「Error return from script」黑盒），并把真实报错透出便于定位 */
+export function withErrorGuard(handler, label) {
+  return async (ctx) => {
+    try {
+      return await handler(ctx);
+    } catch (e) {
+      return fail(500, `${label}_unhandled: ${e?.name || 'Error'}: ${String(e?.message || e).slice(0, 300)}`);
+    }
+  };
+}

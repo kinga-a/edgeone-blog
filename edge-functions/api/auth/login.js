@@ -1,4 +1,4 @@
-import { json, fail, readJson } from '../_lib/response.js';
+import { json, fail, readJson, withErrorGuard } from '../_lib/response.js';
 import { verifyAdmin, createSession, getAdmin, verifyTotp, checkLoginRate, recordLoginFail, clearLoginFails } from '../_lib/auth.js';
 
 /**
@@ -6,7 +6,7 @@ import { verifyAdmin, createSession, getAdmin, verifyTotp, checkLoginRate, recor
  * 请求：{ username, password, totp? }
  * 若已启用 TOTP 且未提供验证码 → 返回 { ok:true, totpRequired:true }，客户端补充 totp 后再次提交
  */
-export async function onRequestPost({ request, env }) {
+async function handleLogin({ request, env }) {
   const body = await readJson(request);
   if (!body || !body.username || !body.password) return fail(400, '请输入用户名和密码');
 
@@ -44,4 +44,5 @@ export async function onRequestPost({ request, env }) {
   });
 }
 
+export const onRequestPost = withErrorGuard(handleLogin, 'login');
 export const onRequest = onRequestPost;

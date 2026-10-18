@@ -9,10 +9,13 @@
  *   enableJsonResponse 直接回 JSON，不依赖长连接/SSE，契合边缘函数短生命周期）
  * - 数据：直接复用 edge-functions/api/_lib 的数据层，与 REST API 同一套读写逻辑
  */
+// 关键：crypto 兼容层必须在 SDK 之前完成加载与补齐
+import './api/_lib/crypto-polyfill.js';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { verifyMcpBearer } from './api/_lib/mcp-auth.js';
+import { withErrorGuard } from './api/_lib/response.js';
 import * as data from './api/_lib/data.js';
 
 const CORS_HEADERS = {
@@ -370,9 +373,10 @@ async function handleMcpPost(request, env) {
 
 /* ---------------- Edge Functions 入口（路由 /mcp） ---------------- */
 
-export async function onRequestPost(context) {
-  return handleMcpPost(context.request, context.env);
-}
+export const onRequestPost = withErrorGuard(
+  (context) => handleMcpPost(context.request, context.env),
+  'mcp',
+);
 
 export async function onRequestOptions() {
   return new Response(null, { status: 204, headers: CORS_HEADERS });

@@ -1,11 +1,11 @@
-import { json, fail, readJson } from '../_lib/response.js';
+import { json, fail, readJson, withErrorGuard } from '../_lib/response.js';
 import { hasAdmin, upsertAdmin } from '../_lib/auth.js';
 
 /**
  * POST /api/auth/setup — 首次部署初始化管理员账号
  * 仅在系统尚未创建管理员时可用；创建后即关闭。
  */
-export async function onRequestPost({ request, env }) {
+async function handleSetup({ request, env }) {
   if (await hasAdmin(env)) return fail(403, '管理员账号已存在，请直接登录');
   const body = await readJson(request);
   const username = String(body?.username || '').trim();
@@ -16,4 +16,5 @@ export async function onRequestPost({ request, env }) {
   return json({ ok: true, message: '管理员创建成功，请登录' });
 }
 
+export const onRequestPost = withErrorGuard(handleSetup, 'setup');
 export const onRequest = onRequestPost;
