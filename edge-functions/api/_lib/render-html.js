@@ -66,10 +66,10 @@ function absUrl(origin, path) {
 }
 
 const NAV_ITEMS = [
-  { href: '/', label: '首页', key: 'home' },
-  { href: '/posts/', label: '文章', key: 'posts' },
-  { href: '/archives/', label: '归档', key: 'archives' },
-  { href: '/about/', label: '关于', key: 'about' },
+  { href: '/', label: '首页', key: 'home', icon: 'M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5.5v-6h-5v6H4a1 1 0 0 1-1-1v-9.5z' },
+  { href: '/posts/', label: '文章', key: 'posts', icon: 'M6 3h9l4 4v14H6V3zM14 3v5h5M9 12h6M9 16h4' },
+  { href: '/archives/', label: '归档', key: 'archives', icon: 'M4 6h16M4 12h16M4 18h10' },
+  { href: '/about/', label: '关于', key: 'about', icon: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-7 8a7 7 0 0 1 14 0' },
 ];
 
 /* ---------------- 页面骨架 ---------------- */
@@ -132,13 +132,18 @@ ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
 </header>
 <div class="drawer-overlay" id="drawer-overlay" aria-hidden="true"></div>
 <aside class="drawer" id="site-drawer" role="dialog" aria-label="导航菜单">
-  <button type="button" class="icon-btn drawer-close" id="drawer-close" aria-label="关闭菜单">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
-  </button>
+  <div class="drawer-head">
+    <span class="drawer-brand" aria-hidden="true">B</span>
+    <span class="drawer-title">${escapeHtml(config.title || '博客')}</span>
+    <button type="button" class="icon-btn drawer-close" id="drawer-close" aria-label="关闭菜单">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
   <ul class="drawer-nav">
-    ${NAV_ITEMS.map((n) => `<li><a href="${n.href}" class="${n.key === navKey ? 'active' : ''}">${n.label}</a></li>`).join('')}
+    ${NAV_ITEMS.map((n) => `<li><a href="${n.href}" class="${n.key === navKey ? 'active' : ''}"><span class="drawer-nav-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="drawer-nav-icon" aria-hidden="true"><path d="${n.icon}"/></svg>${n.label}</span><span class="drawer-nav-arrow" aria-hidden="true">→</span></a></li>`).join('')}
   </ul>
 </aside>
+<div class="page-loading" id="page-loading" aria-hidden="true"><span class="page-loading-spinner" aria-hidden="true"></span></div>
 <div class="search-overlay" id="search-overlay" aria-hidden="true"></div>
 <div class="search-pop" id="search-pop" role="dialog" aria-label="站内搜索">
   <div class="search-pop-head">
@@ -178,7 +183,11 @@ ${body}
   if(menu){menu.addEventListener('click',openDrawer);}
   if(cl){cl.addEventListener('click',closeDrawer);}
   if(ov){ov.addEventListener('click',closeDrawer);}
-  if(dr){var links=dr.querySelectorAll('a');for(var i=0;i<links.length;i++){links[i].addEventListener('click',closeDrawer);}}
+  if(dr){var links=dr.querySelectorAll('a');for(var i=0;i<links.length;i++){
+    links[i].addEventListener('click',function(){var pl=document.getElementById('page-loading');if(pl){pl.classList.add('show');}closeDrawer();});
+    /* 预取目标页（link rel=prefetch 低优先级，浏览器缓存后点击秒开） */
+    (function(h){try{var l=document.createElement('link');l.rel='prefetch';l.href=h;document.head.appendChild(l);}catch(e){}})(links[i].getAttribute('href'));
+  }}
 
   /* ---- 搜索浮层：× / ESC / 遮罩关闭，输入防抖 300ms 实时检索 ---- */
   var so=document.getElementById('search-open'),sov=document.getElementById('search-overlay'),spop=document.getElementById('search-pop'),scl=document.getElementById('search-close'),sinp=document.getElementById('search-input'),sbtn=document.getElementById('search-btn'),sres=document.getElementById('search-results'),sfrm=document.getElementById('search-form');
