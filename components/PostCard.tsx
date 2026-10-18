@@ -45,7 +45,7 @@ export default function PostCard({ post }: { post: PostSummary }) {
 
   return (
     <article className="article-card group">
-      <Link href={`/posts/${post.slug}/`} className="block card-cover">
+      <Link href={`/posts/${post.slug}/`} prefetch={false} className="block card-cover">
         {/* 静态导出 + 禁用 next/image 优化，使用原生 img + 懒加载 */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -79,7 +79,7 @@ export default function PostCard({ post }: { post: PostSummary }) {
           <span>{post.readingTime || 1} 分钟阅读</span>
         </div>
 
-        <Link href={`/posts/${post.slug}/`} className="block">
+        <Link href={`/posts/${post.slug}/`} prefetch={false} className="block">
           <h3 className="card-title">{post.title}</h3>
         </Link>
 
@@ -108,6 +108,7 @@ export default function PostCard({ post }: { post: PostSummary }) {
           </div>
           <Link
             href={`/posts/${post.slug}/`}
+            prefetch={false}
             className="text-brand-600 dark:text-brand-400 font-sans font-medium opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200"
           >
             阅读 →

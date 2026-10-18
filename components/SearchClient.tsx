@@ -109,6 +109,7 @@ export default function SearchClient() {
                 <li key={p.id} className="fade-in-up">
                   <Link
                     href={`/posts/${p.slug}/`}
+                    prefetch={false}
                     className="group block p-5 rounded-2xl bg-[var(--t-card)] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-brand-400 dark:hover:border-brand-400 hover:-translate-y-0.5 transition-all shadow-[var(--shadow-xs)]"
                   >
                     <div className="flex items-center justify-between gap-3">
