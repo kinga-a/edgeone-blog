@@ -94,6 +94,7 @@ export default function HomeClient() {
   const [featuredList, setFeatured] = useState<PostSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [heroQuote, setHeroQuote] = useState('');
+  const [heroQuoteAuthor, setHeroQuoteAuthor] = useState('');
 
   useEffect(() => {
     let alive = true;
@@ -112,19 +113,36 @@ export default function HomeClient() {
     return () => { alive = false; };
   }, []);
 
-  // 首页装饰卡文字：heroQuote 为 https 接口 URL 则拉取每日诗句，否则直接显示固定文字
+  // 首页装饰卡文字：heroQuote 为 https 接口 URL 则拉取每日诗句，否则直接显示固定文字。
+  // JSON 接口（如 https://v1.jinrishici.com/rensheng.json）返回 {content, author} → 诗句 + "—— 作者"；
+  // 纯文本接口/固定文字 → 仅一行。
   useEffect(() => {
     const q = (config?.heroQuote || '').trim();
-    if (!q) { setHeroQuote(''); return; }
+    if (!q) { setHeroQuote(''); setHeroQuoteAuthor(''); return; }
     if (/^https?:\/\//i.test(q)) {
       let alive = true;
-      fetch(q, { headers: { accept: 'text/plain' } })
+      fetch(q, { headers: { accept: 'text/plain, application/json' } })
         .then((r) => (r.ok ? r.text() : ''))
-        .then((t) => { if (alive) setHeroQuote((t || '').trim()); })
-        .catch(() => { if (alive) setHeroQuote(''); });
+        .then((t) => {
+          if (!alive) return;
+          const trimmed = (t || '').trim();
+          if (!trimmed) { setHeroQuote(''); setHeroQuoteAuthor(''); return; }
+          if (trimmed.startsWith('{')) {
+            try {
+              const j = JSON.parse(trimmed);
+              setHeroQuote((j.content || '').trim());
+              setHeroQuoteAuthor((j.author || '').trim());
+              return;
+            } catch { /* 非 JSON，落回纯文本 */ }
+          }
+          setHeroQuote(trimmed);
+          setHeroQuoteAuthor('');
+        })
+        .catch(() => { if (alive) { setHeroQuote(''); setHeroQuoteAuthor(''); } });
       return () => { alive = false; };
     }
     setHeroQuote(q);
+    setHeroQuoteAuthor('');
   }, [config]);
 
   if (loading) {
@@ -220,7 +238,12 @@ export default function HomeClient() {
           <div className="hero-deco" aria-hidden="true">
             <div className="hero-deco-paper"></div>
             <div className="hero-deco-paper-2">
-              {heroQuote ? <p className="hero-deco-quote">{heroQuote}</p> : null}
+              {heroQuote ? (
+                <div className="hero-deco-quote">
+                  <p className="hero-deco-quote-line">{heroQuote}</p>
+                  {heroQuoteAuthor ? <p className="hero-deco-quote-author">—— {heroQuoteAuthor}</p> : null}
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
