@@ -390,6 +390,87 @@ html.dark .hero-vol::before {
   flex-wrap: wrap;
 }
 
+/* 左文右装饰双栏（hero-grid，来自 b3 分支） */
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 40px;
+  align-items: center;
+}
+@media (max-width: 768px) {
+  .hero-grid { grid-template-columns: 1fr; }
+  .hero-deco { display: none; }
+}
+
+/* 纸墨装饰（右侧） */
+.hero-deco {
+  position: relative;
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hero-deco-paper {
+  position: absolute;
+  width: 260px; height: 180px;
+  background: #fff;
+  border: 1px solid var(--t-slate-200);
+  border-radius: 4px;
+  box-shadow: 0 12px 32px rgba(41, 37, 36, 0.12);
+  transform: rotate(-3deg);
+  top: 20px; left: 30px;
+}
+.dark .hero-deco-paper { background: var(--t-slate-800); border-color: var(--t-slate-700); }
+.hero-deco-paper::before {
+  content: '';
+  position: absolute;
+  top: 24px; left: 24px; right: 24px;
+  height: 8px;
+  background: var(--t-slate-900);
+  opacity: 0.15;
+  border-radius: 2px;
+}
+.hero-deco-paper::after {
+  content: '';
+  position: absolute;
+  top: 44px; left: 24px; right: 40px;
+  height: 6px;
+  background: var(--t-slate-900);
+  opacity: 0.08;
+  border-radius: 2px;
+  box-shadow: 0 14px 0 0 var(--t-slate-900), 0 28px 0 0 var(--t-slate-900);
+  opacity: 0.06;
+}
+.hero-deco-paper-2 {
+  position: absolute;
+  width: 240px; height: 160px;
+  background: #fff;
+  border: 1px solid var(--t-slate-200);
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(41, 37, 36, 0.08);
+  transform: rotate(4deg);
+  bottom: 20px; right: 30px;
+}
+.dark .hero-deco-paper-2 { background: var(--t-slate-800); border-color: var(--t-slate-700); }
+.hero-deco-paper-2::before {
+  content: '';
+  position: absolute;
+  top: 20px; left: 20px;
+  width: 36px; height: 36px;
+  background: var(--t-brand-600);
+  border-radius: 4px;
+  opacity: 0.85;
+}
+.hero-deco-paper-2::after {
+  content: '';
+  position: absolute;
+  top: 72px; left: 20px; right: 20px;
+  height: 5px;
+  background: var(--t-slate-900);
+  opacity: 0.06;
+  border-radius: 1px;
+}
+
 /* ========== 头条 Lede（精选文章：非对称图文卡片） ========== */
 .lede {
   display: grid;

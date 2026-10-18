@@ -177,26 +177,34 @@ export default function HomeClient() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 pb-10">
-      {/* 期刊刊头：眉题 + 大标题 + 一句话引言 + CTA */}
+      {/* 期刊刊头：眉题 + 大标题 + 引言 + CTA（左文右纸墨装饰，沿用 b3 分支 hero-grid 布局） */}
       <section className="hero fade-in-up">
-        <div className="hero-vol">VOL.{new Date().getFullYear()} · 记录与思考</div>
-        <h1 className="hero-title font-display">{config?.title || '我的博客'}</h1>
-        <p className="hero-desc">
-          {config?.subtitle || '技术踩坑记录 · 工具分享 · 网络观察随笔——用文字存档思考，把零散的认知沉淀成可回看的内容。'}
-        </p>
-        <div className="hero-actions">
-          <Link href="/posts/" className="btn-primary">
-            <span>浏览文章</span>
-            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-              <path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </Link>
-          <Link href="/archives/" className="btn-secondary">
-            <span>时间归档</span>
-          </Link>
-          <Link href="/about/" className="btn-ghost">
-            <span>关于我 →</span>
-          </Link>
+        <div className="hero-grid">
+          <div className="hero-text">
+            <div className="hero-vol">VOL.{new Date().getFullYear()} · 记录与思考</div>
+            <h1 className="hero-title font-display">{config?.title || '我的博客'}</h1>
+            <p className="hero-desc">
+              {config?.subtitle || '技术踩坑记录 · 工具分享 · 网络观察随笔——用文字存档思考，把零散的认知沉淀成可回看的内容。'}
+            </p>
+            <div className="hero-actions">
+              <Link href="/posts/" className="btn-primary">
+                <span>浏览文章</span>
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </Link>
+              <Link href="/archives/" className="btn-secondary">
+                <span>时间归档</span>
+              </Link>
+              <Link href="/about/" className="btn-ghost">
+                <span>关于我 →</span>
+              </Link>
+            </div>
+          </div>
+          <div className="hero-deco" aria-hidden="true">
+            <div className="hero-deco-paper"></div>
+            <div className="hero-deco-paper-2"></div>
+          </div>
         </div>
       </section>
 
