@@ -1,0 +1,6 @@
+[90m[cli][0m Jumping to login page...
+[90m[cli][0m Please come back after login.
+If the browser does not open automatically, please visit:
+https://edgeone.cloud.tencent.com/makers/cli-login?p=1024&state=ea289b30-8ee6-4f85-bd23-9afccd116393
+[90m[cli][0m[32m[✔] [0m.gitignore updated!
+[90m[cli][0m[32m[✔] [0mLogin successfully!

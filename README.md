@@ -90,10 +90,8 @@ curl -s -b /tmp/blog_cookies -X DELETE "https://<你的域名>/api/mcp-keys/<id>
 - `crypto-soft.js`：纯 JS SHA-256 / SHA-1 / HMAC / PBKDF2，与 WebCrypto 输出逐字节一致（`npm run test:compat` 对拍验证），老/新运行时生成的哈希**跨模式互认**，账号与 MCP Key 可无缝迁移
 - `crypto-polyfill.js`：启动时自动补齐 `getRandomValues/randomUUID`；subtle 调用全部带「失败降级」保护
 - 所有登录/初始化/MCP 入口套 `withErrorGuard`：意外异常返回 500 + JSON 原始报错，不再是黑盒 545
-- 版本信标 `GET /api/ping`：与 KV/加密无关，返回 200 且 `ver=compat-v3.1` 即新构建已上线；若它 200 而其它 /api 全 545 → 部署丢失了 BLOG_KV 绑定
-- 临时诊断端点（排障完成后删除这三个文件即可）：
-  - `GET /api/diag` —— 运行时能力、双实现一致性自检
-  - `GET /api/diag-sdk` —— 极简 MCP 协议实现（零重依赖，已移除 @modelcontextprotocol/sdk，避免函数脚本超体积导致全站 545「file too big」）能否完成一次真实协议往返
+- 版本信标 `GET /api/ping`：与 KV/加密无关，返回 200 即新构建已上线；若它 200 而其它 /api 全 545 → 部署丢失了 BLOG_KV 绑定（仅回显 ok/ver/ts，信息最小化）
+- 排障用临时诊断端点（`/api/diag`、`/api/diag-sdk`、`/api/auth/admin-reset`、`/api/backup` 冗余入口）已在排障完成后移除，需要时从 git 历史恢复
 
 ## 安全设计
 
@@ -210,8 +208,10 @@ npm run dev               # 启动 Next.js 开发服务器
 | GET/PUT | `/api/config` | 站点配置读取 / 更新 |
 | GET | `/api/stats` | 访问统计（管理员） |
 | POST | `/api/stats/track` | 访问埋点 |
-| GET/POST | `/api/backup` | 导出全量备份 / 从备份恢复（管理员） |
+| GET | `/api/backup/export` | 导出全量备份 JSON 下载（管理员） |
 | POST | `/api/backup/webdav` | 测试 WebDAV 连通性 / 立即备份到 WebDAV（管理员） |
+| POST | `/api/backup/restore` | 从 JSON 备份恢复（管理员） |
+| POST | `/api/backup/restore-webdav` | 从 WebDAV 备份恢复（管理员） |
 | GET/POST | `/api/mcp-keys` | MCP API Key 列表 / 创建（管理员，Cookie 鉴权） |
 | DELETE | `/api/mcp-keys/:id` | 吊销 MCP API Key（管理员） |
 | POST | `/mcp` | **MCP Streamable HTTP 端点**（Bearer API Key 鉴权） |

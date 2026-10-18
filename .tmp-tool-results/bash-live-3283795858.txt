@@ -1,0 +1,25 @@
+   Generating static pages (6/9) 
+ ✓ Generating static pages (9/9)
+   Finalizing page optimization ...
+   Collecting build traces ...
+ ⚠ rewrites, redirects, and headers are not applied when exporting your application, detected (rewrites). See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+   Exporting (0/2) ...
+ ✓ Exporting (2/2)
+
+Route (app)                                 Size  First Load JS
+┌ ○ /                                    4.55 kB         111 kB
+├ ○ /_not-found                            123 B         103 kB
+├ ○ /about                                322 kB         424 kB
+├ ○ /admin                               26.7 kB         129 kB
+├ ○ /archives                             3.4 kB         110 kB
+├ ○ /posts                                  6 kB         112 kB
+└ ○ /search                              4.04 kB         110 kB
++ First Load JS shared by all             103 kB
+  ├ chunks/255-566af14aff71e752.js       46.5 kB
+  ├ chunks/4bd1b696-c023c6e3521b1417.js  54.2 kB
+  └ other shared chunks (total)          1.98 kB
+
+
+○  (Static)  prerendered as static content
+
+[relocate-admin] ADMIN_PATH 未自定义，保持默认 /admin
