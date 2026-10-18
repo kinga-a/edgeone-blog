@@ -14,7 +14,6 @@
   },
   "dependencies": {
     "@edgeone/pages-blob": "^0.0.16",
-    "@modelcontextprotocol/sdk": "^1.32.1",
     "highlight.js": "^11.10.0",
     "marked": "^15.0.6",
     "next": "^15.1.6",

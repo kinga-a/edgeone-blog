@@ -1,14 +1,13 @@
 /**
  * MCP 端点端到端冒烟测试：
- *   内存 KV mock + 官方 MCP SDK Client 通过 Streamable HTTP 真实连到本地桥接的
- *   edge-functions/mcp.js，完整走通「建 Key → 建文 → 发布 → 搜索 → 删除」链路，
+ *   内存 KV mock + 极简 fetch/JSON-RPC 客户端（不依赖 @modelcontextprotocol/sdk）
+ *   通过 Streamable HTTP 真实连到本地桥接的 edge-functions/mcp.js，
+ *   完整走通「建 Key → 建文 → 发布 → 搜索 → 删除」链路，
  *   并验证鉴权负路径（无头 / 错 token / GET / OPTIONS）。
  * 运行：npm run test:mcp
  */
 import assert from 'node:assert/strict';
 import http from 'node:http';
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 
 /* ---------------- 内存 KV mock（与 smoke-functions.mjs 一致） ---------------- */
 
@@ -135,11 +134,45 @@ await test('OPTIONS 预检放行 Authorization 头', async () => {
 });
 
 /* ================= 3. MCP 客户端连接与工具枚举 ================= */
-console.log('\n[3/5] MCP 握手（真实 SDK Client / Streamable HTTP）');
-const client = new Client({ name: 'smoke-mcp', version: '1.0.0' });
-await client.connect(new StreamableHTTPClientTransport(new URL(MCP_URL), {
-  requestInit: { headers: { Authorization: `Bearer ${mcpToken}` } },
-}));
+console.log('\n[3/5] MCP 握手（极简 JSON-RPC 客户端 / Streamable HTTP）');
+
+/** 极简 MCP Streamable HTTP 客户端：initialize → notifications/initialized → tools/* */
+class MiniMcpClient {
+  constructor(url, headers) {
+    this.url = url;
+    this.headers = headers || {};
+    this.nextId = 1;
+  }
+  async _post(method, params) {
+    const res = await fetch(this.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...this.headers },
+      body: JSON.stringify({ jsonrpc: '2.0', id: this.nextId++, method, ...(params !== undefined ? { params } : {}) }),
+    });
+    if (res.status === 202) return undefined; // 通知类响应
+    if (res.status !== 200) {
+      throw new Error(`HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    }
+    const data = await res.json();
+    if (data.error) throw new Error(`${data.error.message} (code ${data.error.code})`);
+    return data.result;
+  }
+  async connect() {
+    await this._post('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'smoke-mcp', version: '1.0.0' } });
+    await this._post('notifications/initialized', {});
+  }
+  async listTools() {
+    const r = await this._post('tools/list', {});
+    return { tools: r.tools };
+  }
+  async callTool({ name, arguments: args }) {
+    return this._post('tools/call', { name, arguments: args });
+  }
+  async close() {}
+}
+
+const client = new MiniMcpClient(MCP_URL, { Authorization: `Bearer ${mcpToken}` });
+await client.connect();
 await test('initialize 成功且 tools/list 返回 7 个工具', async () => {
   const { tools } = await client.listTools();
   assert.equal(tools.length, 7);

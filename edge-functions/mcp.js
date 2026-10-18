@@ -9,11 +9,12 @@
  *   enableJsonResponse 直接回 JSON，不依赖长连接/SSE，契合边缘函数短生命周期）
  * - 数据：直接复用 edge-functions/api/_lib 的数据层，与 REST API 同一套读写逻辑
  */
-// 关键：crypto 兼容层必须在 SDK 之前完成加载与补齐
+// 关键：crypto 兼容层必须在任何加密调用之前完成加载与补齐
 import './api/_lib/crypto-polyfill.js';
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
-import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+// 注意：不再引入 @modelcontextprotocol/sdk —— 该 SDK 会使 EdgeOne Makers 打包出的
+// 边缘函数脚本超过运行时体积限制，线上表现为全站 545「Error return from script / file too big」。
+// 下方以手写 JSON-RPC 2.0 实现 MCP Streamable HTTP 无状态模式所需的最小协议面，
+// 兼容 OpenClaw / Claude Desktop / Cursor / Cline 等客户端（initialize / ping / tools/*）。
 import { verifyMcpBearer } from './api/_lib/mcp-auth.js';
 import { withErrorGuard } from './api/_lib/response.js';
 import * as data from './api/_lib/data.js';
@@ -324,29 +325,96 @@ const TOOL_DEFS = [
 ];
 
 /* ------------------------------------------------------------------ */
-/* 每请求装配 MCP Server + Transport                                    */
+/* 极简 MCP Streamable HTTP（无状态 JSON 模式，手写 JSON-RPC 2.0）      */
 /* ------------------------------------------------------------------ */
 
-function buildServer(env) {
-  const server = new Server(
-    { name: 'edgeone-blog', version: '1.0.0' },
-    {
-      capabilities: { tools: {} },
-      instructions: 'EdgeOne Blog 管理工具集：可对博客文章做增删改查、分类/标签查询与全文搜索。删除操作不可逆，执行前务必与用户确认标题。',
-    },
-  );
-  server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOL_DEFS }));
-  server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    const { name, arguments: args } = request.params || {};
-    const tool = TOOLS[name];
-    if (!tool) return ERR_TEXT(`未知工具：${name}`);
-    try {
-      return await tool(env, args || {});
-    } catch (e) {
-      return ERR_TEXT(e?.message || String(e));
+const PROTOCOL_VERSION = '2025-06-18';
+const SUPPORTED_PROTOCOL_VERSIONS = ['2024-11-05', '2025-03-26', '2025-06-18'];
+const SERVER_INFO = { name: 'edgeone-blog', version: '1.0.0' };
+const SERVER_INSTRUCTIONS = 'EdgeOne Blog 管理工具集：可对博客文章做增删改查、分类/标签查询与全文搜索。删除操作不可逆，执行前务必与用户确认标题。';
+
+const RPC = {
+  PARSE_ERROR: -32700,
+  INVALID_REQUEST: -32600,
+  METHOD_NOT_FOUND: -32601,
+  INVALID_PARAMS: -32602,
+  INTERNAL_ERROR: -32603,
+};
+
+function rpcResult(id, result) {
+  return { jsonrpc: '2.0', id, result };
+}
+function rpcFail(id, code, message, data) {
+  const error = { code, message };
+  if (data !== undefined) error.data = data;
+  return { jsonrpc: '2.0', id, error };
+}
+
+/**
+ * 处理单条 JSON-RPC 消息。通知（无 id）返回 null（HTTP 层回 202 空体）。
+ * 导出供 /api/diag-sdk 与本地测试直接驱动协议往返。
+ */
+export async function _dispatchMcp(message, env) {
+  if (!message || typeof message !== 'object') {
+    return rpcFail(null, RPC.INVALID_REQUEST, 'Invalid Request');
+  }
+  if (message.jsonrpc !== '2.0' || typeof message.method !== 'string') {
+    return rpcFail(message && message.id !== undefined ? message.id : null, RPC.INVALID_REQUEST, 'Invalid Request');
+  }
+  const id = message.id === undefined ? null : message.id;
+  const isNotification = message.id === undefined || message.id === null;
+  const { method, params } = message;
+
+  switch (method) {
+    case 'initialize': {
+      const requested = params && params.protocolVersion;
+      const version = SUPPORTED_PROTOCOL_VERSIONS.includes(requested) ? requested : PROTOCOL_VERSION;
+      return rpcResult(id, {
+        protocolVersion: version,
+        capabilities: { tools: {} },
+        serverInfo: SERVER_INFO,
+        instructions: SERVER_INSTRUCTIONS,
+      });
     }
+    case 'notifications/initialized':
+    case 'notifications/cancelled':
+    case 'notifications/progress':
+      return null; // 通知：不产生响应，HTTP 层回 202
+    case 'ping':
+      return rpcResult(id, {});
+    case 'tools/list':
+      return rpcResult(id, { tools: TOOL_DEFS });
+    case 'tools/call': {
+      const name = params && params.name;
+      const args = (params && params.arguments) || {};
+      const tool = TOOLS[name];
+      let payload;
+      if (!tool) {
+        payload = ERR_TEXT(`未知工具：${name}`);
+      } else {
+        try {
+          payload = await tool(env, args);
+        } catch (e) {
+          payload = ERR_TEXT(e && e.message ? e.message : String(e));
+        }
+      }
+      return isNotification ? null : rpcResult(id, payload);
+    }
+    default:
+      return rpcFail(id, RPC.METHOD_NOT_FOUND, `Method not found: ${method}`);
+  }
+}
+
+/** JSON-RPC 响应包装：带 MCP-Protocol-Version 与 CORS 头 */
+function rpcResponse(payload, status = 200) {
+  return new Response(payload === null || payload === undefined ? null : JSON.stringify(payload), {
+    status,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'MCP-Protocol-Version': PROTOCOL_VERSION,
+      ...CORS_HEADERS,
+    },
   });
-  return server;
 }
 
 async function handleMcpPost(request, env) {
@@ -358,17 +426,30 @@ async function handleMcpPost(request, env) {
   if (!auth.ok) {
     return jsonError(auth.status || 401, auth.message, { headers: { 'WWW-Authenticate': 'Bearer error="invalid_token"' } });
   }
-  const server = buildServer(env);
-  const transport = new WebStandardStreamableHTTPServerTransport({
-    sessionIdGenerator: undefined, // 无状态：不签发 Mcp-Session-Id
-    enableJsonResponse: true,       // 直接回 application/json，不依赖 SSE 长连接
-  });
-  await server.connect(transport);
-  const response = await transport.handleRequest(request);
-  // 追加 CORS 头（Response.headers 不可变，需重建）
-  const headers = new Headers(response.headers);
-  for (const [k, v] of Object.entries(CORS_HEADERS)) if (!headers.has(k)) headers.set(k, v);
-  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+  let raw;
+  try {
+    raw = await request.text();
+  } catch {
+    return jsonError(400, '请求体读取失败');
+  }
+  if (raw.length > 1024 * 1024) return jsonError(413, '请求体过大（上限 1MB）');
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return rpcResponse(rpcFail(null, RPC.PARSE_ERROR, 'Parse error'));
+  }
+
+  if (Array.isArray(parsed)) {
+    const results = [];
+    for (const item of parsed) {
+      const r = await _dispatchMcp(item, env);
+      if (r) results.push(r);
+    }
+    return results.length ? rpcResponse(results) : rpcResponse(null, 202);
+  }
+  const result = await _dispatchMcp(parsed, env);
+  return result ? rpcResponse(result) : rpcResponse(null, 202);
 }
 
 /* ---------------- Edge Functions 入口（路由 /mcp） ---------------- */

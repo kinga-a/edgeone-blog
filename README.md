@@ -93,7 +93,7 @@ curl -s -b /tmp/blog_cookies -X DELETE "https://<你的域名>/api/mcp-keys/<id>
 - 版本信标 `GET /api/ping`：与 KV/加密无关，返回 200 且 `ver=compat-v3.1` 即新构建已上线；若它 200 而其它 /api 全 545 → 部署丢失了 BLOG_KV 绑定
 - 临时诊断端点（排障完成后删除这三个文件即可）：
   - `GET /api/diag` —— 运行时能力、双实现一致性自检
-  - `GET /api/diag-sdk` —— MCP SDK 在你的运行时能否完成一次真实协议往返
+  - `GET /api/diag-sdk` —— 极简 MCP 协议实现（零重依赖，已移除 @modelcontextprotocol/sdk，避免函数脚本超体积导致全站 545「file too big」）能否完成一次真实协议往返
 
 ## 安全设计
 
