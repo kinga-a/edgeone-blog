@@ -239,10 +239,13 @@ await test('删除的 confirmTitle 二次确认生效', async () => {
   assert.equal(ok.ok, true);
   assert.equal(ok.deleted.id, post.id);
 });
-await test('删除后 get 报不存在，统计键被清理', async () => {
+await test('删除后进入回收站：默认列表不含、status=trash 可见、get 带 deletedAt', async () => {
   const d = await callTool('blog_get_post', { idOrSlug: post.id });
-  assert.equal(d.__isError, true);
+  assert.equal(d.__isError, false);
+  assert.equal(!!d.post.deletedAt, true);
   assert.equal((await callTool('blog_list_posts', {})).total, 0);
+  const trash = await callTool('blog_list_posts', { status: 'trash' });
+  assert.equal(trash.total, 1);
 });
 
 /* ================= 5. 吊销 Key 后即时失效 ================= */

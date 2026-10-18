@@ -29,7 +29,13 @@ export async function onRequestGet({ request, env }) {
   } else {
     list = await getPublicPosts(env);
   }
-  if (status) list = list.filter((p) => p.status === status);
+  // 回收站筛选：status=trash 只看回收站；其余视图默认排除回收站
+  if (status === 'trash') {
+    list = list.filter((p) => !!p.deletedAt);
+  } else {
+    list = list.filter((p) => !p.deletedAt);
+    if (status) list = list.filter((p) => p.status === status);
+  }
   if (categoryId) list = list.filter((p) => p.categoryId === categoryId);
   if (tagId) list = list.filter((p) => (p.tags || []).includes(tagId));
   if (q) list = list.filter((p) =>

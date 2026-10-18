@@ -24,6 +24,7 @@ const STATUS_TABS: Array<{ value: string; label: string }> = [
   { value: '', label: '全部' },
   { value: 'published', label: '已发布' },
   { value: 'draft', label: '草稿' },
+  { value: 'trash', label: '回收站' },
 ];
 
 function PostsList({ navigate }: { navigate: (k: string) => void }) {
@@ -52,10 +53,32 @@ function PostsList({ navigate }: { navigate: (k: string) => void }) {
   useEffect(() => { load(page, status); }, [page, status, load]);
 
   const remove = async (id: string) => {
-    if (!window.confirm('确定删除这篇文章吗？该操作不可恢复。')) return;
+    if (!window.confirm('确定删除这篇文章吗？将移入回收站，可在回收站恢复或彻底删除。')) return;
     try {
       await api.deletePost(id);
-      toast('文章已删除');
+      toast('已移入回收站');
+      load(page, status);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : '删除失败', 'error');
+    }
+  };
+
+  const restore = async (id: string) => {
+    if (!window.confirm('确定从回收站恢复这篇文章吗？')) return;
+    try {
+      await api.restorePost(id);
+      toast('已恢复文章');
+      load(page, status);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : '恢复失败', 'error');
+    }
+  };
+
+  const purge = async (id: string) => {
+    if (!window.confirm('确定彻底删除这篇文章吗？将同时清除其评论与统计，此操作不可恢复！')) return;
+    try {
+      await api.purgePost(id);
+      toast('文章已彻底删除');
       load(page, status);
     } catch (e) {
       toast(e instanceof Error ? e.message : '删除失败', 'error');
@@ -113,8 +136,14 @@ function PostsList({ navigate }: { navigate: (k: string) => void }) {
                   </Td>
                   <Td>
                     <span className="inline-flex items-center gap-1.5">
-                      <Badge tone={p.status === 'published' ? 'green' : 'gray'}>{p.status === 'published' ? '已发布' : '草稿'}</Badge>
-                      {(p.visibility || 'public') === 'private' && <Badge tone="yellow">私人</Badge>}
+                      {p.deletedAt ? (
+                        <Badge tone="red">回收站</Badge>
+                      ) : (
+                        <>
+                          <Badge tone={p.status === 'published' ? 'green' : 'gray'}>{p.status === 'published' ? '已发布' : '草稿'}</Badge>
+                          {(p.visibility || 'public') === 'private' && <Badge tone="yellow">私人</Badge>}
+                        </>
+                      )}
                     </span>
                   </Td>
                   <Td className="text-slate-500 dark:text-slate-400">{p.categoryName || '—'}</Td>
@@ -122,13 +151,22 @@ function PostsList({ navigate }: { navigate: (k: string) => void }) {
                   <Td className="text-slate-500 dark:text-slate-400 font-mono text-xs">{p.readingTime || 1} 分钟</Td>
                   <Td className="text-right whitespace-nowrap">
                     <div className="inline-flex items-center gap-1.5">
-                      {p.status === 'published' && (
-                        <a href={`/posts/${p.slug}/`} target="_blank" rel="noopener noreferrer">
-                          <RowBtn variant="ghost">查看</RowBtn>
-                        </a>
+                      {p.deletedAt ? (
+                        <>
+                          <RowBtn onClick={() => restore(p.id)}>恢复</RowBtn>
+                          <RowBtn variant="danger" onClick={() => purge(p.id)}>彻底删除</RowBtn>
+                        </>
+                      ) : (
+                        <>
+                          {p.status === 'published' && (
+                            <a href={`/posts/${p.slug}/`} target="_blank" rel="noopener noreferrer">
+                              <RowBtn variant="ghost">查看</RowBtn>
+                            </a>
+                          )}
+                          <RowBtn onClick={() => navigate(`posts/edit/${p.id}`)}>编辑</RowBtn>
+                          <RowBtn variant="danger" onClick={() => remove(p.id)}>删除</RowBtn>
+                        </>
                       )}
-                      <RowBtn onClick={() => navigate(`posts/edit/${p.id}`)}>编辑</RowBtn>
-                      <RowBtn variant="danger" onClick={() => remove(p.id)}>删除</RowBtn>
                     </div>
                   </Td>
                 </tr>
@@ -143,7 +181,7 @@ function PostsList({ navigate }: { navigate: (k: string) => void }) {
             )}
           </>
         ) : (
-          <Empty text="暂无文章，点击右上角「新建文章」开始创作" />
+          <Empty text={status === 'trash' ? '回收站是空的' : '暂无文章，点击右上角「新建文章」开始创作'} />
         )}
       </Card>
     </div>

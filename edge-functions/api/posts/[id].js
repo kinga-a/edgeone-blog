@@ -1,11 +1,12 @@
 import { json, fail, readJson, publicHeaders } from '../_lib/response.js';
-import { getPostByIdOrSlug, updatePost, deletePost, postDetailView, getSiteConfig, isPostPubliclyVisible, getTags, ensureTagByName } from '../_lib/data.js';
+import { getPostByIdOrSlug, updatePost, deletePost, purgePost, restorePost, postDetailView, getSiteConfig, isPostPubliclyVisible, getTags, ensureTagByName } from '../_lib/data.js';
 import { requireAdmin } from '../_lib/auth.js';
 
 /**
  * GET /api/posts/:id — 文章详情（id 或 slug；私人文章仅管理员可见）
+ * POST /api/posts/:id — 从回收站恢复文章（管理员）
  * PUT /api/posts/:id — 更新文章（管理员）
- * DELETE /api/posts/:id — 删除文章（管理员）
+ * DELETE /api/posts/:id — 删除文章（移入回收站，软删除；?permanent=1 彻底删除，管理员）
  */
 export async function onRequestGet({ request, env, params }) {
   const post = await getPostByIdOrSlug(env, params.id);
@@ -46,9 +47,25 @@ export async function onRequestPut({ request, env, params }) {
   }
 }
 
+export async function onRequestPost({ request, env, params }) {
+  const admin = await requireAdmin(request, env);
+  if (!admin.ok) return fail(401, '未登录或登录已过期');
+  const ok = await restorePost(env, params.id);
+  if (!ok) return fail(404, '文章不存在');
+  return json({ ok: true, restored: params.id });
+}
+
 export async function onRequestDelete({ request, env, params }) {
   const admin = await requireAdmin(request, env);
   if (!admin.ok) return fail(401, '未登录或登录已过期');
-  await deletePost(env, params.id);
-  return json({ ok: true });
+  const url = new URL(request.url);
+  const permanent = url.searchParams.get('permanent') === '1';
+  if (permanent) {
+    const existed = await purgePost(env, params.id);
+    if (!existed) return fail(404, '文章不存在');
+    return json({ ok: true, purged: params.id });
+  }
+  const ok = await deletePost(env, params.id);
+  if (!ok) return fail(404, '文章不存在');
+  return json({ ok: true, trashed: params.id });
 }

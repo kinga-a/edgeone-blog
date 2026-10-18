@@ -22,6 +22,8 @@ export interface PostSummary {
   updatedAt: string;
   publishedAt: string;
   readingTime: number;
+  /** 回收站标记：非空表示文章已删除（软删除），前台不可见 */
+  deletedAt?: string;
   categoryName?: string;
   views?: number;
   likes?: number;

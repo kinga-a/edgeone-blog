@@ -196,7 +196,7 @@ npm run dev               # 启动 Next.js 开发服务器
 | GET | `/api/auth/me` | 当前登录状态 |
 | POST | `/api/auth/totp` | TOTP 二次验证管理（setup/verify/disable，需管理员） |
 | GET/POST | `/api/posts` | 文章列表（公开）/ 创建（管理员） |
-| GET/PUT/DELETE | `/api/posts/:id` | 文章详情 / 更新 / 删除（支持 id 或 slug） |
+| GET/POST/PUT/DELETE | `/api/posts/:id` | 详情 / 恢复（POST，从回收站）/ 更新 / 删除（DELETE 移入回收站，`?permanent=1` 彻底删除；支持 id 或 slug） |
 | POST | `/api/posts/:slug/like` `/view` | 点赞 / 阅读量 |
 | GET/POST | `/api/posts/:slug/comments` | 评论列表 / 提交 |
 | GET | `/api/posts/:slug/related` | 相关文章 |

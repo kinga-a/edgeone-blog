@@ -54,7 +54,12 @@ export const api = {
     request<{ ok: true; post: Post }>('/api/posts', { method: 'POST', body: JSON.stringify(body) }),
   updatePost: (id: string, body: Record<string, unknown>) =>
     request<{ ok: true; post: Post }>(`/api/posts/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(body) }),
-  deletePost: (id: string) => request<{ ok: true }>(`/api/posts/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  /** 删除文章 → 移入回收站（可恢复） */
+  deletePost: (id: string) => request<{ ok: true; trashed: string }>(`/api/posts/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  /** 从回收站恢复文章 */
+  restorePost: (id: string) => request<{ ok: true; restored: string }>(`/api/posts/${encodeURIComponent(id)}`, { method: 'POST' }),
+  /** 彻底删除文章（回收站永久删除，不可恢复） */
+  purgePost: (id: string) => request<{ ok: true; purged: string }>(`/api/posts/${encodeURIComponent(id)}?permanent=1`, { method: 'DELETE' }),
   likePost: (idOrSlug: string) => request<{ ok: true; count: number }>(`/api/posts/${encodeURIComponent(idOrSlug)}/like`, { method: 'POST' }),
   viewPost: (idOrSlug: string) => request<{ ok: true; count: number }>(`/api/posts/${encodeURIComponent(idOrSlug)}/view`, { method: 'POST' }),
   relatedPosts: (idOrSlug: string) => request<{ ok: true; items: PostSummary[] }>(`/api/posts/${encodeURIComponent(idOrSlug)}/related`),

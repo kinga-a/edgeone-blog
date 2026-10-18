@@ -106,15 +106,15 @@ export async function getPostList(env) {
   });
 }
 
-/** 前台可见的文章摘要列表：已发布且公开（public） */
+/** 前台可见的文章摘要列表：已发布、公开且不在回收站 */
 export async function getPublicPosts(env) {
   const list = await getPostList(env);
-  return list.filter((p) => p.status === 'published' && (p.visibility || 'public') === 'public');
+  return list.filter((p) => p.status === 'published' && (p.visibility || 'public') === 'public' && !p.deletedAt);
 }
 
-/** 判断文章当前是否对访客可见（已发布且公开） */
+/** 判断文章当前是否对访客可见（已发布且公开且不在回收站） */
 export function isPostPubliclyVisible(post) {
-  return !!post && post.status === 'published' && (post.visibility || 'public') === 'public';
+  return !!post && post.status === 'published' && (post.visibility || 'public') === 'public' && !post.deletedAt;
 }
 
 /** 文章摘要结构（不含正文） */
@@ -220,9 +220,45 @@ export async function updatePost(env, id, input) {
   return next;
 }
 
-/** 删除文章（同时清理相关评论、统计键） */
+/** 删除文章 → 移入回收站（软删除：保留正文/评论/统计，前台不可见，可在后台恢复或彻底删除） */
 export async function deletePost(env, id) {
   const kv = getKv(env);
+  const post = await getPost(env, id);
+  if (!post) return false;
+  post.deletedAt = new Date().toISOString();
+  await kvPutJson(kv, Keys.post(id), post);
+  // 同步更新列表摘要条目的回收站标记（列表接口基于摘要过滤）
+  const list = (await kvGetJson(kv, Keys.postList)) || [];
+  const idx = list.findIndex((p) => p.id === id);
+  if (idx >= 0) {
+    list[idx] = { ...list[idx], deletedAt: post.deletedAt };
+    await kvPutJson(kv, Keys.postList, list);
+  }
+  return true;
+}
+
+/** 从回收站恢复文章 */
+export async function restorePost(env, id) {
+  const kv = getKv(env);
+  const post = await getPost(env, id);
+  if (!post) return false;
+  delete post.deletedAt;
+  await kvPutJson(kv, Keys.post(id), post);
+  // 同步清除列表摘要条目的回收站标记
+  const list = (await kvGetJson(kv, Keys.postList)) || [];
+  const idx = list.findIndex((p) => p.id === id);
+  if (idx >= 0 && list[idx].deletedAt) {
+    const { deletedAt, ...rest } = list[idx];
+    list[idx] = rest;
+    await kvPutJson(kv, Keys.postList, list);
+  }
+  return true;
+}
+
+/** 彻底删除文章（回收站永久删除：移除 KV 与统计键、评论） */
+export async function purgePost(env, id) {
+  const kv = getKv(env);
+  if (!(await getPost(env, id))) return false;
   await kv.delete(Keys.post(id));
   await kv.delete(Keys.statsView(id));
   await kv.delete(Keys.statsLike(id));
@@ -235,6 +271,7 @@ export async function deletePost(env, id) {
   for (const c of comments) {
     if (c.postId === id) await kv.delete(Keys.comment(id, c.id));
   }
+  return true;
 }
 
 /** 文章详情视图：附带分类/标签/统计数据 */

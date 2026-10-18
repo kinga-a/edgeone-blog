@@ -131,7 +131,12 @@ const TOOLS = {
   blog_list_posts: async (env, args) => {
     let list = await data.getPostList(env);
     const status = args.status || 'all';
-    if (status !== 'all') list = list.filter((p) => p.status === status);
+    if (status === 'trash') {
+      list = list.filter((p) => !!p.deletedAt);
+    } else {
+      list = list.filter((p) => !p.deletedAt);
+      if (status !== 'all') list = list.filter((p) => p.status === status);
+    }
     const categoryId = await resolveCategoryId(env, { categoryName: args.categoryName, categoryId: args.categoryId });
     if (categoryId) list = list.filter((p) => p.categoryId === categoryId);
     if (args.tag) {
@@ -205,7 +210,7 @@ const TOOLS = {
       throw new Error(`confirmTitle 与文章标题不一致（实际标题：「${post.title}」），已中止删除。请带上准确标题重试，这是对破坏性操作的二次确认。`);
     }
     await data.deletePost(env, post.id);
-    return OK_TEXT({ ok: true, deleted: { id: post.id, slug: post.slug, title: post.title, status: post.status } });
+    return OK_TEXT({ ok: true, deleted: { id: post.id, slug: post.slug, title: post.title, status: post.status }, note: '文章已移入回收站（软删除），可在后台「文章管理 → 回收站」恢复或彻底删除；删除未真正销毁数据。' });
   },
 
   blog_list_taxonomy: async (env) => {
@@ -277,7 +282,7 @@ const TOOL_DEFS = [
     inputSchema: {
       type: 'object',
       properties: {
-        status: { type: 'string', enum: ['all', 'published', 'draft'], description: '按状态筛选，默认 all' },
+        status: { type: 'string', enum: ['all', 'published', 'draft', 'trash'], description: '按状态筛选；trash=回收站，默认 all（默认不含回收站）' },
         categoryName: { type: 'string', description: '按分类名筛选' },
         categoryId: { type: 'string', description: '按分类 id 筛选' },
         tag: { type: 'string', description: '按标签（名称或 id）筛选' },
@@ -341,7 +346,7 @@ const TOOL_DEFS = [
   },
   {
     name: 'blog_delete_post',
-    description: '删除文章（连带清理其评论与阅读/点赞统计）。不可逆。建议先 blog_get_post 向用户复述标题确认；可传 confirmTitle 做二次确认校验。',
+    description: '删除文章（移入回收站，可恢复）。正文/评论/统计均保留，前台立即不可见；可在后台「文章管理 → 回收站」恢复或彻底删除。建议先 blog_get_post 向用户复述标题确认；可传 confirmTitle 做二次确认校验。',
     inputSchema: {
       type: 'object',
       properties: {
