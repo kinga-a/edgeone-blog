@@ -32,3 +32,5 @@ tsconfig.tsbuildinfo
 .edgeone/*
 .tef_dist/*
   
+# agent tool spill files
+/.tmp-tool-results/
