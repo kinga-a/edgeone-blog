@@ -28,6 +28,61 @@
 - **访问统计**：总访问量、今日访问、30 天趋势、Top 文章
 - **后台路径环境变量**：ADMIN_PATH （该环境变量可以指定后台路径，增加安全性）
 
+## MCP 接入（让 AI 助手管理博客）
+
+博客内置一个 **MCP Server**（`edge-functions/mcp.js`），任何支持 *Streamable HTTP* 传输的 MCP 客户端（OpenClaw / Claude Desktop / Cursor / Cline 等）都可以通过 API Key 直接对博客做增删改查。
+
+- **端点**：`POST https://<你的域名>/mcp`（MCP Streamable HTTP，无状态、直接回 JSON，不起 SSE 长连接，契合边缘函数短生命周期）
+- **鉴权**：`Authorization: Bearer eob_xxx`。与后台 Cookie 会话完全独立：
+  - 在已登录后台的浏览器之外，用管理员会话调用 `POST /api/mcp-keys` 创建（见下方 curl 示例）；token 明文**仅返回一次**
+  - KV 中只存 token 的 SHA-256 哈希（`auth_mcp_keys`），数据泄露不等于 Key 泄露
+  - 鉴权失败按 IP 限速（15 分钟最多 10 次）；`DELETE /api/mcp-keys/:id` 吊销后**立即失效**
+- **工具集（7 个）**：
+
+| 工具 | 说明 |
+|---|---|
+| `blog_list_posts` | 文章列表（含草稿/私人，支持 status/分类/标签/关键词/分页） |
+| `blog_get_post` | 单篇完整详情（含 Markdown 正文） |
+| `blog_create_post` | 创建文章，**默认直接发布**；标签自动创建，分类必须已存在 |
+| `blog_update_post` | 补丁式更新（content 为整篇覆盖，先 get 再改再回传） |
+| `blog_delete_post` | 删除（连带清理评论与统计；支持 `confirmTitle` 二次确认） |
+| `blog_list_taxonomy` | 分类/标签清单（含文章计数） |
+| `blog_search_posts` | 全文搜索（标题/摘要/分类/标签/正文，含草稿） |
+
+MCP 客户端配置示例（以支持 remote MCP 的客户端通用格式为例）：
+
+```json
+{
+  "mcpServers": {
+    "edgeone-blog": {
+      "url": "https://<你的域名>/mcp",
+      "headers": { "Authorization": "Bearer eob_<你的APIKey>" }
+    }
+  }
+}
+```
+
+创建/管理 API Key（两种方式）：
+
+**方式一（推荐）——后台界面**：登录后台 → 站点设置 → 「MCP 接入」卡片：内置端点地址与客户端配置示例（一键复制）、生成 API Key（明文只显示一次，复制后点「我已保存」）、已签发 Key 列表（备注名/前缀/创建与最近使用时间）与吊销。
+
+**方式二——管理 API + 已登录 Cookie（脚本 / CI 场景）**：
+
+```bash
+# 1) 登录拿会话 Cookie（-c 保存 cookie jar）
+curl -s -c /tmp/blog_cookies -X POST "https://<你的域名>/api/auth/login" \
+  -H 'Content-Type: application/json' -d '{"username":"admin","password":"***"}'
+# 2) 创建 MCP API Key（label 任意，方便日后辨认/吊销）
+curl -s -b /tmp/blog_cookies -X POST "https://<你的域名>/api/mcp-keys" \
+  -H 'Content-Type: application/json' -d '{"label":"openclaw"}'
+# 3) 列出 / 吊销
+curl -s -b /tmp/blog_cookies "https://<你的域名>/api/mcp-keys"
+curl -s -b /tmp/blog_cookies -X DELETE "https://<你的域名>/api/mcp-keys/<id>"
+```
+
+> 若开启了 `ADMIN_PATH` 或失败限速，登录步骤请注意对应路径与 15 分钟锁定窗口；开启 TOTP 时登录还需通过 `/api/auth/totp` 流程。
+
+
 ## 安全设计
 
 - **安全响应头**：CSP（白名单 frame-src 含 B 站/YouTube/腾讯/Vimeo）、HSTS（1 年 + includeSubDomains）、X-Frame-Options SAMEORIGIN、X-Content-Type-Options nosniff、Referrer-Policy、Permissions-Policy（静态 edgeone.json 与 SSR render-html.js 双处下发）
@@ -67,7 +122,9 @@ edgeone-blog/
 │   │   ├── posts/            # 列表 / 详情 / 点赞 / 阅读 / 评论 / 相关
 │   │   ├── comments/         # 列表 / 审核 / 删除
 │   │   ├── categories/ tags/ media/ config/ stats/ search
-│   │   └── _lib/             # kv / blob / auth / md / data / render-html 等
+│   │   ├── mcp-keys/         # MCP API Key 创建/列表/吊销（管理员）
+│   │   └── _lib/             # kv / blob / auth / mcp-auth / md / data / render-html 等
+│   ├── mcp.js                # MCP Server 端点（Streamable HTTP：AI 客户端增删改查博客）
 │   ├── posts/[slug].js       # 文章页 SSR（完整 HTML）
 │   ├── categories/[slug].js  # 分类归档页 SSR
 │   ├── tags/[slug].js        # 标签归档页 SSR
@@ -76,6 +133,7 @@ edgeone-blog/
 ├── scripts/
 │   ├── check-functions.mjs   # esbuild 打包检查（npm run check:functions）
 │   ├── smoke-functions.mjs   # 内存 mock 冒烟测试（npm run test:functions）
+│   ├── smoke-mcp.mjs         # MCP 端到端冒烟测试（npm run test:mcp）
 │   └── relocate-admin.mjs    # postbuild：按 ADMIN_PATH 环境变量迁移后台目录
 ├── edgeone.json              # EdgeOne Pages 部署配置
 ├── next.config.mjs           # 静态导出配置 + 本地开发 /api 代理
@@ -86,8 +144,9 @@ edgeone-blog/
 
 ```bash
 npm install
-npm run check:functions   # 函数打包检查（37 个文件）
-npm run test:functions    # 内存 mock 冒烟测试（41 项断言）
+npm run check:functions   # 函数打包检查
+npm run test:functions    # 内存 mock 冒烟测试
+npm run test:mcp          # MCP 端到端冒烟（真实 MCP 客户端走 Streamable HTTP 全链路）
 npm run build             # Next.js 静态导出到 out/
 ```
 
@@ -141,6 +200,9 @@ npm run dev               # 启动 Next.js 开发服务器
 | POST | `/api/stats/track` | 访问埋点 |
 | GET/POST | `/api/backup` | 导出全量备份 / 从备份恢复（管理员） |
 | POST | `/api/backup/webdav` | 测试 WebDAV 连通性 / 立即备份到 WebDAV（管理员） |
+| GET/POST | `/api/mcp-keys` | MCP API Key 列表 / 创建（管理员，Cookie 鉴权） |
+| DELETE | `/api/mcp-keys/:id` | 吊销 MCP API Key（管理员） |
+| POST | `/mcp` | **MCP Streamable HTTP 端点**（Bearer API Key 鉴权） |
 | GET | `/api/search?q=` | 全文搜索 |
 | GET | `/posts/:slug/` | 文章页（SSR 完整 HTML + SEO） |
 | GET | `/categories/:slug/` `/tags/:slug/` | 归档页 SSR |

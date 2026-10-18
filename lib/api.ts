@@ -3,7 +3,7 @@
  * 生产环境（静态导出 + Edge Functions）与本地开发（edgeone pages dev 代理）均使用相对路径。
  */
 import type {
-  AdminStats, Category, Comment, CommentStatus, MediaMeta, Paged, Post, PostStatus,
+  AdminStats, Category, Comment, CommentStatus, McpKeyInfo, MediaMeta, Paged, Post, PostStatus,
   PostSummary, SiteConfig, Tag,
 } from './types';
 
@@ -109,6 +109,12 @@ export const api = {
   getStats: () => request<{ ok: true; stats: AdminStats }>('/api/stats'),
   trackVisit: () => request<{ ok: true; stats: unknown }>('/api/stats/track', { method: 'POST', body: JSON.stringify({ type: 'visit' }) }),
   search: (q: string) => request<{ ok: true; items: PostSummary[]; total: number; q: string }>(`/api/search?q=${encodeURIComponent(q)}`),
+
+  // ---- MCP API Key（/mcp 端点的 Bearer 鉴权凭据） ----
+  listMcpKeys: () => request<{ ok: true; items: McpKeyInfo[] }>('/api/mcp-keys'),
+  createMcpKey: (label: string) =>
+    request<{ ok: true; key: McpKeyInfo; token: string; warning?: string }>('/api/mcp-keys', { method: 'POST', body: JSON.stringify({ label }) }),
+  revokeMcpKey: (id: string) => request<{ ok: true; revoked: string }>(`/api/mcp-keys/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 
   // ---- 备份 ----
   /** 全量导出：直接下载 JSON 备份文件 */

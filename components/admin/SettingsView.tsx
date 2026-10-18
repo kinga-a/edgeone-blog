@@ -1,10 +1,10 @@
 'use client';
 
-/** 站点设置：基本信息 / SEO / 社交 / 评论策略 / TOTP 安全验证 / 备份 */
+/** 站点设置：基本信息 / SEO / 社交 / 评论策略 / TOTP 安全验证 / MCP 接入 / 备份 */
 import { useEffect, useRef, useState } from 'react';
 import { Btn, Card, Field, Input, Loading, SaveState, Textarea, useToast } from './ui';
 import { api } from '@/lib/api';
-import type { PostSummary, SiteConfig } from '@/lib/types';
+import type { McpKeyInfo, PostSummary, SiteConfig } from '@/lib/types';
 
 export default function SettingsView() {
   const [config, setConfig] = useState<SiteConfig | null>(null);
@@ -26,6 +26,14 @@ export default function SettingsView() {
   const [backupBusy, setBackupBusy] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // MCP 接入
+  const [mcpKeys, setMcpKeys] = useState<McpKeyInfo[]>([]);
+  const [mcpLabel, setMcpLabel] = useState('');
+  const [mcpBusy, setMcpBusy] = useState(false);
+  /** 新生成的 token 明文（仅一次返回，未点「我已保存」前持续展示） */
+  const [mcpNewToken, setMcpNewToken] = useState('');
+  const [origin, setOrigin] = useState('');
+
   // 首页精选文章
   const [allPosts, setAllPosts] = useState<PostSummary[]>([]);
   const [featuredChecked, setFeaturedChecked] = useState<string[]>([]);
@@ -42,6 +50,8 @@ export default function SettingsView() {
     api.me().then((d) => {
       if (d?.ok) setTotpEnabled(Boolean(d.totpEnabled));
     }).catch(() => {});
+    api.listMcpKeys().then((d) => { if (d?.ok) setMcpKeys(d.items || []); }).catch(() => {});
+    setOrigin(window.location.origin);
     (async () => {
       const all: PostSummary[] = [];
       let page = 1;
@@ -149,6 +159,47 @@ export default function SettingsView() {
 
   const copyText = (text: string, label: string) => {
     navigator.clipboard?.writeText(text).then(() => toast(`${label}已复制`)).catch(() => toast('复制失败', 'error'));
+  };
+
+  /* ---------------- MCP 接入 ---------------- */
+  const mcpEndpoint = `${((config.siteUrl || origin) || '').replace(/\/+$/, '')}/mcp`;
+  const mcpConfigJson = [
+    '{',
+    '  "edgeone-blog": {',
+    `    "url": "${mcpEndpoint}",`,
+    `    "headers": { "Authorization": "Bearer ${mcpNewToken || '<粘贴生成的 API Key>'}" }`,
+    '  }',
+    '}',
+  ].join('\n');
+
+  const reloadMcpKeys = () => api.listMcpKeys().then((d) => setMcpKeys(d.items || [])).catch(() => {});
+  const fmtTime = (iso: string) => (iso ? iso.slice(0, 16).replace('T', ' ') : '—');
+
+  const createMcpKey = async () => {
+    setMcpBusy(true);
+    try {
+      const d = await api.createMcpKey(mcpLabel.trim() || '未命名 Key');
+      setMcpNewToken(d.token);
+      setMcpLabel('');
+      await reloadMcpKeys();
+      toast('API Key 已生成，明文只显示这一次，请立即复制保存');
+    } catch (e) {
+      toast(e instanceof Error ? e.message : '生成失败', 'error');
+    }
+    setMcpBusy(false);
+  };
+
+  const revokeMcpKey = async (k: McpKeyInfo) => {
+    if (!window.confirm(`确定吊销 API Key「${k.label}」（${k.prefix}…）？使用该 Key 的 MCP 客户端将立即收到 401。`)) return;
+    setMcpBusy(true);
+    try {
+      await api.revokeMcpKey(k.id);
+      await reloadMcpKeys();
+      toast('Key 已吊销');
+    } catch (e) {
+      toast(e instanceof Error ? e.message : '吊销失败', 'error');
+    }
+    setMcpBusy(false);
   };
 
   /* ---------------- 备份 ---------------- */
@@ -377,6 +428,78 @@ export default function SettingsView() {
               </div>
             </div>
           )}
+        </Card>
+
+        <Card>
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">MCP 接入（AI 客户端增删改查）</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+            本站内置 MCP Server（Streamable HTTP）。在 OpenClaw / Claude Desktop / Cursor 等 MCP 客户端配置下面的端点与 API Key，
+            即可让 AI 助手创建、更新、删除、检索博客文章。API Key 等同于管理员权限，请妥善保管、不用时吊销；密钥仅支持「生成新 Key + 吊销旧 Key」，无法查看已保存的明文。
+          </p>
+          <div className="space-y-4">
+            <Field label="MCP 端点（作为客户端配置中的 url）">
+              <div className="flex items-center gap-2">
+                <Input readOnly value={mcpEndpoint || 'https://…'} className="font-mono text-xs" onFocus={(e) => e.target.select()} />
+                <Btn size="sm" variant="secondary" onClick={() => copyText(mcpEndpoint, '端点地址')}>复制</Btn>
+              </div>
+            </Field>
+
+            <Field label="客户端配置示例（多数 MCP 客户端的 mcpServers 片段）">
+              <div className="relative">
+                <pre className="px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-mono leading-relaxed text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 overflow-x-auto whitespace-pre">{mcpConfigJson}</pre>
+                <button
+                  type="button"
+                  onClick={() => copyText(mcpConfigJson, '配置')}
+                  className="absolute top-2 right-2 px-2 py-1 rounded-lg text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-brand-600"
+                >
+                  复制配置
+                </button>
+              </div>
+            </Field>
+
+            {mcpNewToken ? (
+              <div className="rounded-xl border border-amber-300/70 dark:border-amber-500/40 bg-amber-50/70 dark:bg-amber-500/10 p-4 space-y-3">
+                <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                  新 API Key 已生成 —— 明文只会显示这一次，离开本页后无法再次查看：
+                </p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-500/30 text-xs font-mono break-all">{mcpNewToken}</code>
+                  <Btn size="sm" onClick={() => copyText(mcpNewToken, 'API Key')}>复制</Btn>
+                  <Btn size="sm" variant="secondary" onClick={() => setMcpNewToken('')}>我已保存</Btn>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-end gap-2">
+                <Field label="新 Key 备注名（用于日后辨认与吊销）">
+                  <Input value={mcpLabel} onChange={(e) => setMcpLabel(e.target.value)} placeholder="如 openclaw / phone / workbuddy" className="w-56" />
+                </Field>
+                <Btn onClick={createMcpKey} disabled={mcpBusy} loading={mcpBusy}>{mcpBusy ? '生成中…' : '生成 API Key'}</Btn>
+              </div>
+            )}
+
+            <div>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">已签发的 API Key（{mcpKeys.length}）</p>
+              {mcpKeys.length === 0 ? (
+                <p className="text-sm text-slate-400 px-1">暂无 —— 生成第一个 Key 吧。</p>
+              ) : (
+                <div className="border border-slate-200 dark:border-slate-700 rounded-xl divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden">
+                  {mcpKeys.map((k) => (
+                    <div key={k.id} className="flex items-center gap-3 px-3.5 py-2.5">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-slate-800 dark:text-slate-200 truncate">{k.label}</p>
+                        <p className="text-xs text-slate-400 font-mono mt-0.5">{k.prefix}…</p>
+                      </div>
+                      <div className="hidden sm:block text-right text-xs text-slate-400 shrink-0">
+                        <p>创建于 {fmtTime(k.createdAt)}</p>
+                        <p>最近使用 {fmtTime(k.lastUsedAt)}</p>
+                      </div>
+                      <Btn size="sm" variant="danger" onClick={() => revokeMcpKey(k)} disabled={mcpBusy}>吊销</Btn>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </Card>
 
         <Card>

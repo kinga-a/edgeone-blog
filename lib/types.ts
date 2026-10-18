@@ -166,3 +166,12 @@ export interface ApiError {
   ok: false;
   error: string;
 }
+
+/** MCP API Key 公开信息（不含哈希与 token 明文） */
+export interface McpKeyInfo {
+  id: string;
+  label: string;
+  prefix: string;
+  createdAt: string;
+  lastUsedAt: string;
+}
