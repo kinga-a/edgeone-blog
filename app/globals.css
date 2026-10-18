@@ -1606,7 +1606,7 @@ html.dark .icon-btn:hover {
   top: 96px;
   left: 50%;
   transform: translate(-50%, -12px) scale(0.98);
-  width: min(560px, calc(100vw - 32px));
+  width: min(640px, calc(100vw - 32px));
   background: var(--t-slate-50);
   border: 1px solid var(--t-slate-200);
   border-radius: 16px;
