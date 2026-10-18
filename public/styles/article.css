@@ -127,18 +127,7 @@ html.dark .site-logo-badge { color: #241b12; }
 }
 .site-nav a:hover { color: var(--accent); text-decoration: none; background: var(--accent-soft); }
 .site-nav a.active { color: var(--accent); font-weight: 600; background: rgba(154, 67, 24, 0.05); }
-.site-nav a.active::after {
-  content: '';
-  position: absolute;
-  bottom: 3px; left: 14px; right: 14px;
-  height: 2px; background: var(--accent); border-radius: 2px;
-  transform-origin: center;
-  animation: nav-underline .28s var(--ease-spring) both;
-}
-@keyframes nav-underline {
-  from { transform: scaleX(0); opacity: 0; }
-  to { transform: scaleX(1); opacity: 1; }
-}
+html.dark .site-nav a.active { color: #e08a5a; background: rgba(224, 138, 90, 0.09); }
 
 /* 主题切换 / 图标按钮 */
 .theme-toggle, .icon-btn {
