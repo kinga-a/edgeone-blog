@@ -12,6 +12,7 @@ import { renderMarkdown, extractToc } from './md.js';
 import { readingTime, fmtDate } from './ids.js';
 import { requireAdmin } from './auth.js';
 import { categoryIconHtml } from './icons.js';
+import { ARTICLE_CSS_V } from './asset-version.generated.js';
 
 /** 判断当前请求是否为已登录管理员（私人文章对管理员可见） */
 async function isAdminRequest(request, env) {
@@ -103,7 +104,7 @@ ${config.seo?.twitterHandle ? `<meta name="twitter:site" content="@${escapeHtml(
 ${og ? `<meta name="twitter:image" content="${escapeHtml(og)}">` : ''}
 ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
 <link rel="alternate" type="application/rss+xml" title="RSS" href="${escapeHtml(canonical.replace(/[^/]+$/, ''))}rss.xml">
-<link rel="stylesheet" href="/styles/article.css">
+<link rel="stylesheet" href="/styles/article.css?v=${ARTICLE_CSS_V}">
 <script>${DARK_MODE_SCRIPT}</script>
 </head>
 <body>
@@ -115,6 +116,7 @@ ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
     </a>
     <nav class="site-nav">
       ${NAV_ITEMS.map((n) => `<a href="${n.href}" class="${n.key === navKey ? 'active' : ''}">${n.label}</a>`).join('')}
+      <span class="nav-divider" aria-hidden="true"></span>
       <button type="button" class="search-link" id="search-open" aria-label="搜索" title="搜索">
         <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.6"/><path d="M14 14l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
       </button>

@@ -34,3 +34,6 @@ tsconfig.tsbuildinfo
   
 # agent tool spill files
 /.tmp-tool-results/
+
+# 构建时自动生成（scripts/gen-asset-version.mjs）
+edge-functions/api/_lib/asset-version.generated.js
