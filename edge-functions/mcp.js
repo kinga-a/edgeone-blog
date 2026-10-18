@@ -61,6 +61,21 @@ async function resolveCategoryId(env, args) {
   return hit.id;
 }
 
+/** 按 id / slug / 名称解析分类，返回分类对象 */
+async function resolveCategoryRef(env, ref) {
+  if (!ref) throw new Error('idOrSlug 不能为空');
+  const categories = await data.getCategories(env);
+  const key = String(ref);
+  const hit =
+    categories.find((c) => c.id === key) ||
+    categories.find((c) => c.slug === key) ||
+    categories.find((c) => c.name === key);
+  if (!hit) {
+    throw new Error(`分类 "${ref}" 不存在。现有分类：${categories.map((c) => c.name).join('、') || '（暂无）'}`);
+  }
+  return hit;
+}
+
 /** 标签：接受标签 id / 名称 / slug 混合数组，未知名称自动创建（与 REST /api/posts 行为一致） */
 async function resolveTagIds(env, rawTags) {
   if (!Array.isArray(rawTags)) return undefined;
@@ -197,6 +212,33 @@ const TOOLS = {
     return OK_TEXT({ ok: true, categories, tags });
   },
 
+  blog_create_category: async (env, args) => {
+    if (!String(args.name || '').trim()) throw new Error('name 不能为空');
+    const category = await data.createCategory(env, args);
+    return OK_TEXT({ ok: true, created: category });
+  },
+
+  blog_update_category: async (env, args) => {
+    const cat = await resolveCategoryRef(env, args.idOrSlug);
+    const patch = pickFields(args, ['name', 'slug', 'description', 'icon', 'sort']);
+    if (!Object.keys(patch).length) throw new Error('没有任何要更新的字段（name/slug/description/icon/sort）');
+    const updated = await data.updateCategory(env, cat.id, patch);
+    return OK_TEXT({ ok: true, updated, changed: Object.keys(patch) });
+  },
+
+  blog_delete_category: async (env, args) => {
+    const cat = await resolveCategoryRef(env, args.idOrSlug);
+    if (args.confirmName !== undefined && String(args.confirmName) !== cat.name) {
+      throw new Error(`confirmName 与分类名称不一致（实际名称：「${cat.name}」），已中止删除。请带上准确名称重试，这是对破坏性操作的二次确认。`);
+    }
+    const usedBy = (await data.getPostList(env)).filter((p) => p.categoryId === cat.id);
+    if (usedBy.length) {
+      throw new Error(`仍有 ${usedBy.length} 篇文章使用该分类（如：${usedBy.slice(0, 3).map((p) => p.title).join('、')}），已中止删除。请先移除这些文章的 categoryId 或改用其它分类。`);
+    }
+    await data.deleteCategory(env, cat.id);
+    return OK_TEXT({ ok: true, deleted: { id: cat.id, slug: cat.slug, name: cat.name } });
+  },
+
   blog_search_posts: async (env, args) => {
     const q = String(args.q || '').trim().toLowerCase();
     if (!q) throw new Error('q 不能为空');
@@ -312,6 +354,49 @@ const TOOL_DEFS = [
     name: 'blog_list_taxonomy',
     description: '列出全部分类与标签（含文章计数）。用于创建/更新文章前选择分类、复用已有标签。',
     inputSchema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'blog_create_category',
+    description: '新建分类（name 必填；slug 留空自动生成，slug 冲突自动加后缀；icon 为 emoji/单字符，sort 小的在前）。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: '分类名称（必填，不可与现有分类重名）' },
+        slug: { type: 'string', description: 'URL slug，留空自动生成' },
+        description: { type: 'string', description: '分类描述' },
+        icon: { type: 'string', description: '分类图标（emoji 或单字符），留空自动取名称首字' },
+        sort: { type: 'number', description: '排序权重，小的在前' },
+      },
+      required: ['name'],
+    },
+  },
+  {
+    name: 'blog_update_category',
+    description: '更新分类（补丁语义，只改传入字段）。idOrSlug 传分类 id、slug 或名称。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        idOrSlug: { type: 'string', description: '分类 id、slug 或名称（必填）' },
+        name: { type: 'string', description: '新名称' },
+        slug: { type: 'string', description: '新 slug' },
+        description: { type: 'string', description: '分类描述' },
+        icon: { type: 'string', description: '分类图标（emoji 或单字符）' },
+        sort: { type: 'number', description: '排序权重，小的在前' },
+      },
+      required: ['idOrSlug'],
+    },
+  },
+  {
+    name: 'blog_delete_category',
+    description: '删除分类。若仍有文章使用该分类会拒绝并提示先改文章；可传 confirmName 做二次确认（必须与分类名称一致）。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        idOrSlug: { type: 'string', description: '分类 id、slug 或名称（必填）' },
+        confirmName: { type: 'string', description: '传入分类准确名称；不一致时拒绝删除' },
+      },
+      required: ['idOrSlug'],
+    },
   },
   {
     name: 'blog_search_posts',

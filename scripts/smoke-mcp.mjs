@@ -173,9 +173,9 @@ class MiniMcpClient {
 
 const client = new MiniMcpClient(MCP_URL, { Authorization: `Bearer ${mcpToken}` });
 await client.connect();
-await test('initialize 成功且 tools/list 返回 7 个工具', async () => {
+await test('initialize 成功且 tools/list 返回 10 个工具', async () => {
   const { tools } = await client.listTools();
-  assert.equal(tools.length, 7);
+  assert.equal(tools.length, 10);
   assert.ok(tools.every((t) => t.name.startsWith('blog_')));
 });
 const callTool = async (name, args) => {
