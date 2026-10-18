@@ -119,7 +119,7 @@ edgeone-blog/
 ├── app/                      # Next.js 前端页面（静态导出）
 │   ├── layout.tsx            # 全局布局：暗色 Provider、Header/Footer、Metadata
 │   ├── page.tsx              # 首页
-│   ├── posts/ categories/ tags/ archives/ search/ about/ admin/
+│   ├── posts/ categories/ tags/ archives/ about/ admin/   # 搜索为顶部浮层，无独立页面
 │   └── not-found.tsx
 ├── components/               # 前端组件（含 admin/ 后台管理全套）
 ├── lib/                      # 类型定义、API 客户端、Markdown 渲染

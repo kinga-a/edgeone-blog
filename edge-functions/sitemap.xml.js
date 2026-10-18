@@ -19,7 +19,8 @@ export async function onRequestGet({ request, env }) {
   };
 
   add(`${origin}/`, today, '1.0');
-  for (const p of ['posts', 'categories', 'tags', 'archives', 'search', 'about', 'admin']) {
+  // 搜索入口已改为顶部浮层，无独立 /search/ 页面，不在 sitemap 中列出
+  for (const p of ['posts', 'categories', 'tags', 'archives', 'about', 'admin']) {
     add(`${origin}/${p}/`, today, '0.6');
   }
   for (const p of posts) {
