@@ -251,13 +251,8 @@
     }
   })();
 
-  /* ---------- 顶部阅读进度条 + 回到顶部（带阅读进度环） ---------- */
+  /* ---------- 回到顶部（带阅读进度环） ---------- */
   (function () {
-    var topBar = document.createElement('div');
-    topBar.className = 'reading-progress-bar';
-    topBar.setAttribute('aria-hidden', 'true');
-    document.body.appendChild(topBar);
-
     var btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'back-to-top';
@@ -280,7 +275,6 @@
         var total = el.scrollHeight - el.clientHeight;
         var p = total > 0 ? Math.min(1, Math.max(0, el.scrollTop / total)) : 0;
         ring.style.strokeDashoffset = C * (1 - p);
-        topBar.style.width = (p * 100).toFixed(1) + '%';
         btn.classList.toggle('show', window.scrollY > 400);
       });
     }

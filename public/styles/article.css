@@ -70,18 +70,7 @@ html.dark body {
 a { color: var(--accent); text-decoration: none; transition: color 0.2s ease; }
 a:hover { text-decoration: underline; }
 
-/* 顶部阅读进度条（由 article.js 驱动） */
-.reading-progress-bar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 2.5px;
-  width: 0%;
-  background: var(--accent);
-  z-index: 60;
-  transition: width 0.1s linear;
-  pointer-events: none;
-}
+/* 顶部阅读进度条已按需求移除（2026-10） */
 
 /* ---------- 头部（纸墨毛玻璃） ---------- */
 .site-header {
