@@ -497,7 +497,7 @@ html.dark .hero-vol::before {
 }
 .dark .hero-deco-quote-line { color: var(--t-slate-300); }
 .dark .hero-deco-quote-author { color: var(--t-slate-500); }
-.hero-deco-paper-2:has(.hero-deco-quote)::after { display: none; }
+.hero-deco-paper-2.has-quote::after { display: none; }
 
 /* ========== 头条 Lede（精选文章：非对称图文卡片） ========== */
 .lede {

@@ -184,9 +184,17 @@ ${body}
   if(cl){cl.addEventListener('click',closeDrawer);}
   if(ov){ov.addEventListener('click',closeDrawer);}
   if(dr){var links=dr.querySelectorAll('a');for(var i=0;i<links.length;i++){
-    links[i].addEventListener('click',function(){var pl=document.getElementById('page-loading');if(pl){pl.classList.add('show');}closeDrawer();});
-    /* 预取目标页（link rel=prefetch 低优先级，浏览器缓存后点击秒开） */
-    (function(h){try{var l=document.createElement('link');l.rel='prefetch';l.href=h;document.head.appendChild(l);}catch(e){}})(links[i].getAttribute('href'));
+    (function(link){
+      var href=link.getAttribute('href');
+      link.addEventListener('click',function(e){
+        e.preventDefault();
+        var pl=document.getElementById('page-loading');if(pl){pl.classList.add('show');}
+        closeDrawer();
+        /* 显式导航：绕开移动端 overflow/手势等默认行为兼容问题，全设备一致 */
+        window.location.href=href;
+      });
+      try{var l=document.createElement('link');l.rel='prefetch';l.href=href;document.head.appendChild(l);}catch(e){}
+    })(links[i]);
   }}
 
   /* ---- 搜索浮层：× / ESC / 遮罩关闭，输入防抖 300ms 实时检索 ---- */

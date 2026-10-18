@@ -237,7 +237,7 @@ export default function HomeClient() {
           </div>
           <div className="hero-deco" aria-hidden="true">
             <div className="hero-deco-paper"></div>
-            <div className="hero-deco-paper-2">
+            <div className={`hero-deco-paper-2${heroQuote ? ' has-quote' : ''}`}>
               {heroQuote ? (
                 <div className="hero-deco-quote">
                   <p className="hero-deco-quote-line">{heroQuote}</p>
