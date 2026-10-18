@@ -43,8 +43,10 @@ export function siteOrigin(config, request) {
   }
 }
 
-/** SSR 页面安全响应头（与 edgeone.json 全局头双保险；CSP 需放行内联脚本与 highlight.js CDN） */
-export function pageSecurityHeaders(cacheControl = 'public, max-age=600') {
+/** SSR 页面安全响应头（与 edgeone.json 全局头双保险；CSP 需放行内联脚本与 highlight.js CDN）
+ * 缓存默认 max-age=0 + must-revalidate：CDN 保留副本但每次回源校验，保证新部署立即生效；
+ * 避免手机端缓存 10 分钟旧页面（旧版无搜索浮层、Link 仍 prefetch 导致 index.txt 404）。 */
+export function pageSecurityHeaders(cacheControl = 'public, max-age=0, must-revalidate') {
   return {
     'content-type': 'text/html; charset=utf-8',
     'Cache-Control': cacheControl,
