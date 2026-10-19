@@ -397,8 +397,11 @@ html.dark .toc-fab {
 }
 .prose iframe.video-embed { aspect-ratio: 16/9; height: auto; }
 .prose video.video-embed { aspect-ratio: 16/9; height: auto; object-fit: contain; }
-.prose a { text-decoration: underline; text-decoration-color: var(--accent-strong); text-underline-offset: 4px; }
+.prose a { text-decoration: underline; text-decoration-color: var(--accent-strong); text-underline-offset: 4px; word-break: break-all; overflow-wrap: anywhere; }
 .prose a:hover { text-decoration-color: var(--accent); }
+/* 长内容兜底：正文任意长串（链接/URL/长英文）自动断行，避免被 overflow-x:clip 裁剪 */
+.prose { overflow-wrap: anywhere; }
+.article-header h1 { overflow-wrap: anywhere; }
 .prose ul { margin: 1rem 0; padding-left: 1.5rem; list-style: disc; }
 .prose ul li::marker { color: var(--accent); }
 .prose ol { margin: 1rem 0; padding-left: 1.5rem; list-style: decimal; }
