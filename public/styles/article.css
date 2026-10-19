@@ -804,3 +804,10 @@ html.dark .search-card { border-color: rgba(148,163,184,0.25); }
 html.dark .search-pop-title, html.dark .search-card-title { color: #f1f5f9; }
 html.dark .search-card-desc { color: #94a3b8; }
 html.dark .search-pop-head { border-color: rgba(148,163,184,0.2); }
+
+/* 输入元素统一 16px（防 iOS 自动放大 + 桌面可读性） */
+input,
+textarea,
+select {
+  font-size: 16px !important;
+}

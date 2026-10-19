@@ -1960,3 +1960,11 @@ html.dark .vditor-toolbar {
 .vditor .vditor-reset pre {
   overflow-x: auto;
 }
+
+/* 输入元素统一 16px：iOS Safari 聚焦 <16px 输入框会自动放大页面，
+   全局固定 16px 同时满足移动端防放大与桌面端可读性 */
+input,
+textarea,
+select {
+  font-size: 16px !important;
+}
