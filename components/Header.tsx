@@ -303,9 +303,8 @@ export default function Header() {
                   <ul className="mt-2 space-y-2.5 max-h-[46vh] overflow-y-auto pr-1">
                     {results.map((p) => (
                       <li key={p.id}>
-                        <Link
+                        <a
                           href={`/posts/${p.slug}/`}
-                          prefetch={false}
                           onClick={() => setSearchOpen(false)}
                           className="group block p-4 rounded-xl bg-[var(--t-card)] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-brand-400 dark:hover:border-brand-400 hover:-translate-y-0.5 transition-all shadow-[var(--shadow-xs)]"
                         >
@@ -328,7 +327,7 @@ export default function Header() {
                             )}
                             <span className="font-mono">{p.readingTime || 1} 分钟阅读</span>
                           </div>
-                        </Link>
+                        </a>
                       </li>
                     ))}
                   </ul>

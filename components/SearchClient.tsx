@@ -1,7 +1,6 @@
 'use client';
 
 /** 搜索页：输入关键词 → 调用 /api/search 全文检索（带图标、清空按钮、加载骨架与美化卡片） */
-import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { Spinner } from './Skeleton';
 import type { PostSummary } from '@/lib/types';
@@ -120,9 +119,8 @@ export default function SearchClient() {
             <ul className="space-y-3">
               {items.map((p) => (
                 <li key={p.id} className="fade-in-up">
-                  <Link
+                  <a
                     href={`/posts/${p.slug}/`}
-                    prefetch={false}
                     className="group block p-5 rounded-2xl bg-[var(--t-card)] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-brand-400 dark:hover:border-brand-400 hover:-translate-y-0.5 transition-all shadow-[var(--shadow-xs)]"
                   >
                     <div className="flex items-center justify-between gap-3">
@@ -144,7 +142,7 @@ export default function SearchClient() {
                       )}
                       <span className="font-mono">{p.readingTime || 1} 分钟阅读</span>
                     </div>
-                  </Link>
+                  </a>
                 </li>
               ))}
             </ul>

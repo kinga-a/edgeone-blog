@@ -13,7 +13,7 @@ function LedeItem({ post, index }: { post: PostSummary; index: number }) {
   const cover = post.coverUrl || (post.coverKey ? mediaUrl(post.coverKey) : '') || defaultCoverFor(post.id);
   const no = String(index + 1).padStart(2, '0');
   return (
-    <Link href={`/posts/${post.slug}/`} prefetch={false} className="lede group">
+    <a href={`/posts/${post.slug}/`} className="lede group">
       <div className="lede-body">
         <div className="flex items-center gap-2.5">
           <span className="lede-no">FEATURED · NO.{no}</span>
@@ -45,14 +45,14 @@ function LedeItem({ post, index }: { post: PostSummary; index: number }) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={cover} alt={post.title} loading="lazy" />
       </div>
-    </Link>
+    </a>
   );
 }
 
 /** 期刊目录条目（最新文章）：日期 + 标题 + 摘要 + 阅读时长 */
 function JournalItem({ post }: { post: PostSummary }) {
   return (
-    <Link href={`/posts/${post.slug}/`} prefetch={false} className="journal-item group">
+    <a href={`/posts/${post.slug}/`} className="journal-item group">
       <div className="journal-date">{fmtDate(post.publishedAt || post.createdAt)}</div>
       <div className="journal-main">
         <div className="flex items-center gap-2 flex-wrap">
@@ -69,14 +69,14 @@ function JournalItem({ post }: { post: PostSummary }) {
         <span>{post.readingTime || 1} 分钟</span>
         <span className="journal-arrow" aria-hidden="true">→</span>
       </div>
-    </Link>
+    </a>
   );
 }
 
 /** 排行条目（热门文章）：大号衬线编号 + 标题 + 阅读量 */
 function TopItem({ post, index }: { post: PostSummary; index: number }) {
   return (
-    <Link href={`/posts/${post.slug}/`} prefetch={false} className="top-item">
+    <a href={`/posts/${post.slug}/`} className="top-item">
       <div className="top-no">{String(index + 1).padStart(2, '0')}</div>
       <div className="top-main">
         <h3 className="top-title">{post.title}</h3>
@@ -84,7 +84,7 @@ function TopItem({ post, index }: { post: PostSummary; index: number }) {
           {post.views || 0} 阅读 · {fmtDate(post.publishedAt || post.createdAt)}
         </div>
       </div>
-    </Link>
+    </a>
   );
 }
 

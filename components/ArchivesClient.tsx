@@ -1,7 +1,6 @@
 'use client';
 
 /** 归档页：按年份/月份分组的时间线（带月份计数徽章与卡片式悬浮交互） */
-import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import type { PostSummary } from '@/lib/types';
 import { api } from '@/lib/api';
@@ -71,9 +70,8 @@ export default function ArchivesClient() {
                 {items.map((p) => (
                   <li key={p.id} className="relative group">
                     <span className="absolute -left-[31px] top-4 w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-600 group-hover:bg-brand-600 dark:group-hover:bg-brand-400 group-hover:scale-125 ring-4 ring-slate-50 dark:ring-slate-900 transition-all" />
-                    <Link
+                    <a
                       href={`/posts/${p.slug}/`}
-                      prefetch={false}
                       className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 py-3 rounded-xl bg-[var(--t-card)] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-brand-400 dark:hover:border-brand-400 hover:translate-x-1 transition-all shadow-[var(--shadow-xs)]"
                     >
                       <div className="flex items-center gap-2 min-w-0">
@@ -91,7 +89,7 @@ export default function ArchivesClient() {
                         <span>·</span>
                         <span>{fmtDate(p.publishedAt || p.createdAt)}</span>
                       </div>
-                    </Link>
+                    </a>
                   </li>
                 ))}
               </ul>

@@ -1,7 +1,6 @@
 'use client';
 
 /** 文章卡片（杂志式）：封面（真实图/分类占位 + 悬浮角标）+ 日期·阅读时长 + 衬线标题 + 摘要 + 标签 + 底部互动指标 */
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { PostSummary, Tag } from '@/lib/types';
 import { fmtDate, mediaUrl, defaultCoverFor } from '@/lib/utils';
@@ -45,7 +44,7 @@ export default function PostCard({ post }: { post: PostSummary }) {
 
   return (
     <article className="article-card group">
-      <Link href={`/posts/${post.slug}/`} prefetch={false} className="block card-cover">
+      <a href={`/posts/${post.slug}/`} className="block card-cover">
         {/* 静态导出 + 禁用 next/image 优化，使用原生 img + 懒加载 */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -68,7 +67,7 @@ export default function PostCard({ post }: { post: PostSummary }) {
             )}
           </div>
         )}
-      </Link>
+      </a>
       <div className="card-body">
         <div className="card-meta">
           {post.visibility === 'private' && <span className="card-private">私人</span>}
@@ -79,9 +78,9 @@ export default function PostCard({ post }: { post: PostSummary }) {
           <span>{post.readingTime || 1} 分钟阅读</span>
         </div>
 
-        <Link href={`/posts/${post.slug}/`} prefetch={false} className="block">
+        <a href={`/posts/${post.slug}/`} className="block">
           <h3 className="card-title">{post.title}</h3>
-        </Link>
+        </a>
 
         {post.summary && <p className="card-excerpt">{post.summary}</p>}
 
@@ -106,13 +105,12 @@ export default function PostCard({ post }: { post: PostSummary }) {
             <span className="text-slate-300 dark:text-slate-700">·</span>
             <span title="点赞">{post.likes || 0} 赞</span>
           </div>
-          <Link
+          <a
             href={`/posts/${post.slug}/`}
-            prefetch={false}
             className="text-brand-600 dark:text-brand-400 font-sans font-medium opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200"
           >
             阅读 →
-          </Link>
+          </a>
         </div>
       </div>
     </article>
