@@ -178,24 +178,15 @@ ${body}
   var btn=document.getElementById('theme-toggle');
   if(btn){btn.addEventListener('click',function(){setTheme(!document.documentElement.classList.contains('dark'));});}
   var menu=document.getElementById('site-menu'),ov=document.getElementById('drawer-overlay'),dr=document.getElementById('site-drawer'),cl=document.getElementById('drawer-close');
-  function openDrawer(){if(ov){ov.classList.add('open');ov.setAttribute('aria-hidden','false');}if(dr){dr.classList.add('open');}document.body.style.overflow='hidden';document.documentElement.style.overflow='hidden';}
-  function closeDrawer(){if(ov){ov.classList.remove('open');ov.setAttribute('aria-hidden','true');}if(dr){dr.classList.remove('open');}document.body.style.overflow='';document.documentElement.style.overflow='';}
+  function openDrawer(){if(ov){ov.classList.add('open');ov.setAttribute('aria-hidden','false');}if(dr){dr.classList.add('open');}document.body.style.overflow='hidden';}
+  function closeDrawer(){if(ov){ov.classList.remove('open');ov.setAttribute('aria-hidden','true');}if(dr){dr.classList.remove('open');}document.body.style.overflow='';}
   if(menu){menu.addEventListener('click',openDrawer);}
   if(cl){cl.addEventListener('click',closeDrawer);}
   if(ov){ov.addEventListener('click',closeDrawer);}
   if(dr){var links=dr.querySelectorAll('a');for(var i=0;i<links.length;i++){
-    (function(link){
-      var href=link.getAttribute('href');
-      link.addEventListener('click',function(e){
-        e.preventDefault();
-        var pl=document.getElementById('page-loading');if(pl){pl.classList.add('show');}
-        closeDrawer();
-        /* 显式导航：延迟 60ms 让 loading/抽屉动画先渲染再跳转。
-           规避 iOS Safari 同帧内改样式+导航被吞、安卓 Via/Chrome 手势兼容问题，三端一致 */
-        setTimeout(function(){window.location.href=href;},60);
-      });
-      try{var l=document.createElement('link');l.rel='prefetch';l.href=href;document.head.appendChild(l);}catch(e){}
-    })(links[i]);
+    links[i].addEventListener('click',closeDrawer);
+    /* 预取目标静态页（浏览器低优先级缓存，点击秒开；不拦截默认跳转） */
+    (function(h){try{var l=document.createElement('link');l.rel='prefetch';l.href=h;document.head.appendChild(l);}catch(e){}})(links[i].getAttribute('href'));
   }}
 
   /* ---- 搜索浮层：× / ESC / 遮罩关闭，输入防抖 300ms 实时检索 ---- */
