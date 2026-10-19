@@ -116,62 +116,104 @@ function PostsList({ navigate }: { navigate: (k: string) => void }) {
       <Card className="!p-0 overflow-hidden">
         {loading ? <Loading /> : items.length ? (
           <>
-            <Table
-              head={
-                <>
-                  <Th>标题</Th>
-                  <Th>状态</Th>
-                  <Th>分类</Th>
-                  <Th>发布日期</Th>
-                  <Th>阅读</Th>
-                  <Th className="text-right">操作</Th>
-                </>
-              }
-            >
+            {/* 桌面端：表格 */}
+            <div className="hidden md:block">
+              <Table
+                head={
+                  <>
+                    <Th>标题</Th>
+                    <Th>状态</Th>
+                    <Th>分类</Th>
+                    <Th>发布日期</Th>
+                    <Th>阅读</Th>
+                    <Th className="text-right">操作</Th>
+                  </>
+                }
+              >
+                {items.map((p) => (
+                  <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                    <Td>
+                      <div className="font-medium text-slate-800 dark:text-slate-200 max-w-72 truncate">{p.title}</div>
+                      <div className="text-xs font-mono text-slate-400 truncate max-w-72 mt-0.5">/{p.slug}/</div>
+                    </Td>
+                    <Td>
+                      <span className="inline-flex items-center gap-1.5">
+                        {p.deletedAt ? (
+                          <Badge tone="red">回收站</Badge>
+                        ) : (
+                          <>
+                            <Badge tone={p.status === 'published' ? 'green' : 'gray'}>{p.status === 'published' ? '已发布' : '草稿'}</Badge>
+                            {(p.visibility || 'public') === 'private' && <Badge tone="yellow">私人</Badge>}
+                          </>
+                        )}
+                      </span>
+                    </Td>
+                    <Td className="text-slate-500 dark:text-slate-400">{p.categoryName || '—'}</Td>
+                    <Td className="text-slate-500 dark:text-slate-400 font-mono text-xs whitespace-nowrap">{fmtDate(p.publishedAt || p.createdAt)}</Td>
+                    <Td className="text-slate-500 dark:text-slate-400 font-mono text-xs">{p.readingTime || 1} 分钟</Td>
+                    <Td className="text-right whitespace-nowrap">
+                      <div className="inline-flex items-center gap-1.5">
+                        {p.deletedAt ? (
+                          <>
+                            <RowBtn onClick={() => restore(p.id)}>恢复</RowBtn>
+                            <RowBtn variant="danger" onClick={() => purge(p.id)}>彻底删除</RowBtn>
+                          </>
+                        ) : (
+                          <>
+                            {p.status === 'published' && (
+                              <a href={`/posts/${p.slug}/`} target="_blank" rel="noopener noreferrer">
+                                <RowBtn variant="ghost">查看</RowBtn>
+                              </a>
+                            )}
+                            <RowBtn onClick={() => navigate(`posts/edit/${p.id}`)}>编辑</RowBtn>
+                            <RowBtn variant="danger" onClick={() => remove(p.id)}>删除</RowBtn>
+                          </>
+                        )}
+                      </div>
+                    </Td>
+                  </tr>
+                ))}
+              </Table>
+            </div>
+
+            {/* 移动端：卡片列表 */}
+            <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
               {items.map((p) => (
-                <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-                  <Td>
-                    <div className="font-medium text-slate-800 dark:text-slate-200 max-w-72 truncate">{p.title}</div>
-                    <div className="text-xs font-mono text-slate-400 truncate max-w-72 mt-0.5">/{p.slug}/</div>
-                  </Td>
-                  <Td>
-                    <span className="inline-flex items-center gap-1.5">
-                      {p.deletedAt ? (
-                        <Badge tone="red">回收站</Badge>
-                      ) : (
-                        <>
-                          <Badge tone={p.status === 'published' ? 'green' : 'gray'}>{p.status === 'published' ? '已发布' : '草稿'}</Badge>
-                          {(p.visibility || 'public') === 'private' && <Badge tone="yellow">私人</Badge>}
-                        </>
-                      )}
-                    </span>
-                  </Td>
-                  <Td className="text-slate-500 dark:text-slate-400">{p.categoryName || '—'}</Td>
-                  <Td className="text-slate-500 dark:text-slate-400 font-mono text-xs whitespace-nowrap">{fmtDate(p.publishedAt || p.createdAt)}</Td>
-                  <Td className="text-slate-500 dark:text-slate-400 font-mono text-xs">{p.readingTime || 1} 分钟</Td>
-                  <Td className="text-right whitespace-nowrap">
-                    <div className="inline-flex items-center gap-1.5">
-                      {p.deletedAt ? (
-                        <>
-                          <RowBtn onClick={() => restore(p.id)}>恢复</RowBtn>
-                          <RowBtn variant="danger" onClick={() => purge(p.id)}>彻底删除</RowBtn>
-                        </>
-                      ) : (
-                        <>
-                          {p.status === 'published' && (
-                            <a href={`/posts/${p.slug}/`} target="_blank" rel="noopener noreferrer">
-                              <RowBtn variant="ghost">查看</RowBtn>
-                            </a>
-                          )}
-                          <RowBtn onClick={() => navigate(`posts/edit/${p.id}`)}>编辑</RowBtn>
-                          <RowBtn variant="danger" onClick={() => remove(p.id)}>删除</RowBtn>
-                        </>
-                      )}
-                    </div>
-                  </Td>
-                </tr>
+                <div key={p.id} className="p-4">
+                  <div className="font-medium text-slate-800 dark:text-slate-200 leading-snug">{p.title}</div>
+                  <div className="text-xs font-mono text-slate-400 mt-0.5 truncate">/{p.slug}/</div>
+                  <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                    {p.deletedAt ? (
+                      <Badge tone="red">回收站</Badge>
+                    ) : (
+                      <>
+                        <Badge tone={p.status === 'published' ? 'green' : 'gray'}>{p.status === 'published' ? '已发布' : '草稿'}</Badge>
+                        {(p.visibility || 'public') === 'private' && <Badge tone="yellow">私人</Badge>}
+                      </>
+                    )}
+                    <span className="text-xs text-slate-400">{(p.categoryName || '—')} · {fmtDate(p.publishedAt || p.createdAt)} · {p.readingTime || 1} 分钟</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-3">
+                    {p.deletedAt ? (
+                      <>
+                        <RowBtn onClick={() => restore(p.id)}>恢复</RowBtn>
+                        <RowBtn variant="danger" onClick={() => purge(p.id)}>彻底删除</RowBtn>
+                      </>
+                    ) : (
+                      <>
+                        {p.status === 'published' && (
+                          <a href={`/posts/${p.slug}/`} target="_blank" rel="noopener noreferrer">
+                            <RowBtn variant="ghost">查看</RowBtn>
+                          </a>
+                        )}
+                        <RowBtn onClick={() => navigate(`posts/edit/${p.id}`)}>编辑</RowBtn>
+                        <RowBtn variant="danger" onClick={() => remove(p.id)}>删除</RowBtn>
+                      </>
+                    )}
+                  </div>
+                </div>
               ))}
-            </Table>
+            </div>
             {totalPages > 1 && (
               <div className="flex items-center justify-center gap-2.5 py-4 border-t border-slate-100 dark:border-slate-700">
                 <Btn size="sm" variant="secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>上一页</Btn>
@@ -329,12 +371,12 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
     <div>
       {/* 吸顶工具栏：标题 + 保存状态 + 返回/保存 */}
       <div className="sticky top-16 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 mb-5 bg-[#faf7f1]/90 dark:bg-[#1c1916]/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-700">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
           <div className="min-w-0">
             <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 font-display">{mode === 'new' ? '新建文章' : '编辑文章'}</h1>
             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">支持 Markdown：标题、列表、代码块、图片、链接等</p>
           </div>
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
             <span className="hidden sm:block"><SaveState dirty={dirty} busy={busy} savedAt={savedAt} /></span>
             <Btn variant="secondary" onClick={() => navigate('posts')}>返回列表</Btn>
             <Btn onClick={save} disabled={busy} loading={busy}>
@@ -372,10 +414,10 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
             </Field>
           </Card>
 
-          {/* 编辑器（Vditor：即时渲染 + 代码高亮 + 图片上传） */}
+          {/* 编辑器（Vditor：分屏预览 + 代码高亮 + 图片上传） */}
           <div className="min-w-0 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-[var(--t-card)] dark:bg-slate-800 shadow-[var(--shadow-xs)]">
             <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">正文（Markdown · 即时渲染）</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">正文（Markdown · 分屏预览）</span>
               <span className="text-xs text-slate-400 hidden sm:inline">工具栏可上传图片 · 支持代码块 / 表格 / 公式</span>
             </div>
             <VditorEditor value={content} onChange={setContent} cacheId={mode === 'edit' ? (postId || 'edit') : 'new'} />

@@ -60,7 +60,7 @@ export default function VditorEditor({ value, onChange, cacheId = 'blog-post-new
         try {
           editor = new VditorCtor(mountRef.current, {
             height: 520,
-            mode: 'ir',
+            mode: 'sv',
             sanitize: (html: string) => html,
             cache: { id: cacheId, enable: true },
             theme: isDark() ? 'dark' : 'classic',

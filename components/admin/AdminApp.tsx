@@ -112,13 +112,13 @@ export default function AdminApp() {
                   退出
                 </button>
               </div>
-              <nav className="flex lg:flex-col gap-1 overflow-x-auto pb-1 lg:pb-0">
+              <nav className="grid grid-cols-4 gap-1 lg:grid-cols-1 lg:gap-1">
                 {MENU.map((m) => (
                   <button
                     key={m.key}
                     onClick={() => navigate(m.key)}
                     className={cx(
-                      ' lg:w-full text-left px-3 py-2.5 rounded-xl text-sm transition-all flex items-center gap-2.5 shrink-0',
+                      'lg:w-full text-left px-1.5 lg:px-3 py-2 rounded-xl text-[13px] lg:text-sm transition-all flex items-center justify-center lg:justify-start gap-1.5 lg:gap-2.5 flex-col lg:flex-row',
                       mainKey === m.key
                         ? 'bg-brand-600 text-white font-medium shadow-[0_2px_8px_rgba(154,67,24,0.25)]'
                         : 'text-slate-600 dark:text-slate-300 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-400',
