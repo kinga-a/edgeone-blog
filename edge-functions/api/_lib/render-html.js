@@ -84,6 +84,8 @@ function pageShell({ config, title, description, keywords, canonical, ogImage, j
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/favicon.ico" type="image/x-icon">
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
 <title>${escapeHtml(title)}</title>
 <meta name="description" content="${escapeHtml(desc)}">
 ${keywords ? `<meta name="keywords" content="${escapeHtml(keywords)}">` : ''}
