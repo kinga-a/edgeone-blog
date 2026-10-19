@@ -184,9 +184,18 @@ ${body}
   if(cl){cl.addEventListener('click',closeDrawer);}
   if(ov){ov.addEventListener('click',closeDrawer);}
   if(dr){var links=dr.querySelectorAll('a');for(var i=0;i<links.length;i++){
-    links[i].addEventListener('click',closeDrawer);
-    /* 预取目标静态页（浏览器低优先级缓存，点击秒开；不拦截默认跳转） */
-    (function(h){try{var l=document.createElement('link');l.rel='prefetch';l.href=h;document.head.appendChild(l);}catch(e){}})(links[i].getAttribute('href'));
+    (function(link){
+      var href=link.getAttribute('href');
+      link.addEventListener('click',function(){
+        var cur=location.href;
+        closeDrawer();
+        /* 原生导航优先（不 preventDefault，与 b3 一致）；
+           部分移动端浏览器在滚动锁定状态下会吞掉链接默认跳转，
+           350ms 后若仍在原页则 JS 强制跳转兜底（无遮罩、不卡死） */
+        setTimeout(function(){if(location.href===cur){window.location.href=href;}},350);
+      });
+      try{var l=document.createElement('link');l.rel='prefetch';l.href=href;document.head.appendChild(l);}catch(e){}
+    })(links[i]);
   }}
 
   /* ---- 搜索浮层：× / ESC / 遮罩关闭，输入防抖 300ms 实时检索 ---- */
