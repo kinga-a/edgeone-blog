@@ -213,6 +213,24 @@ ${body}
     window.addEventListener('scroll',tocSpy,{passive:true});tocSpy();
   }
 
+  /* ---- 封面图点击放大（lightbox） ---- */
+  var cov=document.querySelector('.article-cover');
+  if(cov){
+    cov.addEventListener('click',function(){
+      var lb=document.createElement('div');lb.className='lightbox';
+      var img=document.createElement('img');img.src=cov.getAttribute('src');img.alt=cov.getAttribute('alt')||'';
+      var x=document.createElement('span');x.className='lightbox-close';x.innerHTML='&times;';
+      lb.appendChild(img);lb.appendChild(x);
+      function close(){lb.remove();document.removeEventListener('keydown',esc);document.body.style.overflow='';}
+      function esc(e){if(e.key==='Escape'){close();}}
+      x.addEventListener('click',close);
+      lb.addEventListener('click',function(e){if(e.target===lb){close();}});
+      document.addEventListener('keydown',esc);
+      document.body.style.overflow='hidden';
+      document.body.appendChild(lb);
+    });
+  }
+
   /* ---- 搜索浮层：× / ESC / 遮罩关闭，输入防抖 300ms 实时检索 ---- */
   var so=document.getElementById('search-open'),sov=document.getElementById('search-overlay'),spop=document.getElementById('search-pop'),scl=document.getElementById('search-close'),sinp=document.getElementById('search-input'),sbtn=document.getElementById('search-btn'),sres=document.getElementById('search-results'),sfrm=document.getElementById('search-form');
   var sTimer=null,sBusy=false;
