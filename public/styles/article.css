@@ -332,15 +332,6 @@ html.dark .toc-fab {
 .toc-fab:hover { transform: translateY(-3px) scale(1.03); color: var(--accent); box-shadow: var(--shadow-lg); }
 .toc-fab:active { transform: translateY(0) scale(0.96); }
 .toc-fab.active { color: var(--accent); background: var(--accent-soft); border-color: var(--accent); }
-/* 悬浮提示（桌面 hover） */
-.toc-fab::after {
-  content: "目录"; position: absolute; right: calc(100% + 8px); top: 50%;
-  transform: translateY(-50%); white-space: nowrap;
-  background: var(--fg); color: var(--card); font-size: 12px;
-  padding: 3px 8px; border-radius: 6px;
-  opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
-}
-.toc-fab:hover::after { opacity: 1; }
 .toc {
   position: fixed; right: 14px; top: 50%; z-index: 150;
   transform: translate(calc(100% + 20px), -50%);

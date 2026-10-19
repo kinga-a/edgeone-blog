@@ -340,7 +340,7 @@ export async function renderArticlePage(env, post, request) {
     </div>
     ${toc.length ? `
     <!-- 浮动目录（body 直接层级：避开 .site-main 入场动画 transform 造成 fixed 定位失效） -->
-    <button type="button" class="toc-fab" id="toc-fab" aria-label="展开目录" title="目录" aria-expanded="false">
+    <button type="button" class="toc-fab" id="toc-fab" aria-label="展开目录" aria-expanded="false">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
     </button>
     <aside class="toc" id="toc-panel" aria-label="目录" aria-hidden="true">
