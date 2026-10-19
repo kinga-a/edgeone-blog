@@ -731,10 +731,11 @@ html.dark .progress-ring .ring-fill { stroke: #E08A5A; }
   padding: 20px;
   z-index: 160;
   opacity: 0;
+  pointer-events: none;
   box-shadow: 0 24px 64px rgba(28, 25, 22, 0.22);
   transition: transform 0.28s ease, opacity 0.24s ease;
 }
-.search-pop.open { transform: translate(-50%, 0) scale(1); opacity: 1; }
+.search-pop.open { transform: translate(-50%, 0) scale(1); opacity: 1; pointer-events: auto; }
 @media (max-width: 640px) { .search-pop { top: 72px; } }
 .search-pop-head {
   display: flex; align-items: center; justify-content: space-between;
