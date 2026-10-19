@@ -199,6 +199,19 @@ ${body}
       try{var l=document.createElement('link');l.rel='prefetch';l.href=href;document.head.appendChild(l);}catch(e){}
     })(links[i]);
   }}
+  /* ---- 浮动目录：按钮展开/收起 + 点击跳转后收起 + 滚动高亮 ---- */
+  var tocFab=document.getElementById('toc-fab'),tocPanel=document.getElementById('toc-panel');
+  if(tocFab&&tocPanel){
+    function setToc(open){tocPanel.classList.toggle('open',open);tocPanel.setAttribute('aria-hidden',String(!open));tocFab.setAttribute('aria-expanded',String(open));tocFab.classList.toggle('active',open);}
+    tocFab.addEventListener('click',function(e){e.stopPropagation();setToc(!tocPanel.classList.contains('open'));});
+    tocPanel.addEventListener('click',function(){setToc(false);});
+    document.addEventListener('click',function(e){if(!tocPanel.contains(e.target)&&e.target!==tocFab){setToc(false);}});
+    /* scrollspy：滚动时高亮当前章节 */
+    var tlinks=tocPanel.querySelectorAll('a'),heads=[];
+    for(var ti=0;ti<tlinks.length;ti++){var tgt=document.getElementById(String(tlinks[ti].getAttribute('href')).slice(1));if(tgt){heads.push(tgt);}}
+    function tocSpy(){var cur=-1;for(var hi=0;hi<heads.length;hi++){if(heads[hi].getBoundingClientRect().top<=130){cur=hi;}}for(var ai=0;ai<tlinks.length;ai++){tlinks[ai].classList.toggle('active',ai===cur);}}
+    window.addEventListener('scroll',tocSpy,{passive:true});tocSpy();
+  }
 
   /* ---- 搜索浮层：× / ESC / 遮罩关闭，输入防抖 300ms 实时检索 ---- */
   var so=document.getElementById('search-open'),sov=document.getElementById('search-overlay'),spop=document.getElementById('search-pop'),scl=document.getElementById('search-close'),sinp=document.getElementById('search-input'),sbtn=document.getElementById('search-btn'),sres=document.getElementById('search-results'),sfrm=document.getElementById('search-form');
@@ -321,15 +334,19 @@ export async function renderArticlePage(env, post, request) {
       ${cover ? `<img class="article-cover" src="${escapeHtml(cover)}" alt="${escapeHtml(post.title)}" loading="lazy">` : ''}
     </div>
     <div class="article-layout${toc.length ? ' has-toc' : ''}">
-      ${toc.length ? `
-      <aside class="toc" aria-label="目录">
-        <div class="toc-title">目录</div>
-        <nav class="toc-list">${toc.map((h) => `<a href="#${escapeHtml(h.id)}" class="toc-${h.level}">${escapeHtml(h.text)}</a>`).join('')}</nav>
-      </aside>` : ''}
       <div class="article-body prose">
         ${html}
       </div>
     </div>
+    ${toc.length ? `
+    <!-- 浮动目录（body 直接层级：避开 .site-main 入场动画 transform 造成 fixed 定位失效） -->
+    <button type="button" class="toc-fab" id="toc-fab" aria-label="展开目录" title="目录" aria-expanded="false">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+    </button>
+    <aside class="toc" id="toc-panel" aria-label="目录" aria-hidden="true">
+      <div class="toc-title">目录</div>
+      <nav class="toc-list">${toc.map((h) => `<a href="#${escapeHtml(h.id)}" class="toc-${h.level}">${escapeHtml(h.text)}</a>`).join('')}</nav>
+    </aside>` : ''}
     <div class="article-actions">
       <button type="button" class="btn-like" id="btn-like">
         <svg class="btn-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21s-7-4.5-9.5-9A5.2 5.2 0 0 1 12 6a5.2 5.2 0 0 1 9.5 6C19 16.5 12 21 12 21z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
