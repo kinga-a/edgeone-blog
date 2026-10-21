@@ -147,8 +147,30 @@ export async function webdavPush(env) {
   }
   const res = await fetch(target, { method: 'PUT', headers, body: payload });
   if (!res.ok) {
-    const detail = (await res.text().catch(() => '')).slice(0, 200);
-    throw new Error(`WebDAV 推送失败：HTTP ${res.status}${detail ? ` ${detail}` : ''}`);
+    const detail = (await res.text().catch(() => '')).slice(0, 120);
+    throw new Error(webdavErrorHint(res.status, target, detail));
   }
   return { ok: true, count: dump.count, url: target };
+}
+
+/** 将 WebDAV 常见失败状态码翻译为可操作的排查提示 */
+export function webdavErrorHint(status, target, detail) {
+  const base = `WebDAV 推送失败：HTTP ${status}`;
+  const path = target ? `（目标 ${target}）` : '';
+  const hint =
+    status === 401
+      ? '认证失败：用户名或密码错误，请检查账号密码'
+      : status === 403
+        ? '服务器拒绝写入：账号可能没有该路径的写权限，或目标目录不存在（请先在 WebDAV 服务中创建目录并确认账号可写）'
+        : status === 404
+          ? '目标路径不存在：请确认填写的目录/路径存在，或把地址填为完整文件 URL（以 .json 结尾）'
+          : status === 409
+            ? '目标冲突：目录不存在或与已有资源冲突，请先创建目录或换一个路径'
+          : status === 405
+            ? '服务器不支持 PUT 写入：该 WebDAV 可能只读，或需在服务端开启写入权限'
+          : status >= 500
+            ? 'WebDAV 服务器内部错误，请稍后重试'
+          : null;
+  const detailTxt = detail && !detail.includes('<') ? `：${detail}` : '';
+  return hint ? `${base}${path}。${hint}${detailTxt}` : `${base}${path}${detailTxt}`;
 }
