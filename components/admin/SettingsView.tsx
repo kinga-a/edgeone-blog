@@ -225,6 +225,22 @@ export default function SettingsView() {
     setBackupBusy(false);
   };
 
+  const doTestWebdav = async () => {
+    const b = config.backup || {};
+    if (!b.webdavUrl) {
+      toast('请先填写 WebDAV 地址', 'error');
+      return;
+    }
+    setBackupBusy(true);
+    try {
+      const d = await api.testWebdav(b);
+      toast(`连通正常：${d.message || `HTTP ${d.status}`}`);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : '测试失败', 'error');
+    }
+    setBackupBusy(false);
+  };
+
   const onPickBackupFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
@@ -548,6 +564,7 @@ export default function SettingsView() {
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <Btn onClick={doWebdav} disabled={backupBusy} loading={backupBusy}>{backupBusy ? '处理中…' : '立即备份到 WebDAV'}</Btn>
                 <Btn variant="secondary" onClick={doRestoreWebdav} disabled={backupBusy}>{backupBusy ? '处理中…' : '从 WebDAV 恢复'}</Btn>
+                <Btn variant="secondary" onClick={doTestWebdav} disabled={backupBusy}>测试连通</Btn>
                 <Btn variant="secondary" onClick={save} disabled={busy}>保存 WebDAV 配置</Btn>
               </div>
             </div>
