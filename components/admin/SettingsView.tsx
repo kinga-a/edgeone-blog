@@ -24,7 +24,7 @@ export default function SettingsView() {
 
   // 备份
   const [backupBusy, setBackupBusy] = useState(false);
-  const [webdavTest, setWebdavTest] = useState<{ ok: boolean; message: string; elapsedMs?: number } | null>(null);
+  const [webdavTest, setWebdavTest] = useState<{ ok: boolean; title: string; message: string; elapsedMs?: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // MCP 接入
@@ -217,10 +217,16 @@ export default function SettingsView() {
 
   const doWebdav = async () => {
     setBackupBusy(true);
+    setWebdavTest(null);
+    const start = performance.now();
     try {
       const d = await api.backupToWebdav();
+      const elapsed = Math.round(performance.now() - start);
+      setWebdavTest({ ok: true, title: 'WebDAV 备份成功', message: `共 ${d.count} 条记录已推送到：${d.url}`, elapsedMs: elapsed });
       toast(`备份成功：共 ${d.count} 条记录`);
     } catch (e) {
+      const elapsed = Math.round(performance.now() - start);
+      setWebdavTest({ ok: false, title: 'WebDAV 备份失败', message: e instanceof Error ? e.message : '备份失败', elapsedMs: elapsed });
       toast(e instanceof Error ? e.message : '备份失败', 'error');
     }
     setBackupBusy(false);
@@ -229,7 +235,7 @@ export default function SettingsView() {
   const doTestWebdav = async () => {
     const b = config.backup || {};
     if (!b.webdavUrl) {
-      setWebdavTest({ ok: false, message: '请先填写 WebDAV 地址' });
+      setWebdavTest({ ok: false, title: 'WebDAV 连接失败', message: '请先填写 WebDAV 地址' });
       toast('请先填写 WebDAV 地址', 'error');
       return;
     }
@@ -239,11 +245,11 @@ export default function SettingsView() {
     try {
       const d = await api.testWebdav(b);
       const elapsed = Math.round(performance.now() - start);
-      setWebdavTest({ ok: true, message: d.message || `连通正常（HTTP ${d.status}）`, elapsedMs: elapsed });
+      setWebdavTest({ ok: true, title: 'WebDAV 连通正常', message: d.message || `连通正常（HTTP ${d.status}）`, elapsedMs: elapsed });
       toast(`连通正常（${elapsed}ms）`);
     } catch (e) {
       const elapsed = Math.round(performance.now() - start);
-      setWebdavTest({ ok: false, message: e instanceof Error ? e.message : '测试失败', elapsedMs: elapsed });
+      setWebdavTest({ ok: false, title: 'WebDAV 连接失败', message: e instanceof Error ? e.message : '测试失败', elapsedMs: elapsed });
       toast(e instanceof Error ? e.message : '测试失败', 'error');
     }
     setBackupBusy(false);
@@ -278,10 +284,16 @@ export default function SettingsView() {
   const doRestoreWebdav = async () => {
     if (!window.confirm('将从 WebDAV 拉取备份并恢复数据：同键记录将被覆盖，备份中不存在的键保持不变。确定继续？')) return;
     setBackupBusy(true);
+    setWebdavTest(null);
+    const start = performance.now();
     try {
       const d = await api.restoreFromWebdav();
-      toast(`恢复成功：${d.restored} 条记录已写入${d.skipped ? `（跳过会话 ${d.skipped} 条）` : ''}，建议刷新页面查看`);
+      const elapsed = Math.round(performance.now() - start);
+      setWebdavTest({ ok: true, title: 'WebDAV 恢复成功', message: `${d.restored} 条记录已写入${d.skipped ? `（跳过会话 ${d.skipped} 条）` : ''}，建议刷新页面查看`, elapsedMs: elapsed });
+      toast(`恢复成功：${d.restored} 条记录已写入`);
     } catch (e) {
+      const elapsed = Math.round(performance.now() - start);
+      setWebdavTest({ ok: false, title: 'WebDAV 恢复失败', message: e instanceof Error ? e.message : '恢复失败', elapsedMs: elapsed });
       toast(e instanceof Error ? e.message : '恢复失败', 'error');
     }
     setBackupBusy(false);
@@ -581,7 +593,7 @@ export default function SettingsView() {
                   : 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900 text-rose-900 dark:text-rose-200'}`}>
                   <span className="mt-0.5 shrink-0">{webdavTest.ok ? '✓' : '✕'}</span>
                   <div className="min-w-0">
-                    <p className="font-medium">{webdavTest.ok ? 'WebDAV 连通正常' : 'WebDAV 连接失败'}</p>
+                    <p className="font-medium">{webdavTest.title}</p>
                     <p className="mt-0.5 break-all opacity-90">{webdavTest.message}</p>
                     {webdavTest.elapsedMs != null && <p className="mt-0.5 text-xs opacity-70">耗时 {webdavTest.elapsedMs}ms</p>}
                   </div>

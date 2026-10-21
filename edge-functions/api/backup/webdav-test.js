@@ -1,10 +1,10 @@
 import { json, fail, readJson } from '../_lib/response.js';
 import { requireAdmin } from '../_lib/auth.js';
-import { utf8Base64 } from '../_lib/backup.js';
+import { utf8Base64, webdavTarget } from '../_lib/backup.js';
 
 /**
  * POST /api/backup/webdav-test — 测试 WebDAV 连通性（管理员）
- * 使用请求体中传入的表单当前值（无需先保存配置）。
+ * 使用请求体中传入的表单当前值（无需先保存配置）；按备份规则解析目标文件 URL。
  * 优先 OPTIONS（WebDAV 能力探测），服务器不支持时退化为 HEAD。
  * 返回友好分类：连通正常 / 认证失败 / 无权限 / 路径不存在 / 网络错误。
  */
@@ -13,21 +13,25 @@ export async function onRequestPost({ request, env }) {
   if (!admin.ok) return fail(401, '未登录或登录已过期');
 
   const body = await readJson(request).catch(() => ({}));
-  const url = String(body?.webdavUrl || '').trim();
-  if (!url) return fail(400, '请先填写 WebDAV 地址');
+  const b = {
+    webdavUrl: String(body?.webdavUrl || '').trim(),
+    webdavPath: String(body?.webdavPath || ''),
+    webdavUsername: String(body?.webdavUsername || '').trim(),
+    webdavPassword: String(body?.webdavPassword || ''),
+  };
+  const target = webdavTarget(b);
+  if (!target) return fail(400, '请先填写 WebDAV 地址');
 
   const headers = {};
-  const username = String(body?.webdavUsername || '').trim();
-  const password = String(body?.webdavPassword || '');
-  if (username) {
-    headers.Authorization = `Basic ${utf8Base64(`${username}:${password}`)}`;
+  if (b.webdavUsername) {
+    headers.Authorization = `Basic ${utf8Base64(`${b.webdavUsername}:${b.webdavPassword}`)}`;
   }
 
   // 1) OPTIONS：探测服务器 WebDAV 能力
   let res;
   let usedMethod = 'OPTIONS';
   try {
-    res = await fetch(url, { method: 'OPTIONS', headers });
+    res = await fetch(target, { method: 'OPTIONS', headers });
   } catch (e) {
     return fail(502, `无法连接 WebDAV 服务器：${e.message || '网络错误'}`);
   }
@@ -35,7 +39,7 @@ export async function onRequestPost({ request, env }) {
   if (res.status === 405 || res.status === 501) {
     usedMethod = 'HEAD';
     try {
-      res = await fetch(url, { method: 'HEAD', headers });
+      res = await fetch(target, { method: 'HEAD', headers });
     } catch (e) {
       return fail(502, `无法连接 WebDAV 服务器：${e.message || '网络错误'}`);
     }

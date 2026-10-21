@@ -85,17 +85,33 @@ export async function restoreFromPayload(env, payload) {
   return { ok: true, restored, skipped, count: entries.length };
 }
 
+/**
+ * 计算 WebDAV 备份目标 URL：
+ * - 若 webdavUrl 已是文件 URL（带 .json/.bak 等后缀）→ 直接使用
+ * - 否则视为目录 URL：拼接 子目录(webdavPath) + 固定备份文件名
+ */
+export function webdavTarget(b) {
+  const raw = String(b?.webdavUrl || '').trim();
+  if (!raw) return null;
+  if (/\.(json|json\.gz|bak|backup)$/i.test(raw)) return raw;
+  const file = `edgeone-blog-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  const base = raw.replace(/\/+$/, '');
+  const sub = String(b?.webdavPath || '').replace(/^\/+/, '').replace(/\/+$/, '');
+  return sub ? `${base}/${sub}/${file}` : `${base}/${file}`;
+}
+
 /** 从配置的 WebDAV 拉取备份并恢复（合并式） */
 export async function restoreFromWebdav(env) {
   const config = await getSiteConfig(env);
   const b = config.backup || {};
-  if (!b.webdavUrl) throw new Error('未配置 WebDAV 地址');
+  const target = webdavTarget(b);
+  if (!target) throw new Error('未配置 WebDAV 地址');
 
   const headers = {};
   if (b.webdavUsername) {
     headers.Authorization = `Basic ${utf8Base64(`${b.webdavUsername}:${b.webdavPassword || ''}`)}`;
   }
-  const res = await fetch(b.webdavUrl, { method: 'GET', headers });
+  const res = await fetch(target, { method: 'GET', headers });
   if (!res.ok) {
     const detail = (await res.text().catch(() => '')).slice(0, 200);
     throw new Error(`WebDAV 拉取失败：HTTP ${res.status}${detail ? ` ${detail}` : ''}`);
@@ -120,7 +136,8 @@ export function utf8Base64(str) {
 export async function webdavPush(env) {
   const config = await getSiteConfig(env);
   const b = config.backup || {};
-  if (!b.webdavUrl) throw new Error('未配置 WebDAV 地址');
+  const target = webdavTarget(b);
+  if (!target) throw new Error('未配置 WebDAV 地址');
 
   const dump = await dumpAll(env);
   const payload = JSON.stringify(dump, null, 2);
@@ -128,10 +145,10 @@ export async function webdavPush(env) {
   if (b.webdavUsername) {
     headers.Authorization = `Basic ${utf8Base64(`${b.webdavUsername}:${b.webdavPassword || ''}`)}`;
   }
-  const res = await fetch(b.webdavUrl, { method: 'PUT', headers, body: payload });
+  const res = await fetch(target, { method: 'PUT', headers, body: payload });
   if (!res.ok) {
     const detail = (await res.text().catch(() => '')).slice(0, 200);
     throw new Error(`WebDAV 推送失败：HTTP ${res.status}${detail ? ` ${detail}` : ''}`);
   }
-  return { ok: true, count: dump.count, url: b.webdavUrl };
+  return { ok: true, count: dump.count, url: target };
 }
