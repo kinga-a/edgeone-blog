@@ -24,6 +24,7 @@ export default function SettingsView() {
 
   // 备份
   const [backupBusy, setBackupBusy] = useState(false);
+  const [webdavTest, setWebdavTest] = useState<{ ok: boolean; message: string; elapsedMs?: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // MCP 接入
@@ -228,14 +229,21 @@ export default function SettingsView() {
   const doTestWebdav = async () => {
     const b = config.backup || {};
     if (!b.webdavUrl) {
+      setWebdavTest({ ok: false, message: '请先填写 WebDAV 地址' });
       toast('请先填写 WebDAV 地址', 'error');
       return;
     }
     setBackupBusy(true);
+    setWebdavTest(null);
+    const start = performance.now();
     try {
       const d = await api.testWebdav(b);
-      toast(`连通正常：${d.message || `HTTP ${d.status}`}`);
+      const elapsed = Math.round(performance.now() - start);
+      setWebdavTest({ ok: true, message: d.message || `连通正常（HTTP ${d.status}）`, elapsedMs: elapsed });
+      toast(`连通正常（${elapsed}ms）`);
     } catch (e) {
+      const elapsed = Math.round(performance.now() - start);
+      setWebdavTest({ ok: false, message: e instanceof Error ? e.message : '测试失败', elapsedMs: elapsed });
       toast(e instanceof Error ? e.message : '测试失败', 'error');
     }
     setBackupBusy(false);
@@ -564,9 +572,21 @@ export default function SettingsView() {
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <Btn onClick={doWebdav} disabled={backupBusy} loading={backupBusy}>{backupBusy ? '处理中…' : '立即备份到 WebDAV'}</Btn>
                 <Btn variant="secondary" onClick={doRestoreWebdav} disabled={backupBusy}>{backupBusy ? '处理中…' : '从 WebDAV 恢复'}</Btn>
-                <Btn variant="secondary" onClick={doTestWebdav} disabled={backupBusy}>测试连通</Btn>
+                <Btn variant="secondary" onClick={doTestWebdav} disabled={backupBusy}>{backupBusy ? '测试中…' : '测试连通'}</Btn>
                 <Btn variant="secondary" onClick={save} disabled={busy}>保存 WebDAV 配置</Btn>
               </div>
+              {webdavTest && (
+                <div className={`mt-3 rounded-xl px-4 py-3 text-sm border flex items-start gap-2.5 fade-in-up ${webdavTest.ok
+                  ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900 text-emerald-900 dark:text-emerald-200'
+                  : 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900 text-rose-900 dark:text-rose-200'}`}>
+                  <span className="mt-0.5 shrink-0">{webdavTest.ok ? '✓' : '✕'}</span>
+                  <div className="min-w-0">
+                    <p className="font-medium">{webdavTest.ok ? 'WebDAV 连通正常' : 'WebDAV 连接失败'}</p>
+                    <p className="mt-0.5 break-all opacity-90">{webdavTest.message}</p>
+                    {webdavTest.elapsedMs != null && <p className="mt-0.5 text-xs opacity-70">耗时 {webdavTest.elapsedMs}ms</p>}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </Card>
