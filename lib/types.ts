@@ -95,6 +95,8 @@ export interface SiteConfig {
   author: string;
   about: string;
   footerText: string;
+  /** ICP 备案：enabled 开启后页脚显示备案号；number 为备案号 */
+  icp?: { enabled?: boolean; number?: string };
   /** 首页 hero 纸卡文字：填 https 接口 URL 则每日自动拉取（如每日诗词），填普通文字则固定显示；留空隐藏 */
   heroQuote: string;
   language: string;

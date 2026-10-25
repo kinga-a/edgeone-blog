@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 export default function Footer() {
-  const [config, setConfig] = useState<{ title?: string; footerText?: string }>({});
+  const [config, setConfig] = useState<{ title?: string; footerText?: string; icp?: { enabled?: boolean; number?: string } }>({});
   const [year] = useState(() => new Date().getFullYear());
 
   useEffect(() => {
@@ -16,6 +16,8 @@ export default function Footer() {
       })
       .catch(() => {});
   }, []);
+
+  const icpNumber = config.icp?.enabled ? config.icp.number?.trim() || '' : '';
 
   return (
     <footer className="border-t border-slate-200 dark:border-slate-800 bg-transparent mt-12">
@@ -42,6 +44,13 @@ export default function Footer() {
         <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500 font-mono">
           © {year} {config.title || '我的博客'} · Next.js + Tailwind CSS · EdgeOne KV / Blob
         </p>
+        {icpNumber ? (
+          <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500 font-mono">
+            <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
+              {icpNumber}
+            </a>
+          </p>
+        ) : null}
       </div>
     </footer>
   );

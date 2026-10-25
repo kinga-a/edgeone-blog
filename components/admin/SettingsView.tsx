@@ -355,6 +355,15 @@ export default function SettingsView() {
             </Field>
           </div>
           <div className="mt-4">
+            <Field label="ICP 备案号" hint="开启后页脚底部显示备案号（链接至工信部备案查询系统）；留空不显示">
+              <label className="flex items-center gap-2.5 text-sm text-slate-700 dark:text-slate-300 cursor-pointer mb-2">
+                <input type="checkbox" checked={config.icp?.enabled === true} onChange={(e) => set({ icp: { ...config.icp, enabled: e.target.checked } })} className="accent-brand-600" />
+                在页脚显示 ICP 备案号
+              </label>
+              <Input value={config.icp?.number || ''} onChange={(e) => set({ icp: { ...config.icp, number: e.target.value } })} placeholder="如：京ICP备XXXXXXXX号" className="font-mono text-xs" />
+            </Field>
+          </div>
+          <div className="mt-4">
             <Field
               label="首页装饰卡文字（每日诗词 / 固定文字）"
               hint="填 https 接口 URL 则每日自动拉取一句（如 https://v1.jinrishici.com/rensheng.txt）；填普通文字则固定显示；留空隐藏"
