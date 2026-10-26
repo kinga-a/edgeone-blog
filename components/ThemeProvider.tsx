@@ -26,9 +26,10 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
     if (!mounted) return;
     document.documentElement.classList.toggle('dark', dark);
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-    // iOS 26/27 状态栏颜色来自 html/body 背景采样（header 有 backdrop-filter 时停止采样顶部条、
-    // 回退 html/body 背景），且只在滚动/布局变化时重读（WebKit 306074/319479）。
-    // 因此切主题后：① 同步 theme-color meta（兼容 iOS 15-17）② 强制 1px 滚动触发 iOS 重采样。
+    // iOS 26/27 状态栏颜色采样 html/body 背景（header 有 backdrop-filter 时停止采样顶部条、
+    // 回退 html/body 背景），theme-color meta 已不生效，仅在视口布局变化时重读
+    // （WebKit 306074/319479；真机验证：打开菜单 drawer 触发 body overflow hidden 后状态栏才更新）。
+    // 因此切主题后同步 meta（兼容 iOS 15-17）并组合触发 iOS 重采样。
     const color = dark ? THEME_COLOR_DARK : THEME_COLOR_LIGHT;
     let metas = document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]');
     if (metas.length === 0) {
@@ -45,28 +46,39 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
     } catch {
       /* ignore */
     }
-    // 强制 iOS 重读状态栏背景：向下滚 1px（滚动时重采样）再恢复原位；不可滚动时用 opacity 抖动触发重绘
-    requestAnimationFrame(() => {
-      try {
-        const y = window.scrollY;
-        window.scrollTo(0, y + 1);
-        requestAnimationFrame(() => {
-          if (window.scrollY !== y) {
-            window.scrollTo(0, y);
-          } else {
-            document.documentElement.style.opacity = '0.9999';
-            requestAnimationFrame(() => {
-              document.documentElement.style.opacity = '';
-            });
-          }
-        });
-      } catch {
-        /* ignore */
-      }
-    });
+    forceIOSStatusBarRefresh();
   }, [dark, mounted]);
 
   const toggle = () => setDark((d) => !d);
 
   return <ThemeContext.Provider value={{ dark, toggle }}>{children}</ThemeContext.Provider>;
+}
+
+/** iOS 26/27 状态栏重采样触发：与打开菜单 drawer（body overflow hidden）等效的视口/布局变化。
+ *  程序化 1px 滚动实测无效，组合三种触发提高命中：
+ *  ① body overflow hidden 抖动（菜单按钮验证过的机制）
+ *  ② 向下滚动 1px（WebKit 306074：滚动时重采样）
+ *  ③ 临时 fixed 合成层（新图层出现触发重绘） */
+function forceIOSStatusBarRefresh() {
+  try {
+    // ① overflow 变化 → 视口滚动条/布局变化（打开菜单的等效触发），保持 80ms 确保完成重采样
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => {
+      document.body.style.overflow = prevOverflow;
+    }, 80);
+    // ② 向下滚动 1px，120ms 后恢复原位
+    const y = window.scrollY;
+    window.scrollTo(0, y + 1);
+    setTimeout(() => {
+      window.scrollTo(0, y);
+    }, 120);
+    // ③ 临时 fixed 元素：新合成层出现触发一次重绘
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:fixed;top:0;left:0;width:2px;height:2px;opacity:0.02;pointer-events:none;z-index:-1;';
+    document.body.appendChild(probe);
+    setTimeout(() => probe.remove(), 100);
+  } catch {
+    /* ignore */
+  }
 }
