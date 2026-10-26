@@ -96,6 +96,12 @@ html.dark {
 html {
   scroll-behavior: smooth;
   overflow-x: clip;
+  /* html 背景兜底：iOS 状态栏/safe-area 区域显示 html 背景，跟随手动主题避免深色下露浅色条 */
+  background-color: #faf7f1;
+}
+
+html.dark {
+  background-color: #1c1916;
 }
 
 body {

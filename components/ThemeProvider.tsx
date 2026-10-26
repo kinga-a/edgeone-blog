@@ -41,6 +41,14 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
     } catch {
       /* ignore */
     }
+    // iOS Safari 只在 theme-color meta 插入/移除 DOM 时重读（仅改 content 不更新状态栏）：
+    // 移除旧 meta 并重建，强制状态栏跟随手动主题
+    const color = dark ? '#1c1916' : '#faf7f1';
+    document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.remove());
+    const meta = document.createElement('meta');
+    meta.name = 'theme-color';
+    meta.content = color;
+    document.head.appendChild(meta);
   }, [dark, mounted]);
 
   const toggle = () => setDark((d) => !d);

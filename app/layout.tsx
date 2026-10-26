@@ -31,16 +31,20 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#faf7f1' },
-    { media: '(prefers-color-scheme: dark)', color: '#292524' },
-  ],
+  viewportFit: 'cover',
+  // theme-color 不在此导出：Next 会重复注入 meta 导致 iOS 取错；改为 body 静态 meta + 内联脚本按手动主题设置
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
       <body className="min-h-screen flex flex-col">
+        <meta name="theme-color" content="#faf7f1" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('blog-theme');var dark=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;if(dark){document.documentElement.classList.add('dark');}var color=dark?'#1c1916':'#faf7f1';document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){m.remove();});var m=document.createElement('meta');m.name='theme-color';m.content=color;document.head.appendChild(m);}catch(e){}})();`,
+          }}
+        />
         <ThemeProvider>
           <FaviconUpdater />
           <SeoUpdater />
