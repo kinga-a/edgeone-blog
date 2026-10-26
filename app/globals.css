@@ -96,12 +96,15 @@ html.dark {
 html {
   scroll-behavior: smooth;
   overflow-x: clip;
+  /* 通知 Safari 当前为浅色：原生控件/滚动条/overscroll 底色 */
+  color-scheme: light;
   /* html 背景兜底：iOS 状态栏/safe-area 区域显示 html 背景，跟随手动主题避免深色下露浅色条 */
-  background-color: #faf7f1;
+  background-color: #faf7f2;
 }
 
 html.dark {
-  background-color: #1c1916;
+  color-scheme: dark;
+  background-color: #1c1a17;
 }
 
 body {
