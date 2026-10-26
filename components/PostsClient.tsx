@@ -26,17 +26,33 @@ export default function PostsClient() {
   const [error, setError] = useState<string | null>(null);
   const [keyword, setKeyword] = useState(q);
   const [reloadKey, setReloadKey] = useState(0);
+  const [perPage, setPerPage] = useState(10);
+  const [configLoaded, setConfigLoaded] = useState(false);
 
   useEffect(() => {
     setKeyword(q);
   }, [q]);
 
+  // 读取站点配置的「每页文章数」，用于列表分页
   useEffect(() => {
     let alive = true;
+    api.getConfig()
+      .then((d) => {
+        if (!alive) return;
+        if (d?.ok && d.config?.perPage) setPerPage(d.config.perPage);
+        setConfigLoaded(true);
+      })
+      .catch(() => { if (alive) setConfigLoaded(true); });
+    return () => { alive = false; };
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    if (!configLoaded) return;
     setLoading(true);
     setError(null);
     Promise.all([
-      api.listPosts({ page, pageSize: 10, category, tag, q }),
+      api.listPosts({ page, pageSize: perPage, category, tag, q }),
       api.listCategories().catch(() => null),
       api.listTags().catch(() => null),
     ])
@@ -57,7 +73,7 @@ export default function PostsClient() {
         setLoading(false);
       });
     return () => { alive = false; };
-  }, [page, category, tag, q, reloadKey]);
+  }, [page, category, tag, q, reloadKey, perPage, configLoaded]);
 
   const buildHref = useCallback(
     (p: number) => {
