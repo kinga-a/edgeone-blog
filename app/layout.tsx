@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import BackToTop from '@/components/BackToTop';
 import PageTransition from '@/components/PageTransition';
 import FaviconUpdater from '@/components/FaviconUpdater';
+import SeoUpdater from '@/components/SeoUpdater';
 import ScrollManager from '@/components/ScrollManager';
 import { DEFAULT_FAVICON } from '@/lib/constants';
 
@@ -42,6 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen flex flex-col">
         <ThemeProvider>
           <FaviconUpdater />
+          <SeoUpdater />
           <ScrollManager />
           <Header />
           <main className="flex-1">

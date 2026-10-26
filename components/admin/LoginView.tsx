@@ -89,6 +89,7 @@ export default function LoginView({ onLogin }: { onLogin: () => void }) {
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="管理员用户名"
                 autoFocus
+                autoComplete="username"
                 disabled={totpRequired}
               />
             </Field>
@@ -99,6 +100,8 @@ export default function LoginView({ onLogin }: { onLogin: () => void }) {
                   onChange={(e) => setPassword(e.target.value)}
                   type={showPwd ? 'text' : 'password'}
                   placeholder={mode === 'setup' ? '至少 8 位字符' : '请输入密码'}
+                  autoComplete={mode === 'setup' ? 'new-password' : 'current-password'}
+                  name="password"
                   disabled={totpRequired}
                   className="pr-10"
                 />
@@ -133,6 +136,7 @@ export default function LoginView({ onLogin }: { onLogin: () => void }) {
                   placeholder="6 位数字验证码"
                   inputMode="numeric"
                   maxLength={6}
+                  autoComplete="one-time-code"
                   className="text-center tracking-[0.3em] font-mono text-base"
                   autoFocus
                 />
@@ -144,6 +148,8 @@ export default function LoginView({ onLogin }: { onLogin: () => void }) {
                   onChange={(e) => setPassword2(e.target.value)}
                   type={showPwd ? 'text' : 'password'}
                   placeholder="再次输入密码"
+                  autoComplete="new-password"
+                  name="password2"
                 />
               </Field>
             ) : null}
