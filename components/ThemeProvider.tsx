@@ -26,14 +26,20 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
     if (!mounted) return;
     document.documentElement.classList.toggle('dark', dark);
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-    // iOS Safari 只在 theme-color meta 插入/移除 DOM 时重读：移除旧 meta 并重建，
-    // 强制状态栏/地址栏跟随手动主题；色值与页面主体背景（--t-slate-50/900）一致
+    // iOS Safari 监听 theme-color meta 的 content 属性变化即时刷新信号栏/地址栏
+    // （remove/append 替换节点不触发，必须 setAttribute 原地改）；随后去重保单 meta。
+    // 色值与页面主体背景（--t-slate-50/900）一致
     const color = dark ? THEME_COLOR_DARK : THEME_COLOR_LIGHT;
-    document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.remove());
-    const meta = document.createElement('meta');
-    meta.name = 'theme-color';
-    meta.content = color;
-    document.head.appendChild(meta);
+    let metas = document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]');
+    if (metas.length === 0) {
+      const meta = document.createElement('meta');
+      meta.name = 'theme-color';
+      meta.content = color;
+      document.head.appendChild(meta);
+    } else {
+      metas.forEach((m) => m.setAttribute('content', color));
+      for (let i = 1; i < metas.length; i++) metas[i].remove();
+    }
     try {
       localStorage.setItem(THEME_KEY, dark ? 'dark' : 'light');
     } catch {

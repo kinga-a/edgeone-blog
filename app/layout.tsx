@@ -37,9 +37,9 @@ export const viewport: Viewport = {
 };
 
 /** 挂载前内联脚本：先按站内主题（localStorage 优先，其次系统偏好）应用 dark class，
- *  再重建 theme-color meta（移除旧的全部 meta 后按站内主题重插），
- *  保证 Safari 信号栏首次渲染即正确，且无重复 meta。 */
-const themeInitScript = `(function(){try{var t=localStorage.getItem('${THEME_KEY}');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;var el=document.documentElement;el.classList.toggle('dark',d);el.setAttribute('data-theme',d?'dark':'light');var c=d?'${THEME_COLOR_DARK}':'${THEME_COLOR_LIGHT}';document.querySelectorAll('meta[name="theme-color"]').forEach(function(x){x.remove();});var m=document.createElement('meta');m.setAttribute('name','theme-color');m.setAttribute('content',c);document.head.appendChild(m);}catch(e){}})();`;
+ *  再同步 theme-color meta——iOS Safari 监听 content 属性变化即时刷新信号栏/地址栏
+ *  （remove/append 替换节点不触发，必须 setAttribute 原地改）；随后去重保单 meta。 */
+const themeInitScript = `(function(){try{var t=localStorage.getItem('${THEME_KEY}');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;var el=document.documentElement;el.classList.toggle('dark',d);el.setAttribute('data-theme',d?'dark':'light');var c=d?'${THEME_COLOR_DARK}':'${THEME_COLOR_LIGHT}';var ms=document.querySelectorAll('meta[name="theme-color"]');if(!ms.length){var m=document.createElement('meta');m.setAttribute('name','theme-color');m.setAttribute('content',c);document.head.appendChild(m);}else{ms.forEach(function(x){x.setAttribute('content',c);});for(var i=1;i<ms.length;i++){ms[i].remove();}}}catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
