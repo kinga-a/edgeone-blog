@@ -309,10 +309,19 @@ export async function renderArticlePage(env, post, request) {
   const sid = String(post.id || '');
   let sh = 0;
   for (let i = 0; i < sid.length; i++) sh = (sh * 31 + sid.charCodeAt(i)) >>> 0;
-  const defaultCover = absUrl(origin, DEFAULT_COVERS[sh % DEFAULT_COVERS.length]);
+  // 封面统一使用相对路径（与静态资源 /covers/*、/styles/* 同款解析方式）：
+  // 浏览器按当前页面域名自动补全，无论 EdgeOne Pages 同域、自定义域名、反向代理或本地
+  // 代理联调都天然正确；绝对 URL 依赖 origin 推导，代理/自定义域场景下极易拼错导致 404。
+  // 注意：JSON-LD 的 image 保留绝对 URL（schema.org 规范要求绝对地址）。
+  const defaultCover = DEFAULT_COVERS[sh % DEFAULT_COVERS.length];
   const cover = post.coverUrl
     ? post.coverUrl
-    : (post.coverKey ? absUrl(origin, `/api/media/${post.coverKey}`) : (config.seo?.ogImage || defaultCover));
+    : (post.coverKey ? `/api/media/${post.coverKey}` : (config.seo?.ogImage || defaultCover));
+
+  // og:image / twitter:image 按 Open Graph 规范要求绝对 URL，
+  // 但 cover 现在是相对路径或外部完整 URL —— 统一在此规范化：
+  // 已是绝对 URL（http/https）原样使用；相对路径基于站点 origin 补全。
+  const absoluteCover = /^https?:\/\//i.test(cover) ? cover : absUrl(origin, cover);
 
   const jsonLd = JSON.stringify({
     '@context': 'https://schema.org',
@@ -322,7 +331,7 @@ export async function renderArticlePage(env, post, request) {
     author: { '@type': 'Person', name: post.author || config.author || '' },
     datePublished: post.publishedAt || post.createdAt,
     dateModified: post.updatedAt || post.createdAt,
-    ...(cover ? { image: cover } : {}),
+    ...(cover ? { image: absoluteCover } : {}),
     mainEntityOfPage: canonical,
     wordCount: String(post.content ? post.content.length : 0),
   });
@@ -419,7 +428,7 @@ export async function renderArticlePage(env, post, request) {
     description,
     keywords: [config.keywords, category?.name, ...(tagObjs.map((t) => t.name))].filter(Boolean).join(','),
     canonical,
-    ogImage: cover,
+    ogImage: absoluteCover,
     jsonLd,
     body,
     navKey: 'posts',

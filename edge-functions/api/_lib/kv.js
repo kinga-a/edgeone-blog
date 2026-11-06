@@ -43,8 +43,14 @@ export const Keys = {
   statsVisit: 'stats_visit',
   statsView: (postId) => `stats_view_${postId}`,
   statsLike: (postId) => `stats_like_${postId}`,
-  // 速率限制：IP 内仅含数字字母下划线（EdgeOne KV key 限制）
-  rateLimit: (scope, ip) => `rate_${scope}_${String(ip).replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 48)}`,
+  // 速率限制：IP 内仅含数字字母下划线（EdgeOne KV key 限制）。
+  // 按日期分区（rate_YYYYMMDD_scope_ip）：KV 无自动 TTL，写死单一键会随时间无限累积；
+  // 日期滚动后旧键自然失效，配合下面的 purgeStaleRateKeys 定期清理，防止键数线性膨胀。
+  rateLimit: (scope, ip) => {
+    const d = new Date();
+    const ymd = `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}${String(d.getUTCDate()).padStart(2, '0')}`;
+    return `rate_${ymd}_${scope}_${String(ip).replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 48)}`;
+  },
 };
 
 /** 读取 JSON 值，不存在返回 null */
@@ -107,4 +113,33 @@ export async function rateLimitHit(kv, key, limit, windowMs) {
     return { ok: false, waitSec: Math.max(1, Math.ceil((windowMs - (now - at)) / 1000)) };
   }
   return { ok: true };
+}
+
+/** 清理过期的速率限制键与过期会话键（低频后台任务或管理操作触发）：
+ *  rate_<ymd>_ 前缀的键在窗口过期后即无意义，auth_session_ 前缀的过期会话
+ *  平时仅在被访问时惰性删除，长期不看后台的会话键会一直残留，这里统一清掉。 */
+export async function purgeExpiredRateKeysAndSessions(kv, rateKeyRetentionDays = 2) {
+  const cutoff = Date.now() - rateKeyRetentionDays * 24 * 3600 * 1000;
+  let purged = 0;
+  const rateKeys = await kvListKeys(kv, 'rate_');
+  for (const key of rateKeys) {
+    // rate_<ymd>_<scope>_<ip> → 从键名日期直接判断是否过期，无需读取值
+    const m = /^rate_(\d{8})_/.exec(key);
+    if (!m) continue;
+    const ymd = m[1];
+    const ts = Date.UTC(+ymd.slice(0, 4), +ymd.slice(4, 6) - 1, +ymd.slice(6, 8));
+    if (ts < cutoff) {
+      await kv.delete(key);
+      purged += 1;
+    }
+  }
+  const sessionKeys = await kvListKeys(kv, 'auth_session_');
+  for (const key of sessionKeys) {
+    const session = await kvGetJson(kv, key);
+    if (session?.expiresAt && Date.now() > new Date(session.expiresAt).getTime()) {
+      await kv.delete(key);
+      purged += 1;
+    }
+  }
+  return purged;
 }

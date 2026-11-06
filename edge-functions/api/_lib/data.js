@@ -1,6 +1,16 @@
 /**
  * 数据访问层：文章 / 分类 / 标签 / 评论 / 媒体 / 配置 / 统计
  * 全部基于 EdgeOne Pages KV（键名仅允许数字、字母、下划线）。
+ *
+ * 【并发模型说明】EdgeOne KV 没有原子 CAS/事务，下方所有"读全量 → 修改 → 写回"的
+ * 写路径（postList / commentList / configSite / statsVisit 等聚合键，以及
+ * trackView / trackLike 单键计数）都存在竞态窗口：两个并发请求会各自读到旧值，
+ * 后写者覆盖前写者，造成丢更新。当前业务取向下按"最终一致可接受"处理：
+ *   - 聚合列表写点只发生在管理员后台操作（单人低频）与评论提交（有按 IP 限速）；
+ *   - trackView / trackLike 属于计数器，少量并发丢失不影响业务语义
+ *     （与 kv.js 的 kvIncr 注释同一口径）。
+ * 不要在这些函数中依赖"写入即读回最新值"；如未来需要强一致（如库存/订单），
+ * 应引入互斥键锁或改用支持事务的存储，而不是在调用方叠加重试。
  */
 import { getKv, Keys, kvGetJson, kvPutJson } from './kv.js';
 import { slugify, readingTime, nowIso, fmtDate } from './ids.js';
@@ -622,7 +632,7 @@ export async function deleteMediaMeta(env, uid) {
 /* 访问统计                                                            */
 /* ------------------------------------------------------------------ */
 
-/** 记录一次站点访问，返回最新统计 */
+/** 记录一次站点访问，返回最新统计（读改写非原子：高并发下当日/总数可能少计，可接受，见文件头并发模型说明） */
 export async function trackVisit(env) {
   const kv = getKv(env);
   const today = fmtDate(nowIso());
@@ -724,7 +734,7 @@ export function summarizeVisitSeries(series) {
   };
 }
 
-/** 文章阅读量 +1 */
+/** 文章阅读量 +1（读改写非原子：并发访问下可能少计，计数器场景可接受，见文件头并发模型说明） */
 export async function trackView(env, postId) {
   const kv = getKv(env);
   const cur = (await kvGetJson(kv, Keys.statsView(postId))) || { count: 0 };
@@ -786,7 +796,7 @@ export async function getPostStatsBatch(env, postIds) {
   return map;
 }
 
-/** 文章点赞 +1 */
+/** 文章点赞 +1（读改写非原子：并发点赞可能少计，计数器场景可接受，见文件头并发模型说明） */
 export async function trackLike(env, postId) {
   const kv = getKv(env);
   const cur = (await kvGetJson(kv, Keys.statsLike(postId))) || { count: 0 };

@@ -38,7 +38,7 @@ async function handleLogin({ request, env }) {
   }
 
   await clearLoginFails(request, env);
-  const { cookie } = await createSession(env, String(body.username).trim());
+  const { cookie } = await createSession(env, String(body.username).trim(), request);
   return json({ ok: true, username: String(body.username).trim(), totpRequired: false }, {
     headers: { 'Set-Cookie': cookie, 'Cache-Control': 'no-store' },
   });

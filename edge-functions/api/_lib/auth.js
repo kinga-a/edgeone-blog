@@ -66,8 +66,10 @@ export async function requireAdmin(request, env) {
   return { ok: true, username: session.username, token };
 }
 
-/** 创建管理员会话并返回 Set-Cookie 头 */
-export async function createSession(env, username) {
+/** 创建管理员会话并返回 Set-Cookie 头（Secure 按请求协议条件化：
+ *  生产 HTTPS 与 http://localhost 浏览器均正常携带；局域网 IP 等纯 HTTP 联调场景
+ *  若写死 Secure 会被浏览器拒存导致登录静默失败，故仅在 https 下追加） */
+export async function createSession(env, username, request) {
   const kv = getKv(env);
   const token = uid(32);
   const session = {
@@ -76,9 +78,18 @@ export async function createSession(env, username) {
     expiresAt: new Date(Date.now() + SESSION_TTL_MS).toISOString(),
   };
   await kvPutJson(kv, Keys.session(token), session);
+  let isHttps = false;
+  try {
+    // 优先信任反向代理/边缘转发头，其次请求自身协议
+    isHttps =
+      request?.headers?.get?.('x-forwarded-proto')?.split(',')[0]?.trim() === 'https' ||
+      new URL(request?.url || '').protocol === 'https:';
+  } catch {
+    isHttps = false;
+  }
   return {
     token,
-    cookie: `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${Math.floor(SESSION_TTL_MS / 1000)}; Secure`,
+    cookie: `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${Math.floor(SESSION_TTL_MS / 1000)}${isHttps ? '; Secure' : ''}`,
   };
 }
 

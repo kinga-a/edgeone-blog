@@ -235,12 +235,17 @@ html.dark .page-loading { background: rgba(24, 22, 20, 0.6); }
 @keyframes page-loading-spin { to { transform: rotate(360deg); } }
 
 /* 移动端：导航链接收进抽屉 */
-.site-menu { display: none; margin-left: 0.25rem; }
+/* 用 .site-nav button.site-menu 使特异性同为 (0,2,1)，且靠后的规则在
+   PC 端覆盖上方 .site-nav button.icon-btn { display:inline-flex }，
+   否则 (0,1,0) 的 .site-menu { display:none } 必输，汉堡按钮会常驻显示 */
+.site-nav button.site-menu { display: none; margin-left: 0.25rem; }
 @media (max-width: 767px) {
   .site-nav a:not(.search-link) { display: none; }
+  /* nav-divider 是 <span> 不被 a:not(.search-link) 命中；首页手机端无分隔线，此处对齐 */
+  .site-nav .nav-divider { display: none; }
   .site-nav { gap: 6px; }
-  .site-nav .theme-toggle, .site-nav a.search-link, .site-nav .site-menu { margin-left: 0; }
-  .site-menu { display: inline-flex; }
+  .site-nav .theme-toggle, .site-nav a.search-link, .site-nav button.site-menu { margin-left: 0; }
+  .site-nav button.site-menu { display: inline-flex; }
 }
 
 /* ---------- 主体与入场动画 ---------- */
