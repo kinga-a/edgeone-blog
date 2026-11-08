@@ -1,4 +1,4 @@
-import { json, fail, readJson, publicHeaders } from '../_lib/response.js';
+import { json, fail, readJson, publicHeaders, publicCacheHeaders } from '../_lib/response.js';
 import { getSiteConfig, saveSiteConfig } from '../_lib/data.js';
 import { requireAdmin } from '../_lib/auth.js';
 
@@ -9,7 +9,7 @@ export async function onRequestGet({ request, env }) {
   if (!admin.ok && config.backup) {
     config.backup = { ...config.backup, webdavPassword: '' };
   }
-  return json({ ok: true, config }, { headers: publicHeaders() });
+  return json({ ok: true, config }, { headers: admin.ok ? publicHeaders() : publicCacheHeaders() });
 }
 
 /** PUT /api/config — 更新站点配置（管理员） */

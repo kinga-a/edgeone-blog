@@ -1,4 +1,4 @@
-import { json, publicHeaders } from '../_lib/response.js';
+import { json, publicHeaders, publicCacheHeaders } from '../_lib/response.js';
 import { getPostList, getPublicPosts, getSiteConfig } from '../_lib/data.js';
 import { requireAdmin } from '../_lib/auth.js';
 
@@ -23,5 +23,5 @@ export async function onRequestGet({ request, env }) {
   const byId = new Map(list.map((p) => [p.id, p]));
   const items = ids.map((id) => byId.get(id)).filter(Boolean);
 
-  return json({ ok: true, items }, { headers: publicHeaders() });
+  return json({ ok: true, items }, { headers: admin.ok ? publicHeaders() : publicCacheHeaders() });
 }

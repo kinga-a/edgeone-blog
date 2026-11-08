@@ -1,4 +1,4 @@
-import { json, fail, readJson, parseSearchParams, intParam, publicHeaders } from '../_lib/response.js';
+import { json, fail, readJson, parseSearchParams, intParam, publicHeaders, publicCacheHeaders } from '../_lib/response.js';
 import { getPostList, getPublicPosts, createPost, getCategories, getTags, ensureTagByName, getPostStatsBatch } from '../_lib/data.js';import { requireAdmin } from '../_lib/auth.js';
 
 /**
@@ -55,6 +55,8 @@ export async function onRequestGet({ request, env }) {
     const s = statsMap.get(p.id) || { views: 0, likes: 0, comments: 0 };
     return {
       ...p,
+      // cover=none：不下发封面（首页列表不展示封面，避免 data URI 撑大响应）
+      ...(params.cover === 'none' ? { coverUrl: '' } : {}),
       categoryName: catMap.get(p.categoryId) || '',
       views: s.views,
       likes: s.likes,
@@ -69,7 +71,7 @@ export async function onRequestGet({ request, env }) {
     page,
     pageSize,
     totalPages: Math.max(1, Math.ceil(total / pageSize)),
-  }, { headers: publicHeaders() });
+  }, { headers: admin.ok ? publicHeaders() : publicCacheHeaders() });
 }
 
 export async function onRequestPost({ request, env }) {

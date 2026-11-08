@@ -60,6 +60,15 @@ export function publicHeaders() {
   };
 }
 
+/** 匿名只读响应的短时共享缓存：公开内容可缓存 60 秒，管理员响应绝不用这个（可能含私人文章/配置密码，仍走 no-store） */
+export function publicCacheHeaders() {
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
+    'Vary': 'Cookie',
+  };
+}
+
 /** 通用 OPTIONS 预检处理 */
 export function handleOptions() {
   return new Response(null, {

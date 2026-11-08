@@ -43,7 +43,7 @@ function LedeItem({ post, index }: { post: PostSummary; index: number }) {
       </div>
       <div className="lede-cover">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={cover} alt={post.title} loading="lazy" />
+        <img src={cover} alt={post.title} fetchPriority="high" decoding="async" />
       </div>
     </a>
   );
@@ -98,11 +98,12 @@ export default function HomeClient() {
 
   useEffect(() => {
     let alive = true;
+    // 访问统计是一次 KV 写操作，不进首屏阻塞路径，单独发出不等结果
+    api.trackVisit().catch(() => null);
     Promise.all([
       api.getConfig().catch(() => null),
-      api.listPosts({ page: 1, pageSize: 30, status: 'published' }).catch(() => null),
+      api.listPosts({ page: 1, pageSize: 15, status: 'published', cover: 'none' }).catch(() => null),
       api.getFeaturedPosts().catch(() => null),
-      api.trackVisit().catch(() => null),
     ]).then(([cfg, list, feat]) => {
       if (!alive) return;
       if (cfg?.ok) setConfig(cfg.config);
