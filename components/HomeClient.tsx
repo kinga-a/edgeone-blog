@@ -8,6 +8,69 @@ import type { PostSummary, SiteConfig } from '@/lib/types';
 import { api } from '@/lib/api';
 import { fmtDate, mediaUrl, defaultCoverFor } from '@/lib/utils';
 
+/** 淡入图片：加载完成前透明（容器底色占位），完成后平滑显形。头条图优先加载，不用懒加载 */
+function FadeImg({ src, alt }: { src: string; alt: string }) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt={alt}
+      fetchPriority="high"
+      decoding="async"
+      onLoad={() => setLoaded(true)}
+      className={`img-fade${loaded ? ' img-fade-in' : ''}`}
+    />
+  );
+}
+
+/** 刊头骨架（配置接口未返回时占位） */
+function HeroSkeleton() {
+  return (
+    <div className="py-14">
+      <div className="skeleton h-6 w-36 rounded-full mb-6" aria-hidden="true" />
+      <div className="skeleton h-12 w-3/4 max-w-md rounded-xl mb-5" aria-hidden="true" />
+      <div className="skeleton h-4 w-3/5 max-w-lg rounded mb-2.5" aria-hidden="true" />
+      <div className="skeleton h-4 w-2/5 max-w-sm rounded mb-7" aria-hidden="true" />
+      <div className="flex items-center gap-3">
+        <div className="skeleton h-11 w-32 rounded-xl" aria-hidden="true" />
+        <div className="skeleton h-11 w-28 rounded-xl" aria-hidden="true" />
+      </div>
+    </div>
+  );
+}
+
+/** 头条骨架（精选/列表接口未返回时占位） */
+function LedeSkeleton() {
+  return (
+    <div className="lede mt-2">
+      <div className="space-y-3.5 py-2">
+        <div className="skeleton h-4 w-28 rounded-full" aria-hidden="true" />
+        <div className="skeleton h-8 w-4/5 rounded-lg" aria-hidden="true" />
+        <div className="skeleton h-4 w-full rounded" aria-hidden="true" />
+        <div className="skeleton h-4 w-2/3 rounded" aria-hidden="true" />
+        <div className="pt-3 flex items-center justify-between">
+          <div className="skeleton h-3.5 w-40 rounded" aria-hidden="true" />
+          <div className="skeleton h-4 w-20 rounded" aria-hidden="true" />
+        </div>
+      </div>
+      <div className="skeleton rounded-[14px] min-h-[230px]" aria-hidden="true" />
+    </div>
+  );
+}
+
+/** 目录骨架（列表接口未返回时占位） */
+function JournalSkeleton() {
+  return (
+    <div className="mt-16 space-y-3">
+      <div className="skeleton h-7 w-32 rounded-md mb-4" aria-hidden="true" />
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="skeleton h-16 rounded-xl" aria-hidden="true" />
+      ))}
+    </div>
+  );
+}
+
 /** 头条（精选文章）：左文右图非对称排版 */
 function LedeItem({ post, index }: { post: PostSummary; index: number }) {
   const cover = post.coverUrl || (post.coverKey ? mediaUrl(post.coverKey) : '') || defaultCoverFor(post.id);
@@ -42,8 +105,7 @@ function LedeItem({ post, index }: { post: PostSummary; index: number }) {
         </div>
       </div>
       <div className="lede-cover">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={cover} alt={post.title} fetchPriority="high" decoding="async" />
+        <FadeImg src={cover} alt={post.title} />
       </div>
     </a>
   );
@@ -92,7 +154,10 @@ export default function HomeClient() {
   const [config, setConfig] = useState<SiteConfig | null>(null);
   const [posts, setPosts] = useState<PostSummary[]>([]);
   const [featuredList, setFeatured] = useState<PostSummary[]>([]);
-  const [loading, setLoading] = useState(true);
+  // 三个接口各自独立就绪：哪个先返回就先渲染对应区块，不再互相等待
+  const [cfgReady, setCfgReady] = useState(false);
+  const [listReady, setListReady] = useState(false);
+  const [featReady, setFeatReady] = useState(false);
   const [heroQuote, setHeroQuote] = useState('');
   const [heroQuoteAuthor, setHeroQuoteAuthor] = useState('');
 
@@ -100,16 +165,20 @@ export default function HomeClient() {
     let alive = true;
     // 访问统计是一次 KV 写操作，不进首屏阻塞路径，单独发出不等结果
     api.trackVisit().catch(() => null);
-    Promise.all([
-      api.getConfig().catch(() => null),
-      api.listPosts({ page: 1, pageSize: 15, status: 'published', cover: 'none' }).catch(() => null),
-      api.getFeaturedPosts().catch(() => null),
-    ]).then(([cfg, list, feat]) => {
+    api.getConfig().catch(() => null).then((cfg) => {
       if (!alive) return;
       if (cfg?.ok) setConfig(cfg.config);
+      setCfgReady(true);
+    });
+    api.listPosts({ page: 1, pageSize: 15, status: 'published', cover: 'none' }).catch(() => null).then((list) => {
+      if (!alive) return;
       if (list?.ok) setPosts(list.items);
+      setListReady(true);
+    });
+    api.getFeaturedPosts().catch(() => null).then((feat) => {
+      if (!alive) return;
       if (feat?.ok && Array.isArray(feat.items)) setFeatured(feat.items);
-      setLoading(false);
+      setFeatReady(true);
     });
     return () => { alive = false; };
   }, []);
@@ -146,48 +215,6 @@ export default function HomeClient() {
     setHeroQuoteAuthor('');
   }, [config]);
 
-  if (loading) {
-    return (
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 pb-12">
-        {/* 刊头骨架 */}
-        <div className="py-14">
-          <div className="skeleton h-6 w-36 rounded-full mb-6" aria-hidden="true" />
-          <div className="skeleton h-12 w-3/4 max-w-md rounded-xl mb-5" aria-hidden="true" />
-          <div className="skeleton h-4 w-3/5 max-w-lg rounded mb-2.5" aria-hidden="true" />
-          <div className="skeleton h-4 w-2/5 max-w-sm rounded mb-7" aria-hidden="true" />
-          <div className="flex items-center gap-3">
-            <div className="skeleton h-11 w-32 rounded-xl" aria-hidden="true" />
-            <div className="skeleton h-11 w-28 rounded-xl" aria-hidden="true" />
-          </div>
-        </div>
-        {/* 头条骨架 */}
-        <div className="lede">
-          <div className="space-y-3.5 py-2">
-            <div className="skeleton h-4 w-28 rounded-full" aria-hidden="true" />
-            <div className="skeleton h-8 w-4/5 rounded-lg" aria-hidden="true" />
-            <div className="skeleton h-4 w-full rounded" aria-hidden="true" />
-            <div className="skeleton h-4 w-2/3 rounded" aria-hidden="true" />
-            <div className="pt-3 flex items-center justify-between">
-              <div className="skeleton h-3.5 w-40 rounded" aria-hidden="true" />
-              <div className="skeleton h-4 w-20 rounded" aria-hidden="true" />
-            </div>
-          </div>
-          <div className="skeleton rounded-[14px] min-h-[230px]" aria-hidden="true" />
-        </div>
-        {/* 目录骨架 */}
-        <div className="mt-16 space-y-3">
-          <div className="skeleton h-7 w-32 rounded-md mb-4" aria-hidden="true" />
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="skeleton h-16 rounded-xl"
-              aria-hidden="true"
-            />
-          ))}
-        </div>
-      </div>
-    );
-  }
 
   // 头条：站点配置指定（featured）优先；未指定或不足时用最新文章兜底
   const featured = featuredList[0] || posts[0];
@@ -213,6 +240,7 @@ export default function HomeClient() {
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 pb-10">
       {/* 期刊刊头：眉题 + 大标题 + 引言 + CTA（左文右纸墨装饰，沿用 b3 分支 hero-grid 布局） */}
+      {!cfgReady ? <HeroSkeleton /> : (
       <section className="hero fade-in-up">
         <div className="hero-grid">
           <div className="hero-text">
@@ -249,9 +277,10 @@ export default function HomeClient() {
           </div>
         </div>
       </section>
+      )}
 
-      {/* 精选头条 */}
-      {featured && (
+      {/* 精选头条：精选或列表任一就绪即可先行渲染，都未就绪时显示骨架 */}
+      {!(featReady || listReady) ? <LedeSkeleton /> : featured ? (
         <Reveal className="mt-2">
           <div className="section-header">
             <h2 className="section-title">
@@ -262,9 +291,10 @@ export default function HomeClient() {
           </div>
           <LedeItem post={featured} index={0} />
         </Reveal>
-      )}
+      ) : null}
 
-      {/* 最新目录 */}
+      {/* 最新目录：列表未就绪时显示骨架 */}
+      {!listReady ? <JournalSkeleton /> : (
       <Reveal className="mt-16" delay={80}>
         <div className="section-header">
           <h2 className="section-title">
@@ -283,9 +313,10 @@ export default function HomeClient() {
           </div>
         )}
       </Reveal>
+      )}
 
       {/* 热门排行 */}
-      {hot.length > 0 && (
+      {listReady && hot.length > 0 && (
         <Reveal className="mt-16" delay={120}>
           <div className="section-header">
             <h2 className="section-title">

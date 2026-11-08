@@ -27,6 +27,7 @@ function loadTags(): Promise<Tag[]> {
 
 export default function PostCard({ post }: { post: PostSummary }) {
   const [tagNames, setTagNames] = useState<string[]>([]);
+  const [coverLoaded, setCoverLoaded] = useState(false);
 
   useEffect(() => {
     if (!post.tags?.length) return;
@@ -51,7 +52,9 @@ export default function PostCard({ post }: { post: PostSummary }) {
           src={cover}
           alt={post.title}
           loading="lazy"
-          className="w-full h-full object-cover"
+          decoding="async"
+          onLoad={() => setCoverLoaded(true)}
+          className={`w-full h-full object-cover img-fade${coverLoaded ? ' img-fade-in' : ''}`}
         />
         {(post.visibility === 'private' || post.categoryName) && (
           <div className="absolute top-3 left-3 flex items-center gap-1.5 z-10">

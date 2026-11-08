@@ -602,6 +602,18 @@ a:hover .lede-cover img {
   transform: scale(1.045);
 }
 
+/* 图片淡入：加载完成前保持透明（容器底色占位），完成后平滑显形，避免白闪与突兀弹出 */
+img.img-fade {
+  opacity: 0;
+}
+img.img-fade.img-fade-in {
+  opacity: 1;
+}
+.lede-cover img.img-fade,
+.article-card .card-cover img.img-fade {
+  transition: opacity 0.6s ease, transform 0.6s var(--ease-out);
+}
+
 /* ========== 期刊目录 Journal Index（最新文章：行式条目 + 悬浮动效） ========== */
 .journal-list {
   border-top: 1px solid var(--t-slate-200);
