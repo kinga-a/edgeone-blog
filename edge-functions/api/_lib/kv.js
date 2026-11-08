@@ -31,6 +31,7 @@ export const Keys = {
   metaInitialized: 'meta_initialized',
   post: (id) => `post_${id}`,
   postList: 'post_list',
+  publicSnapshot: 'cache_public_posts',
   category: (id) => `category_${id}`,
   categoryList: 'category_list',
   tag: (id) => `tag_${id}`,

@@ -1,5 +1,5 @@
 import { json, publicHeaders, parseSearchParams } from './_lib/response.js';
-import { getPublicPosts, getPostList, getCategories, getTags } from './_lib/data.js';
+import { getPublicPosts, getPublicSnapshot, getPostList, getCategories, getTags } from './_lib/data.js';
 import { requireAdmin } from './_lib/auth.js';
 
 /**
@@ -15,7 +15,7 @@ export async function onRequestGet({ request, env }) {
   const [posts, categories, tags] = await Promise.all([
     admin.ok
       ? (await getPostList(env)).filter((p) => p.status === 'published')
-      : getPublicPosts(env),
+      : getPublicSnapshot(env),
     getCategories(env),
     getTags(env),
   ]);

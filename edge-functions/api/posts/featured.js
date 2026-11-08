@@ -1,5 +1,5 @@
 import { json, publicHeaders, publicCacheHeaders } from '../_lib/response.js';
-import { getPostList, getPublicPosts, getSiteConfig } from '../_lib/data.js';
+import { getPostList, getPublicPosts, getPublicSnapshot, getSiteConfig } from '../_lib/data.js';
 import { requireAdmin } from '../_lib/auth.js';
 
 /**
@@ -17,7 +17,7 @@ export async function onRequestGet({ request, env }) {
     list = await getPostList(env);
     list = list.filter((p) => p.status === 'published');
   } else {
-    list = await getPublicPosts(env);
+    list = await getPublicSnapshot(env);
   }
 
   const byId = new Map(list.map((p) => [p.id, p]));

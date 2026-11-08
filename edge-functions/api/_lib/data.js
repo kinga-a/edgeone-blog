@@ -126,6 +126,59 @@ export async function getPublicPosts(env) {
   return list.filter((p) => p.status === 'published' && (p.visibility || 'public') === 'public' && !p.deletedAt);
 }
 
+/* ------------------------------------------------------------------ */
+/* 公开文章快照（前台读缓存）                                          */
+/* 列表/精选/搜索等匿名读接口共用：快照 = 公开摘要 + 分类名 + 统计，     */
+/* 全部预合并存入单个 KV 键，读请求只需 1 次 KV 读（原先每页约 30+ 次）。 */
+/* 内容写入（文章/分类/评论变更）会删除快照，下一次读同步重建 → 立即生效； */
+/* 阅读/点赞计数不删快照，靠 60 秒过期后的后台重建刷新（允许迟到）。     */
+/* ------------------------------------------------------------------ */
+
+const PUBLIC_SNAPSHOT_TTL_MS = 60_000;
+let snapshotRebuilding = null;
+
+/** 重建公开快照内容（全量公开文章 + 分类名 + 统计合并） */
+export async function buildPublicSnapshot(env) {
+  const [posts, categories] = await Promise.all([getPublicPosts(env), getCategories(env)]);
+  const catMap = new Map(categories.map((c) => [c.id, c.name]));
+  const statsMap = await getPostStatsBatch(env, posts.map((p) => p.id));
+  const items = posts.map((p) => {
+    const s = statsMap.get(p.id) || { views: 0, likes: 0, comments: 0 };
+    return {
+      ...p,
+      categoryName: catMap.get(p.categoryId) || '',
+      views: s.views,
+      likes: s.likes,
+      commentCount: s.comments,
+    };
+  });
+  return { builtAt: Date.now(), items };
+}
+
+/** 读取公开快照：无则同步重建；过期则先返回旧快照、后台静默重建 */
+export async function getPublicSnapshot(env) {
+  const kv = getKv(env);
+  const snap = await kvGetJson(kv, Keys.publicSnapshot);
+  if (snap && Array.isArray(snap.items)) {
+    if (Date.now() - (snap.builtAt || 0) > PUBLIC_SNAPSHOT_TTL_MS && !snapshotRebuilding) {
+      snapshotRebuilding = buildPublicSnapshot(env)
+        .then((next) => kvPutJson(kv, Keys.publicSnapshot, next))
+        .catch(() => null)
+        .finally(() => { snapshotRebuilding = null; });
+    }
+    return snap.items;
+  }
+  const next = await buildPublicSnapshot(env);
+  await kvPutJson(kv, Keys.publicSnapshot, next).catch(() => null);
+  return next.items;
+}
+
+/** 内容写入后调用：删除快照，下一次前台读请求同步重建（内容立即生效） */
+export async function invalidatePublicSnapshot(env) {
+  const kv = getKv(env);
+  await kv.delete(Keys.publicSnapshot).catch(() => null);
+}
+
 /** 判断文章当前是否对访客可见（已发布且公开且不在回收站） */
 export function isPostPubliclyVisible(post) {
   return !!post && post.status === 'published' && (post.visibility || 'public') === 'public' && !post.deletedAt;
@@ -195,6 +248,7 @@ export async function createPost(env, input) {
   const summaries = list.filter((p) => p.id !== id);
   summaries.push(toSummary(post, config));
   await kvPutJson(kv, Keys.postList, summaries);
+  await invalidatePublicSnapshot(env);
   return post;
 }
 
@@ -231,6 +285,7 @@ export async function updatePost(env, id, input) {
   const summaries = list.filter((p) => p.id !== id);
   summaries.push(toSummary(next, config));
   await kvPutJson(kv, Keys.postList, summaries);
+  await invalidatePublicSnapshot(env);
   return next;
 }
 
@@ -248,6 +303,7 @@ export async function deletePost(env, id) {
     list[idx] = { ...list[idx], deletedAt: post.deletedAt };
     await kvPutJson(kv, Keys.postList, list);
   }
+  await invalidatePublicSnapshot(env);
   return true;
 }
 
@@ -266,6 +322,7 @@ export async function restorePost(env, id) {
     list[idx] = rest;
     await kvPutJson(kv, Keys.postList, list);
   }
+  await invalidatePublicSnapshot(env);
   return true;
 }
 
@@ -285,6 +342,7 @@ export async function purgePost(env, id) {
   for (const c of comments) {
     if (c.postId === id) await kv.delete(Keys.comment(id, c.id));
   }
+  await invalidatePublicSnapshot(env);
   return true;
 }
 
@@ -391,6 +449,7 @@ export async function createCategory(env, input) {
   await kvPutJson(kv, Keys.category(id), category);
   list.push(category);
   await kvPutJson(kv, Keys.categoryList, list);
+  await invalidatePublicSnapshot(env);
   return category;
 }
 
@@ -413,6 +472,7 @@ export async function updateCategory(env, id, input) {
   await kvPutJson(kv, Keys.category(id), next);
   const list = (await kvGetJson(kv, Keys.categoryList)) || [];
   await kvPutJson(kv, Keys.categoryList, list.map((c) => (c.id === id ? next : c)));
+  await invalidatePublicSnapshot(env);
   return next;
 }
 
@@ -421,6 +481,7 @@ export async function deleteCategory(env, id) {
   await kv.delete(Keys.category(id));
   const list = (await kvGetJson(kv, Keys.categoryList)) || [];
   await kvPutJson(kv, Keys.categoryList, list.filter((c) => c.id !== id));
+  await invalidatePublicSnapshot(env);
 }
 
 /* ------------------------------------------------------------------ */
@@ -567,6 +628,7 @@ export async function createComment(env, input) {
   const list = (await kvGetJson(kv, Keys.commentList)) || [];
   list.push(comment);
   await kvPutJson(kv, Keys.commentList, list);
+  await invalidatePublicSnapshot(env);
   return comment;
 }
 
@@ -582,6 +644,7 @@ export async function updateCommentStatus(env, postId, id, status) {
   await kvPutJson(kv, Keys.comment(postId, id), comment);
   const list = (await kvGetJson(kv, Keys.commentList)) || [];
   await kvPutJson(kv, Keys.commentList, list.map((c) => (c.id === id && c.postId === postId ? comment : c)));
+  await invalidatePublicSnapshot(env);
   return comment;
 }
 
@@ -590,6 +653,7 @@ export async function deleteComment(env, postId, id) {
   await kv.delete(Keys.comment(postId, id));
   const list = (await kvGetJson(kv, Keys.commentList)) || [];
   await kvPutJson(kv, Keys.commentList, list.filter((c) => !(c.id === id && c.postId === postId)));
+  await invalidatePublicSnapshot(env);
 }
 
 /* ------------------------------------------------------------------ */

@@ -1,5 +1,5 @@
 import { json, fail, readJson, parseSearchParams, intParam, publicHeaders, publicCacheHeaders } from '../_lib/response.js';
-import { getPostList, getPublicPosts, createPost, getCategories, getTags, ensureTagByName, getPostStatsBatch } from '../_lib/data.js';import { requireAdmin } from '../_lib/auth.js';
+import { getPostList, getPublicPosts, getPublicSnapshot, createPost, getCategories, getTags, ensureTagByName, getPostStatsBatch } from '../_lib/data.js';import { requireAdmin } from '../_lib/auth.js';
 
 /**
  * GET /api/posts — 文章列表
@@ -22,12 +22,15 @@ export async function onRequestGet({ request, env }) {
   const admin = await requireAdmin(request, env).catch(() => ({ ok: false }));
   const adminScope = params.scope === 'admin' && admin.ok;
   let list;
+  // 匿名读走公开快照（分类名与统计已预合并）；管理员读保持实时原路径
+  let preEnriched = false;
   if (admin.ok) {
     list = await getPostList(env);
     // 前台已登录只看已发布（公开 + 私人）；后台 scope=admin 保留草稿全量
     if (!adminScope) list = list.filter((p) => p.status === 'published');
   } else {
-    list = await getPublicPosts(env);
+    list = await getPublicSnapshot(env);
+    preEnriched = true;
   }
   // 回收站筛选：status=trash 只看回收站；其余视图默认排除回收站
   if (status === 'trash') {
@@ -47,22 +50,30 @@ export async function onRequestGet({ request, env }) {
   const start = (page - 1) * pageSize;
   const rawItems = list.slice(start, start + pageSize);
 
-  // 附加分类名 + 统计（views/likes/comments）
-  const categories = await getCategories(env);
-  const catMap = new Map(categories.map((c) => [c.id, c.name]));
-  const statsMap = await getPostStatsBatch(env, rawItems.map((p) => p.id));
-  const items = rawItems.map((p) => {
-    const s = statsMap.get(p.id) || { views: 0, likes: 0, comments: 0 };
-    return {
+  // 附加分类名 + 统计（views/likes/comments）；快照路径已预合并，只需处理封面开关
+  let items;
+  if (preEnriched) {
+    items = rawItems.map((p) => ({
       ...p,
-      // cover=none：不下发封面（首页列表不展示封面，避免 data URI 撑大响应）
       ...(params.cover === 'none' ? { coverUrl: '' } : {}),
-      categoryName: catMap.get(p.categoryId) || '',
-      views: s.views,
-      likes: s.likes,
-      commentCount: s.comments,
-    };
-  });
+    }));
+  } else {
+    const categories = await getCategories(env);
+    const catMap = new Map(categories.map((c) => [c.id, c.name]));
+    const statsMap = await getPostStatsBatch(env, rawItems.map((p) => p.id));
+    items = rawItems.map((p) => {
+      const s = statsMap.get(p.id) || { views: 0, likes: 0, comments: 0 };
+      return {
+        ...p,
+        // cover=none：不下发封面（首页列表不展示封面，避免 data URI 撑大响应）
+        ...(params.cover === 'none' ? { coverUrl: '' } : {}),
+        categoryName: catMap.get(p.categoryId) || '',
+        views: s.views,
+        likes: s.likes,
+        commentCount: s.comments,
+      };
+    });
+  }
 
   return json({
     ok: true,
