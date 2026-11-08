@@ -11,7 +11,7 @@ export default function AboutClient() {
 
   useEffect(() => {
     let alive = true;
-    api.getConfig().then((d) => {
+    api.getConfigCached().then((d) => {
       if (!alive) return;
       if (d?.ok) setConfig(d.config);
     }).catch(() => {});

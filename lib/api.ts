@@ -29,6 +29,63 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return data as T;
 }
 
+/**
+ * 前台公共读接口的轻量缓存（stale-while-revalidate）：
+ * 页面之间跳转/整页刷新不再重复等待慢接口——30 秒内直接用缓存；
+ * 过期则先秒显缓存、后台静默刷新，下一次打开即新数据。
+ * 只供前台匿名浏览使用（*Cached 方法与精选接口）；后台管理仍走原始方法，永远实时。
+ * 缓存存内存 + sessionStorage（整页跳转也能命中）；带大封面的列表超配额时自动只留内存。
+ */
+const READ_CACHE_TTL = 30_000;
+const readCache = new Map<string, { ts: number; data: unknown }>();
+const readInflight = new Map<string, Promise<unknown>>();
+const READ_CACHE_SS_PREFIX = 'api-cache:';
+
+function readCacheGet<T>(key: string): { data: T; fresh: boolean } | null {
+  const mem = readCache.get(key);
+  if (mem) return { data: mem.data as T, fresh: Date.now() - mem.ts < READ_CACHE_TTL };
+  try {
+    const raw = sessionStorage.getItem(READ_CACHE_SS_PREFIX + key);
+    if (raw) {
+      const parsed = JSON.parse(raw) as { ts: number; data: T };
+      readCache.set(key, { ts: parsed.ts, data: parsed.data });
+      return { data: parsed.data, fresh: Date.now() - parsed.ts < READ_CACHE_TTL };
+    }
+  } catch { /* sessionStorage 不可用则忽略 */ }
+  return null;
+}
+
+function readCacheSet(key: string, data: unknown) {
+  const entry = { ts: Date.now(), data };
+  readCache.set(key, entry);
+  try {
+    sessionStorage.setItem(READ_CACHE_SS_PREFIX + key, JSON.stringify(entry));
+  } catch { /* 超出存储配额时只保留内存缓存 */ }
+}
+
+function swr<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
+  const hit = readCacheGet<T>(key);
+  if (hit?.fresh) return Promise.resolve(hit.data);
+  let p = readInflight.get(key) as Promise<T> | undefined;
+  if (!p) {
+    p = fetcher()
+      .then((data) => { readCacheSet(key, data); return data; })
+      .finally(() => { readInflight.delete(key); });
+    readInflight.set(key, p);
+  }
+  if (hit) {
+    p.catch(() => null); // 有旧数据兜底时，后台刷新失败不打扰当前页面
+    return Promise.resolve(hit.data);
+  }
+  return p;
+}
+
+function buildPostsPath(params: Record<string, string | number | undefined>): string {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== '') qs.set(k, String(v));
+  return `/api/posts?${qs.toString()}`;
+}
+
 export const api = {
   // ---- 认证 ----
   setup: (username: string, password: string) =>
@@ -42,13 +99,15 @@ export const api = {
     request<{ ok: true; secret?: string; uri?: string; enabled?: boolean }>('/api/auth/totp', { method: 'POST', body: JSON.stringify({ action, code }) }),
 
   // ---- 文章 ----
-  listPosts: (params: Record<string, string | number | undefined>) => {
-    const qs = new URLSearchParams();
-    for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== '') qs.set(k, String(v));
-    return request<Paged<PostSummary>>(`/api/posts?${qs.toString()}`);
+  listPosts: (params: Record<string, string | number | undefined>) =>
+    request<Paged<PostSummary>>(buildPostsPath(params)),
+  /** 前台专用：带页面间缓存的文章列表（后台请勿用，须实时） */
+  listPostsCached: (params: Record<string, string | number | undefined>) => {
+    const path = buildPostsPath(params);
+    return swr<Paged<PostSummary>>(path, () => request<Paged<PostSummary>>(path));
   },
-  /** 首页精选文章（站点配置 featuredPostIds 指定，按顺序返回；未配置时为空） */
-  getFeaturedPosts: () => request<{ ok: true; items: PostSummary[] }>('/api/posts/featured'),
+  /** 首页精选文章（站点配置 featuredPostIds 指定，按顺序返回；未配置时为空）。仅前台使用，带缓存 */
+  getFeaturedPosts: () => swr<{ ok: true; items: PostSummary[] }>('/api/posts/featured', () => request<{ ok: true; items: PostSummary[] }>('/api/posts/featured')),
   getPost: (idOrSlug: string) => request<{ ok: true; post: Post }>(`/api/posts/${encodeURIComponent(idOrSlug)}`),
   createPost: (body: Record<string, unknown>) =>
     request<{ ok: true; post: Post }>('/api/posts', { method: 'POST', body: JSON.stringify(body) }),
@@ -70,6 +129,8 @@ export const api = {
 
   // ---- 分类 / 标签 ----
   listCategories: () => request<{ ok: true; items: Category[] }>('/api/categories'),
+  /** 前台专用：带缓存的分类列表 */
+  listCategoriesCached: () => swr<{ ok: true; items: Category[] }>('/api/categories', () => request<{ ok: true; items: Category[] }>('/api/categories')),
   createCategory: (body: { name: string; slug?: string; description?: string; icon?: string }) =>
     request<{ ok: true; category: Category }>('/api/categories', { method: 'POST', body: JSON.stringify(body) }),
   updateCategory: (id: string, body: { name?: string; slug?: string; description?: string; icon?: string }) =>
@@ -77,6 +138,8 @@ export const api = {
   deleteCategory: (id: string) => request<{ ok: true }>(`/api/categories/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 
   listTags: () => request<{ ok: true; items: Tag[] }>('/api/tags'),
+  /** 前台专用：带缓存的标签列表 */
+  listTagsCached: () => swr<{ ok: true; items: Tag[] }>('/api/tags', () => request<{ ok: true; items: Tag[] }>('/api/tags')),
   createTag: (body: { name: string; slug?: string }) =>
     request<{ ok: true; tag: Tag }>('/api/tags', { method: 'POST', body: JSON.stringify(body) }),
   updateTag: (id: string, body: { name?: string; slug?: string }) =>
@@ -109,6 +172,8 @@ export const api = {
 
   // ---- 配置 / 统计 / 搜索 ----
   getConfig: () => request<{ ok: true; config: SiteConfig }>('/api/config'),
+  /** 前台专用：带缓存的站点配置（后台设置页请勿用，须读完整实时配置） */
+  getConfigCached: () => swr<{ ok: true; config: SiteConfig }>('/api/config', () => request<{ ok: true; config: SiteConfig }>('/api/config')),
   saveConfig: (patch: Partial<SiteConfig>) =>
     request<{ ok: true; config: SiteConfig }>('/api/config', { method: 'PUT', body: JSON.stringify(patch) }),
   getStats: () => request<{ ok: true; stats: AdminStats }>('/api/stats'),

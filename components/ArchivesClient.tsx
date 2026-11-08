@@ -12,7 +12,7 @@ export default function ArchivesClient() {
 
   useEffect(() => {
     let alive = true;
-    api.listPosts({ page: 1, pageSize: 200, status: 'published' }).then((d) => {
+    api.listPostsCached({ page: 1, pageSize: 200, status: 'published' }).then((d) => {
       if (!alive) return;
       if (d?.ok) setPosts(d.items);
       setLoading(false);

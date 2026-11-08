@@ -36,7 +36,7 @@ export default function PostsClient() {
   // 读取站点配置的「每页文章数」，用于列表分页
   useEffect(() => {
     let alive = true;
-    api.getConfig()
+    api.getConfigCached()
       .then((d) => {
         if (!alive) return;
         if (d?.ok && d.config?.perPage) setPerPage(d.config.perPage);
@@ -52,9 +52,9 @@ export default function PostsClient() {
     setLoading(true);
     setError(null);
     Promise.all([
-      api.listPosts({ page, pageSize: perPage, category, tag, q }),
-      api.listCategories().catch(() => null),
-      api.listTags().catch(() => null),
+      api.listPostsCached({ page, pageSize: perPage, category, tag, q }),
+      api.listCategoriesCached().catch(() => null),
+      api.listTagsCached().catch(() => null),
     ])
       .then(([list, cats, tgs]) => {
         if (!alive) return;

@@ -165,12 +165,12 @@ export default function HomeClient() {
     let alive = true;
     // 访问统计是一次 KV 写操作，不进首屏阻塞路径，单独发出不等结果
     api.trackVisit().catch(() => null);
-    api.getConfig().catch(() => null).then((cfg) => {
+    api.getConfigCached().catch(() => null).then((cfg) => {
       if (!alive) return;
       if (cfg?.ok) setConfig(cfg.config);
       setCfgReady(true);
     });
-    api.listPosts({ page: 1, pageSize: 15, status: 'published', cover: 'none' }).catch(() => null).then((list) => {
+    api.listPostsCached({ page: 1, pageSize: 15, status: 'published', cover: 'none' }).catch(() => null).then((list) => {
       if (!alive) return;
       if (list?.ok) setPosts(list.items);
       setListReady(true);
