@@ -23,6 +23,25 @@ export function useTheme() {
   return useContext(ThemeContext);
 }
 
+/** 让浏览器 UI（Safari 工具栏、滚动条、表单控件）跟站内主题走：
+    同步 color-scheme 与 theme-color，而不是只跟系统外观走。 */
+function applyBrowserChrome(dark: boolean) {
+  const color = dark ? '#292524' : '#faf7f1';
+  document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+  const metas = document.querySelectorAll('meta[name="theme-color"]');
+  if (metas.length) {
+    metas.forEach((m) => {
+      m.removeAttribute('media');
+      m.setAttribute('content', color);
+    });
+  } else {
+    const m = document.createElement('meta');
+    m.name = 'theme-color';
+    m.content = color;
+    document.head.appendChild(m);
+  }
+}
+
 export default function ThemeProvider({ children }: { children: ReactNode }) {
   const [dark, setDark] = useState<boolean>(false);
   const [mounted, setMounted] = useState(false);
@@ -36,6 +55,7 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
     if (!mounted) return;
     document.documentElement.classList.toggle('dark', dark);
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    applyBrowserChrome(dark);
     try {
       localStorage.setItem(THEME_KEY, dark ? 'dark' : 'light');
     } catch {

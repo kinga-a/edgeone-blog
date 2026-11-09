@@ -40,6 +40,16 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
+      <head>
+        {/* 首屏前按站内主题（localStorage 优先、其次系统）定下深浅色，
+            让 Safari 工具栏的 theme-color 与 color-scheme 跟站内主题走，
+            而不是只跟系统外观走。ThemeProvider 挂载后会继续同步。 */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var s=localStorage.getItem('blog-theme');var d=s?s==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;var r=document.documentElement;r.classList.toggle('dark',d);r.setAttribute('data-theme',d?'dark':'light');r.style.colorScheme=d?'dark':'light';var c=d?'#292524':'#faf7f1';var ms=document.querySelectorAll('meta[name="theme-color"]');if(ms.length){ms.forEach(function(m){m.removeAttribute('media');m.setAttribute('content',c);});}}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className="min-h-screen flex flex-col">
         <ThemeProvider>
           <FaviconUpdater />
