@@ -98,6 +98,13 @@ html.dark {
 html {
   scroll-behavior: smooth;
   overflow-x: clip;
+  /* 让画布底色跟主题走：iOS 状态栏区域（viewport-fit=cover 后页面顶部伸到状态栏下方）
+     显示的是这一层的底色，之前 html 没有底色，状态栏那条就是系统默认的白色。 */
+  background-color: #faf7f1;
+}
+
+html.dark {
+  background-color: #1c1916;
 }
 
 body {
@@ -1486,6 +1493,8 @@ html:not(.dark) .progress-ring .ring-fill {
   position: sticky;
   top: 0;
   z-index: 40;
+  /* viewport-fit=cover 后头部会伸到刘海/状态栏下方，留出安全区，内容不被状态栏遮住 */
+  padding-top: env(safe-area-inset-top, 0px);
   backdrop-filter: saturate(180%) blur(14px);
   -webkit-backdrop-filter: saturate(180%) blur(14px);
   background-color: rgba(250, 247, 241, 0.78);
