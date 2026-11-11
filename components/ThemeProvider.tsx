@@ -45,30 +45,33 @@ function applyBrowserChrome(dark: boolean) {
 /** iOS 26/27 Safari 不会在 class 变化时自动重采样浏览器 UI 颜色：它的采样器优先读
     视口顶部 sticky/fixed 元素的背景（本站吸顶头带 backdrop-filter，会被采样器忽略，
     WebKit 319479），且只在元素出现/布局/滚动变化时才重读——这正是「切完主题必须再
-    点开汉堡菜单（抽屉）才生效」的原因：抽屉是无 backdrop-filter 的 fixed 元素，
-    背景跟随主题，打开它才逼采样器重读。本函数在切换主题时复刻抽屉的触发条件：
-    ① 插入全屏 fixed 探针（背景=新主题色、opacity:0，采样器仍会读）短暂保持后移除
-    ② body overflow 抖动（等效抽屉打开时的布局变化）
-    ③ 1px 程序化滚动（WebKit 306074：滚动时重采样）
-    组合方案曾于 2026-10-26 在真机验证有效（提交 1a8dcaf），后被 feec681 同步源码时
-    误删，本次恢复。桌面浏览器执行它无副作用。 */
-function forceIOSChromeRefresh(color: string) {
+    点开汉堡菜单（抽屉）才生效」的原因。
+    抽屉能触发的本质（逐项对照 .drawer 的 CSS）：fixed 定位、贴住视口顶边、
+    背景是不透明的主题表面色（var(--t-slate-50)）、无 backdrop-filter、且会持续
+    停留在 DOM 里。早先按「采样器会读 opacity:0 元素」这一未经真机证实的说法做的
+    透明探针（85ccfc0/1a8dcaf）实测无效——透明元素对采样器等于不存在。
+    本函数忠实复刻抽屉：主题 class 翻转后插入一个全屏 fixed 探针，背景直接引用
+    同一个主题变量（插入时已是新主题色）、完全不透明、z-index 与抽屉同层（160），
+    停留约 350ms 后淡出移除；同时保持 body overflow hidden 同一窗口（抽屉打开期间
+    的页面状态），并附带 1px 程序化滚动（WebKit 306074）作第三重触发。 */
+function forceIOSChromeRefresh() {
   try {
     document.getElementById('theme-chrome-probe')?.remove();
     const probe = document.createElement('div');
     probe.id = 'theme-chrome-probe';
     probe.style.cssText =
-      'position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;opacity:0;pointer-events:none;background-color:' +
-      color +
-      ';';
+      'position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;opacity:1;pointer-events:none;z-index:160;background-color:var(--t-slate-50);transition:opacity 0.15s ease;';
     document.body.appendChild(probe);
-    setTimeout(() => probe.remove(), 150);
+    setTimeout(() => {
+      probe.style.opacity = '0';
+      setTimeout(() => probe.remove(), 160);
+    }, 350);
 
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     setTimeout(() => {
       document.body.style.overflow = prevOverflow;
-    }, 80);
+    }, 350);
 
     const y = window.scrollY;
     window.scrollTo(0, y + 1);
@@ -98,9 +101,8 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
       /* ignore */
     }
     // 每次应用主题（含首屏挂载后的首次同步）都复刻抽屉机制逼 iOS Safari 重采样：
-    // 只靠 html 背景色时，采样器在首帧读到的仍是旧色，状态栏会停在白色；
-    // 2026-10-26 真机验证的原版即无条件触发，勿再加「首次跳过」的守卫。
-    forceIOSChromeRefresh(dark ? '#292524' : '#faf7f1');
+    // 只靠 html 背景色时，采样器在首帧读到的仍是旧色，状态栏会停在白色。
+    forceIOSChromeRefresh();
   }, [dark, mounted]);
 
   const toggle = () => setDark((d) => !d);
