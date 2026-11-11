@@ -55,14 +55,21 @@ function applyBrowserChrome(dark: boolean) {
     停留约 250ms 后淡出移除（2026-11-11 由 350ms 缩短，用户实测观察中，漏采则回退）；
     同时保持 body overflow hidden 同一窗口（抽屉打开期间
     的页面状态），并附带 1px 程序化滚动（WebKit 306074）作第三重触发。
-    时序编排（让页面与浏览器边框「看起来同时变」）：探针的不透明停留随后改为
-    120ms——足够触发插入即重采样——淡出拉长到 0.3s，与 .theme-anim 的全站颜色
-    过渡同长，使边框着色与页面变色在同一时间窗内完成。Safari 不提供让网页命令
-    边框在指定帧改色的 API，能做到的极限是把变化压进同一个约 0.3s 的窗口；
-    若真机仍觉边框慢半拍，剩余手段只有反向拉长不透明停留、让边框在遮盖下
-    先变完再揭开。 */
-function forceIOSChromeRefresh() {
+    时序编排：实测「同窗对齐」（短停留+同长淡出）仍救不了——采样器似乎要等页面
+    动画平息后才重读，边框着色总是慢页面一步。最终方案改为幕布式：用户切换时
+    探针不透明停留 800ms，把页面与边框的变化全程盖住，等边框在幕布下变完才
+    淡出揭开，感知上只有一次整体变化（代价：切换全程约 1.1s，像一次刻意的转场）；
+    首次应用（冷开页面）只为纠正状态栏采样，用 250ms 短停留，不罚等待。
+    本函数只在 iOS 上有意义（采样问题为 iOS Safari 特有），其他平台直接跳过，
+    桌面端只享受 .theme-anim 的平滑过渡。 */
+function forceIOSChromeRefresh(longCurtain: boolean) {
   try {
+    const ua = navigator.userAgent;
+    const isIOS =
+      /iP(hone|ad|od)/.test(ua) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (!isIOS) return;
+    const holdMs = longCurtain ? 800 : 250;
     document.getElementById('theme-chrome-probe')?.remove();
     const probe = document.createElement('div');
     probe.id = 'theme-chrome-probe';
@@ -72,13 +79,13 @@ function forceIOSChromeRefresh() {
     setTimeout(() => {
       probe.style.opacity = '0';
       setTimeout(() => probe.remove(), 310);
-    }, 120);
+    }, holdMs);
 
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     setTimeout(() => {
       document.body.style.overflow = prevOverflow;
-    }, 200);
+    }, 250);
 
     const y = window.scrollY;
     window.scrollTo(0, y + 1);
@@ -102,10 +109,11 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!mounted) return;
     const root = document.documentElement;
+    const isToggle = appliedRef.current;
     // 用户切换（非首次应用）时，先给 html 挂上 .theme-anim，让全站颜色在 0.3s 内
     // 一起平滑过渡（CSS 见 globals.css），窗口结束自动移除；首次应用是首屏同步，
     // 颜色由内联脚本在绘制前定好，不需要也不应该有过渡。
-    if (appliedRef.current) {
+    if (isToggle) {
       root.classList.add('theme-anim');
       if (animTimerRef.current) window.clearTimeout(animTimerRef.current);
       animTimerRef.current = window.setTimeout(() => root.classList.remove('theme-anim'), 340);
@@ -121,7 +129,8 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
     appliedRef.current = true;
     // 每次应用主题（含首屏挂载后的首次同步）都复刻抽屉机制逼 iOS Safari 重采样：
     // 只靠 html 背景色时，采样器在首帧读到的仍是旧色，状态栏会停在白色。
-    forceIOSChromeRefresh();
+    // 用户切换用长幕布（等边框变完再揭开），首次应用用短停留（只纠正采样）。
+    forceIOSChromeRefresh(isToggle);
   }, [dark, mounted]);
 
   const toggle = () => setDark((d) => !d);
