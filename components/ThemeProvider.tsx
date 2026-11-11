@@ -1,7 +1,7 @@
 'use client';
 
 /** 暗色模式：class 策略 + localStorage 持久化（在应用挂载前注入初始脚本避免闪烁） */
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
 const ThemeContext = createContext<{ dark: boolean; toggle: () => void }>({ dark: false, toggle: () => {} });
 
@@ -81,7 +81,6 @@ function forceIOSChromeRefresh(color: string) {
 export default function ThemeProvider({ children }: { children: ReactNode }) {
   const [dark, setDark] = useState<boolean>(false);
   const [mounted, setMounted] = useState(false);
-  const appliedOnceRef = useRef(false);
 
   useEffect(() => {
     setDark(getInitialDark());
@@ -98,13 +97,10 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
     } catch {
       /* ignore */
     }
-    // 首次应用是首屏同步（内联脚本已在绘制前定好浏览器 UI），不需要触发重采样；
-    // 之后每次用户切换主题，复刻抽屉机制逼 iOS Safari 立即重采样新主题色。
-    if (appliedOnceRef.current) {
-      forceIOSChromeRefresh(dark ? '#292524' : '#faf7f1');
-    } else {
-      appliedOnceRef.current = true;
-    }
+    // 每次应用主题（含首屏挂载后的首次同步）都复刻抽屉机制逼 iOS Safari 重采样：
+    // 只靠 html 背景色时，采样器在首帧读到的仍是旧色，状态栏会停在白色；
+    // 2026-10-26 真机验证的原版即无条件触发，勿再加「首次跳过」的守卫。
+    forceIOSChromeRefresh(dark ? '#292524' : '#faf7f1');
   }, [dark, mounted]);
 
   const toggle = () => setDark((d) => !d);
