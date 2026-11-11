@@ -124,6 +124,26 @@ html.dark body {
   background-image: radial-gradient(rgba(224, 138, 90, 0.03) 1px, transparent 0);
 }
 
+/* 主题切换瞬间（ThemeProvider 临时给 html 加 .theme-anim，约 340ms 后移除）：
+   让全站元素的颜色类属性一起平滑过渡，避免只有 body 在淡、卡片/边框/文字瞬间跳变
+   的参差感。只在切换窗口内生效，不影响平时的悬停/交互动画；transform 与 opacity
+   不在此列（探针淡出、卡片悬停位移各走各的）。减弱动态偏好时不启用。 */
+@media (prefers-reduced-motion: no-preference) {
+  html.theme-anim,
+  html.theme-anim *,
+  html.theme-anim *::before,
+  html.theme-anim *::after {
+    transition:
+      background-color 0.3s ease,
+      border-color 0.3s ease,
+      color 0.3s ease,
+      fill 0.3s ease,
+      stroke 0.3s ease,
+      outline-color 0.3s ease,
+      box-shadow 0.3s ease !important;
+  }
+}
+
 /* 选中文字：朱砂底 */
 ::selection {
   background: rgba(154, 67, 24, 0.18);
@@ -1847,6 +1867,8 @@ html.dark .btn-secondary:hover {
     transparent 100%
   );
   animation: skeleton-shimmer 1.5s var(--ease-in-out) infinite;
+  /* 列表里按序号经 --sk-delay 错开扫光相位，避免整排骨架同步扫光像波浪灯 */
+  animation-delay: var(--sk-delay, 0s);
 }
 .dark .skeleton::after {
   background: linear-gradient(

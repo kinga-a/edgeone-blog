@@ -65,7 +65,12 @@ function JournalSkeleton() {
     <div className="mt-16 space-y-3">
       <div className="skeleton h-7 w-32 rounded-md mb-4" aria-hidden="true" />
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="skeleton h-16 rounded-xl" aria-hidden="true" />
+        <div
+          key={i}
+          className="skeleton h-16 rounded-xl"
+          style={{ '--sk-delay': `${-(i * 0.24).toFixed(2)}s` } as React.CSSProperties}
+          aria-hidden="true"
+        />
       ))}
     </div>
   );

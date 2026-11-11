@@ -17,10 +17,15 @@ export function Spinner({ className }: { className?: string }) {
   );
 }
 
-/** 文章卡片骨架（列表页 / 首页网格用，贴合真实卡片结构） */
-export function PostCardSkeleton() {
+/** 文章卡片骨架（列表页 / 首页网格用，贴合真实卡片结构）
+    index 用于按序号错开扫光相位（--sk-delay 负延迟），避免整排卡片同步扫光 */
+export function PostCardSkeleton({ index = 0 }: { index?: number }) {
   return (
-    <div className="article-card p-0 pointer-events-none" aria-hidden="true">
+    <div
+      className="article-card p-0 pointer-events-none"
+      style={{ '--sk-delay': `${-((index % 6) * 0.24).toFixed(2)}s` } as React.CSSProperties}
+      aria-hidden="true"
+    >
       <Skeleton className="card-cover w-full rounded-none" />
       <div className="card-body">
         <div className="flex items-center gap-2">

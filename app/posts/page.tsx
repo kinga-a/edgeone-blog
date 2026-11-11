@@ -17,7 +17,7 @@ export default function PostsPage() {
           <div className="skeleton h-4 w-24 rounded mb-8" aria-hidden="true" />
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
-              <PostCardSkeleton key={i} />
+              <PostCardSkeleton key={i} index={i} />
             ))}
           </div>
         </div>

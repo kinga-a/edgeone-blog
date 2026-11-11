@@ -259,7 +259,7 @@ export default function PostsClient() {
 
       {loading ? (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => <PostCardSkeleton key={i} />)}
+          {Array.from({ length: 6 }).map((_, i) => <PostCardSkeleton key={i} index={i} />)}
         </div>
       ) : error ? (
         <div className="text-center py-16 px-4 rounded-2xl bg-[var(--t-card)] border border-slate-200 dark:border-slate-800 text-slate-400">

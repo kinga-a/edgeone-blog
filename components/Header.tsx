@@ -287,7 +287,11 @@ export default function Header() {
             {searching ? (
               <div className="mt-4 space-y-2.5" aria-hidden="true">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="skeleton h-20 w-full rounded-xl" />
+                  <div
+                    key={i}
+                    className="skeleton h-20 w-full rounded-xl"
+                    style={{ '--sk-delay': `${-(i * 0.24).toFixed(2)}s` } as React.CSSProperties}
+                  />
                 ))}
               </div>
             ) : (

@@ -1,7 +1,7 @@
 'use client';
 
 /** 暗色模式：class 策略 + localStorage 持久化（在应用挂载前注入初始脚本避免闪烁） */
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 
 const ThemeContext = createContext<{ dark: boolean; toggle: () => void }>({ dark: false, toggle: () => {} });
 
@@ -60,11 +60,11 @@ function forceIOSChromeRefresh() {
     const probe = document.createElement('div');
     probe.id = 'theme-chrome-probe';
     probe.style.cssText =
-      'position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;opacity:1;pointer-events:none;z-index:160;background-color:var(--t-slate-50);transition:opacity 0.15s ease;';
+      'position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;opacity:1;pointer-events:none;z-index:160;background-color:var(--t-slate-50);transition:opacity 0.25s ease;';
     document.body.appendChild(probe);
     setTimeout(() => {
       probe.style.opacity = '0';
-      setTimeout(() => probe.remove(), 160);
+      setTimeout(() => probe.remove(), 260);
     }, 350);
 
     const prevOverflow = document.body.style.overflow;
@@ -84,6 +84,8 @@ function forceIOSChromeRefresh() {
 export default function ThemeProvider({ children }: { children: ReactNode }) {
   const [dark, setDark] = useState<boolean>(false);
   const [mounted, setMounted] = useState(false);
+  const appliedRef = useRef(false);
+  const animTimerRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     setDark(getInitialDark());
@@ -92,14 +94,24 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!mounted) return;
-    document.documentElement.classList.toggle('dark', dark);
-    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    const root = document.documentElement;
+    // 用户切换（非首次应用）时，先给 html 挂上 .theme-anim，让全站颜色在 0.3s 内
+    // 一起平滑过渡（CSS 见 globals.css），窗口结束自动移除；首次应用是首屏同步，
+    // 颜色由内联脚本在绘制前定好，不需要也不应该有过渡。
+    if (appliedRef.current) {
+      root.classList.add('theme-anim');
+      if (animTimerRef.current) window.clearTimeout(animTimerRef.current);
+      animTimerRef.current = window.setTimeout(() => root.classList.remove('theme-anim'), 340);
+    }
+    root.classList.toggle('dark', dark);
+    root.setAttribute('data-theme', dark ? 'dark' : 'light');
     applyBrowserChrome(dark);
     try {
       localStorage.setItem(THEME_KEY, dark ? 'dark' : 'light');
     } catch {
       /* ignore */
     }
+    appliedRef.current = true;
     // 每次应用主题（含首屏挂载后的首次同步）都复刻抽屉机制逼 iOS Safari 重采样：
     // 只靠 html 背景色时，采样器在首帧读到的仍是旧色，状态栏会停在白色。
     forceIOSChromeRefresh();
