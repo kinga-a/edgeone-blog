@@ -54,25 +54,31 @@ function applyBrowserChrome(dark: boolean) {
     同一个主题变量（插入时已是新主题色）、完全不透明、z-index 与抽屉同层（160），
     停留约 250ms 后淡出移除（2026-11-11 由 350ms 缩短，用户实测观察中，漏采则回退）；
     同时保持 body overflow hidden 同一窗口（抽屉打开期间
-    的页面状态），并附带 1px 程序化滚动（WebKit 306074）作第三重触发。 */
+    的页面状态），并附带 1px 程序化滚动（WebKit 306074）作第三重触发。
+    时序编排（让页面与浏览器边框「看起来同时变」）：探针的不透明停留随后改为
+    120ms——足够触发插入即重采样——淡出拉长到 0.3s，与 .theme-anim 的全站颜色
+    过渡同长，使边框着色与页面变色在同一时间窗内完成。Safari 不提供让网页命令
+    边框在指定帧改色的 API，能做到的极限是把变化压进同一个约 0.3s 的窗口；
+    若真机仍觉边框慢半拍，剩余手段只有反向拉长不透明停留、让边框在遮盖下
+    先变完再揭开。 */
 function forceIOSChromeRefresh() {
   try {
     document.getElementById('theme-chrome-probe')?.remove();
     const probe = document.createElement('div');
     probe.id = 'theme-chrome-probe';
     probe.style.cssText =
-      'position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;opacity:1;pointer-events:none;z-index:160;background-color:var(--t-slate-50);transition:opacity 0.25s ease;';
+      'position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;opacity:1;pointer-events:none;z-index:160;background-color:var(--t-slate-50);transition:opacity 0.3s ease;';
     document.body.appendChild(probe);
     setTimeout(() => {
       probe.style.opacity = '0';
-      setTimeout(() => probe.remove(), 260);
-    }, 250);
+      setTimeout(() => probe.remove(), 310);
+    }, 120);
 
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     setTimeout(() => {
       document.body.style.overflow = prevOverflow;
-    }, 250);
+    }, 200);
 
     const y = window.scrollY;
     window.scrollTo(0, y + 1);
