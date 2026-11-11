@@ -52,7 +52,8 @@ function applyBrowserChrome(dark: boolean) {
     透明探针（85ccfc0/1a8dcaf）实测无效——透明元素对采样器等于不存在。
     本函数忠实复刻抽屉：主题 class 翻转后插入一个全屏 fixed 探针，背景直接引用
     同一个主题变量（插入时已是新主题色）、完全不透明、z-index 与抽屉同层（160），
-    停留约 350ms 后淡出移除；同时保持 body overflow hidden 同一窗口（抽屉打开期间
+    停留约 250ms 后淡出移除（2026-11-11 由 350ms 缩短，用户实测观察中，漏采则回退）；
+    同时保持 body overflow hidden 同一窗口（抽屉打开期间
     的页面状态），并附带 1px 程序化滚动（WebKit 306074）作第三重触发。 */
 function forceIOSChromeRefresh() {
   try {
@@ -65,13 +66,13 @@ function forceIOSChromeRefresh() {
     setTimeout(() => {
       probe.style.opacity = '0';
       setTimeout(() => probe.remove(), 260);
-    }, 350);
+    }, 250);
 
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     setTimeout(() => {
       document.body.style.overflow = prevOverflow;
-    }, 350);
+    }, 250);
 
     const y = window.scrollY;
     window.scrollTo(0, y + 1);
