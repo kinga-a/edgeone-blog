@@ -1944,12 +1944,15 @@ html {
   }
 }
 
+/* 整页主滚动条隐藏：仅作用于 html 根节点，文章内代码块 / 表格 / 目录的滚动条不受影响 */
 html {
-  scrollbar-width: thin;
-  scrollbar-color: var(--t-slate-300) transparent;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
-html.dark {
-  scrollbar-color: var(--t-slate-700) transparent;
+html::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 :focus-visible {
