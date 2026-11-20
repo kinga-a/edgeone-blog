@@ -528,6 +528,342 @@ html.dark .hero-vol::before {
 .dark .hero-deco-quote-author { color: var(--t-slate-500); }
 .hero-deco-paper-2.has-quote::after { display: none; }
 
+/* ========== 精选文章：3D 旋转卡片（封面流 coverflow） ==========
+   设计目标：中央卡片大而清晰（可读标题/摘要），两侧卡片倾斜露出、明显小于中央，
+   形成封面流视觉；hover 中央卡可放大。全部卡片内容始终清晰可读，无降透明度/去饱和。 */
+/* ========== 精选文章：3D 旋转卡片（封面流 coverflow） ==========
+   设计目标：中央卡片大而清晰（可读标题/摘要），两侧卡片倾斜露出、明显小于中央，
+   形成封面流视觉；hover 中央卡可放大。全部卡片内容始终清晰可读，无降透明度/去饱和。 */
+.featured-carousel {
+  position: relative;
+  height: 380px;
+  margin-top: 24px;
+  perspective: 1400px;
+  overflow: hidden;
+  border: 1px solid var(--t-slate-200);
+  border-radius: 20px;
+  background:
+    radial-gradient(ellipse at 50% 42%, rgba(154, 67, 24, 0.06), transparent 62%),
+    radial-gradient(rgba(154, 67, 24, 0.035) 1px, transparent 0),
+    var(--t-card);
+  background-size: auto, 28px 28px, auto;
+  box-shadow: var(--shadow-sm);
+}
+html.dark .featured-carousel {
+  border-color: var(--t-slate-700);
+  background:
+    radial-gradient(ellipse at 50% 42%, rgba(224, 138, 90, 0.07), transparent 62%),
+    radial-gradient(rgba(224, 138, 90, 0.04) 1px, transparent 0),
+    var(--t-card);
+  background-size: auto, 28px 28px, auto;
+}
+
+/* 轨道：卡片绝对定位，由 --cur 控制当前居中卡片索引 */
+.featured-carousel-track {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  --cur: 0;
+}
+
+/* 单张卡片：尺寸由 --cw/--ch 控制，绕 Y 轴旋转形成封面流 */
+.featured-carousel-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--cw);
+  height: var(--ch);
+  --cw: 300px;
+  --ch: 300px;
+  --gap: 26px;
+  --scale-side: 0.78;
+  --angle-side: 38deg;
+  display: block;
+  overflow: hidden;
+  border: 1.5px solid rgba(var(--color-card), 0.85);
+  border-radius: 16px;
+  background: radial-gradient(circle at 50% 38%, rgba(var(--color-card), 0.20), rgba(var(--color-card), 0.45) 100%);
+  box-shadow: 0 22px 50px -18px rgba(28, 26, 23, 0.45), inset 0 0 26px rgba(var(--color-card), 0.12);
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  touch-action: manipulation;
+  /* 居中后按索引差平移/旋转/缩放；abs 用 max 实现（CSS 无 abs） */
+  transform:
+    translate(-50%, -50%)
+    translateX(calc((var(--i) - var(--cur)) * (var(--cw) + var(--gap))))
+    rotateY(calc((var(--cur) - var(--i)) * var(--angle-side)))
+    scale(calc(1 - max((var(--cur) - var(--i)), (var(--i) - var(--cur))) * (1 - var(--scale-side))));
+  z-index: calc(100 - max((var(--cur) - var(--i)), (var(--i) - var(--cur))));
+  transition: transform 0.5s var(--ease-out), box-shadow 0.5s var(--ease-out);
+  will-change: transform;
+}
+.featured-carousel-card:hover {
+  box-shadow: 0 28px 64px -20px rgba(28, 26, 23, 0.55), 0 0 30px rgba(var(--color-card), 0.28);
+}
+
+/* 封面：清晰显示，不降透明度、不去饱和 */
+.featured-carousel-image {
+  position: absolute;
+  inset: 0;
+}
+.featured-carousel-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s var(--ease-out);
+}
+.featured-carousel-card:hover .featured-carousel-image img {
+  transform: scale(1.04);
+}
+
+/* 卡片高光：保留质感，但不再用 backdrop-blur 模糊封面 */
+.featured-carousel-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(var(--color-card), 0.05) 45%, rgba(var(--color-card), 0.20));
+  pointer-events: none;
+}
+.featured-carousel-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 58%, rgba(120, 82, 52, 0.10) 100%);
+  pointer-events: none;
+}
+
+/* 文案区：底部渐变保证白字在任何封面上可读 */
+.featured-carousel-content {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: 16px 18px;
+  color: #fff;
+  background: linear-gradient(180deg, transparent, rgba(40, 28, 18, 0.82));
+  transform: translateZ(2px);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.featured-carousel-no {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.82);
+}
+.featured-carousel-title {
+  margin-top: 6px;
+  font-size: 18px;
+  line-height: 1.3;
+  color: #fff;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.featured-carousel-summary {
+  display: none;
+}
+.featured-carousel-meta {
+  margin-top: 8px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.72);
+}
+.featured-carousel-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #fed7aa;
+}
+
+/* 底部圆点导航 */
+.featured-carousel-nav {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  gap: 8px;
+}
+.featured-carousel-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  transition: background 0.3s var(--ease-out), transform 0.3s var(--ease-out);
+}
+.featured-carousel-dot[aria-current='true'] {
+  background: #fff;
+  transform: scale(1.3);
+}
+
+@media (max-width: 640px) {
+  .featured-carousel {
+    height: 300px;
+    margin-top: 18px;
+    border-radius: 18px;
+    perspective: 1100px;
+  }
+  .featured-carousel-card {
+    --cw: 220px;
+    --ch: 220px;
+    --gap: 18px;
+    --scale-side: 0.72;
+    --angle-side: 42deg;
+    border-radius: 14px;
+  }
+  .featured-carousel-content {
+    padding: 12px 14px;
+  }
+  .featured-carousel-no {
+    font-size: 9px;
+  }
+  .featured-carousel-title {
+    font-size: 15px;
+  }
+  .featured-carousel-meta {
+    margin-top: 6px;
+    font-size: 10px;
+  }
+  .featured-carousel-link {
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .featured-carousel-card {
+    transition: none;
+  }
+}
+
+.featured-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+  margin-top: 24px;
+}
+.featured-grid-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--t-card);
+  border: 1px solid var(--t-slate-200);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  transition:
+    transform var(--dur) var(--ease-out),
+    box-shadow var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out);
+}
+html.dark .featured-grid-card {
+  border-color: var(--t-slate-700);
+}
+.featured-grid-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--t-brand-300);
+}
+html.dark .featured-grid-card:hover {
+  border-color: var(--t-brand-400);
+}
+.featured-grid-cover {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--t-slate-100);
+}
+html.dark .featured-grid-cover {
+  background: var(--t-slate-800);
+}
+.featured-grid-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s var(--ease-out);
+}
+.featured-grid-card:hover .featured-grid-cover img {
+  transform: scale(1.045);
+}
+.featured-grid-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 8px;
+  padding: 18px;
+}
+.featured-grid-no {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--t-brand-600);
+}
+html.dark .featured-grid-no {
+  color: var(--t-brand-400);
+}
+.featured-grid-title {
+  font-size: 19px;
+  line-height: 1.35;
+  color: var(--t-slate-900);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+html.dark .featured-grid-title {
+  color: var(--t-slate-100);
+}
+.featured-grid-summary {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--t-slate-500);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.featured-grid-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 6px;
+  flex-wrap: wrap;
+}
+.featured-grid-foot .card-meta {
+  font-size: 11px;
+}
+.featured-grid-link {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--t-brand-600);
+  white-space: nowrap;
+  transition: transform var(--dur) var(--ease-out);
+}
+html.dark .featured-grid-link {
+  color: var(--t-brand-400);
+}
+.featured-grid-card:hover .featured-grid-link {
+  transform: translateX(3px);
+}
+@media (max-width: 768px) {
+  .featured-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+@media (min-width: 769px) and (max-width: 1024px) {
+  .featured-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 /* ========== 头条 Lede（精选文章：非对称图文卡片） ========== */
 .lede {
   display: grid;
@@ -1944,7 +2280,6 @@ html {
   }
 }
 
-/* 整页主滚动条隐藏：仅作用于 html 根节点，文章内代码块 / 表格 / 目录的滚动条不受影响 */
 html {
   scrollbar-width: none;
   -ms-overflow-style: none;

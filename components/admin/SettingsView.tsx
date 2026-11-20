@@ -381,8 +381,28 @@ export default function SettingsView() {
         <Card>
           <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">首页精选文章</h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-            勾选要展示在首页「精选文章 01」区的文章，按勾选顺序排列（第一篇为精选大卡，后两篇为侧边小卡）；留空则自动取最新文章。
+            勾选要展示在首页「精选文章 01」区的文章，按勾选顺序排列；勾选几篇，首页就展示几篇，留空则自动展示最新 1 篇。
           </p>
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <span className="text-xs text-slate-500 dark:text-slate-400">展示样式：</span>
+            {([
+              { value: 'carousel', label: '旋转卡片（3D 环形旋转）' },
+              { value: 'grid', label: '平铺卡片（一排 3 个）' },
+            ] as const).map(({ value, label }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => set({ featuredLayout: value })}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                  (config.featuredLayout || 'grid') === value
+                    ? 'bg-brand-50 border-brand-300 text-brand-600 dark:bg-brand-900 dark:border-brand-500 dark:text-brand-400'
+                    : 'bg-[var(--t-card)] border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-brand-400'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <div className="max-h-64 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-xl divide-y divide-slate-100 dark:divide-slate-800">
             {allPosts.length === 0 ? (
               <div className="px-3 py-6 text-sm text-slate-400 text-center">文章加载中…</div>

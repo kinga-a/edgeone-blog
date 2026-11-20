@@ -108,6 +108,8 @@ export interface SiteConfig {
   faviconUrl?: string;
   /** 首页精选文章 id 列表（按此顺序展示；空则自动取最新） */
   featuredPostIds?: string[];
+  /** 首页精选文章展示样式：grid 平铺卡片（默认，一排 3 个）；carousel 3D 旋转卡片 */
+  featuredLayout?: 'carousel' | 'grid';
   seo: { ogImage?: string; twitterHandle?: string; googleSiteVerification?: string };
   social: { github?: string; twitter?: string; wechat?: string; email?: string };
   backup?: { webdavUrl?: string; webdavUsername?: string; webdavPassword?: string; webdavPath?: string };

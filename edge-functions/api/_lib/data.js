@@ -40,6 +40,8 @@ export const DEFAULT_SITE_CONFIG = {
   faviconUrl: '',
   /** 首页精选文章（文章 id 列表，按此顺序展示；为空时首页自动取最新文章） */
   featuredPostIds: [],
+  /** 首页精选文章展示样式：grid 平铺卡片（默认）；carousel 3D 旋转卡片 */
+  featuredLayout: 'grid',
   seo: {
     ogImage: '',
     twitterHandle: '',

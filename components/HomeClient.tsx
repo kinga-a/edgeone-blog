@@ -2,7 +2,7 @@
 
 /** 首页（纸墨编辑风）：期刊刊头 Masthead + 精选头条 Lede + 最新目录 Journal + 热门排行 Top List */
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Reveal from './Reveal';
 import type { PostSummary, SiteConfig } from '@/lib/types';
 import { api } from '@/lib/api';
@@ -76,43 +76,124 @@ function JournalSkeleton() {
   );
 }
 
-/** 头条（精选文章）：左文右图非对称排版 */
-function LedeItem({ post, index }: { post: PostSummary; index: number }) {
-  const cover = post.coverUrl || (post.coverKey ? mediaUrl(post.coverKey) : '') || defaultCoverFor(post.id);
-  const no = String(index + 1).padStart(2, '0');
+function FeaturedCarousel({ posts }: { posts: PostSummary[] }) {
+  const quantity = posts.length;
+  const colors = ['224, 138, 90', '154, 67, 24', '217, 119, 6', '180, 83, 9', '249, 115, 22', '234, 88, 12', '245, 158, 11', '161, 98, 7', '146, 64, 14', '217, 119, 6'];
+  const [cur, setCur] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [reduced, setReduced] = useState(false);
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  // 尊重系统「减弱动态」偏好：开启时不自动滚动
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReduced(mq.matches);
+    const onChange = () => setReduced(mq.matches);
+    mq.addEventListener?.('change', onChange);
+    return () => mq.removeEventListener?.('change', onChange);
+  }, []);
+
+  // 把当前索引同步到轨道的 --cur 变量，驱动 CSS 变换
+  useEffect(() => {
+    if (trackRef.current) trackRef.current.style.setProperty('--cur', String(cur));
+  }, [cur]);
+
+  // 自动滚动：每 5s 切换到下一篇；hover 或键盘聚焦时暂停
+  useEffect(() => {
+    if (quantity <= 1 || reduced || paused) return;
+    const id = setInterval(() => setCur((c) => (c + 1) % quantity), 5000);
+    return () => clearInterval(id);
+  }, [quantity, paused, reduced]);
+
   return (
-    <a href={`/posts/${post.slug}/`} className="lede group">
-      <div className="lede-body">
-        <div className="flex items-center gap-2.5">
-          <span className="lede-no">FEATURED · NO.{no}</span>
-          {post.categoryName && (
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-50 text-brand-600 dark:text-brand-400">
-              {post.categoryName}
-            </span>
-          )}
-        </div>
-        <h2 className="lede-title font-display">{post.title}</h2>
-        {post.summary && <p className="lede-excerpt">{post.summary}</p>}
-        <div className="mt-auto pt-2 flex items-center justify-between gap-4 flex-wrap">
-          <div className="card-meta">
-            <span>{fmtDate(post.publishedAt || post.createdAt)}</span>
-            <span className="meta-dot">·</span>
-            <span>{post.readingTime || 1} 分钟阅读</span>
-            <span className="meta-dot">·</span>
-            <span title="阅读量">{post.views || 0} 阅读</span>
-          </div>
-          <span className="inline-flex items-center gap-1 text-sm font-medium text-brand-600 dark:text-brand-400 group-hover:translate-x-1 transition-transform">
-            阅读全文
-            <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-              <path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </span>
-        </div>
+    <div
+      className="featured-carousel"
+      role="region"
+      aria-label="精选文章轮播"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
+    >
+      <div className="featured-carousel-track" ref={trackRef}>
+        {posts.map((post, index) => {
+          const cover = post.coverUrl || (post.coverKey ? mediaUrl(post.coverKey) : '') || defaultCoverFor(post.id);
+          const no = String(index + 1).padStart(2, '0');
+          return (
+            <article
+              key={post.id}
+              className="featured-carousel-card"
+              style={{ '--i': index, '--n': quantity, '--color-card': colors[index % colors.length] } as React.CSSProperties}
+            >
+              <a href={`/posts/${post.slug}/`} className="featured-carousel-link" aria-label={`阅读精选文章：${post.title}`}>
+                <div className="featured-carousel-image">
+                  <FadeImg src={cover} alt={post.title} />
+                </div>
+                <div className="featured-carousel-content">
+                  <span className="featured-carousel-no">FEATURED · NO.{no}</span>
+                  <h3 className="featured-carousel-title font-display">{post.title}</h3>
+                  {post.summary && <p className="featured-carousel-summary">{post.summary}</p>}
+                  <div className="featured-carousel-meta">
+                    {fmtDate(post.publishedAt || post.createdAt)} · {post.readingTime || 1} 分钟阅读
+                  </div>
+                </div>
+              </a>
+            </article>
+          );
+        })}
       </div>
-      <div className="lede-cover">
-        <FadeImg src={cover} alt={post.title} />
-      </div>
-    </a>
+      {quantity > 1 && (
+        <div className="featured-carousel-nav" aria-label="精选文章切换">
+          {posts.map((post, index) => (
+            <button
+              key={post.id}
+              type="button"
+              className="featured-carousel-dot"
+              aria-label={`查看第 ${index + 1} 篇：${post.title}`}
+              aria-current={index === cur ? 'true' : undefined}
+              onClick={() => setCur(index)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** 精选文章：平铺卡片（一排 3 个），点击卡片进入对应文章 */
+function FeaturedGrid({ posts }: { posts: PostSummary[] }) {
+  return (
+    <div className="featured-grid">
+      {posts.map((post, index) => {
+        const cover = post.coverUrl || (post.coverKey ? mediaUrl(post.coverKey) : '') || defaultCoverFor(post.id);
+        const no = String(index + 1).padStart(2, '0');
+        return (
+          <a key={post.id} href={`/posts/${post.slug}/`} className="featured-grid-card group" aria-label={`阅读精选文章：${post.title}`}>
+            <div className="featured-grid-cover">
+              <FadeImg src={cover} alt={post.title} />
+            </div>
+            <div className="featured-grid-body">
+              <div className="flex items-center gap-2">
+                <span className="featured-grid-no">NO.{no}</span>
+                {post.categoryName && (
+                  <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-brand-50 text-brand-600 dark:text-brand-400">
+                    {post.categoryName}
+                  </span>
+                )}
+              </div>
+              <h3 className="featured-grid-title font-display">{post.title}</h3>
+              {post.summary && <p className="featured-grid-summary">{post.summary}</p>}
+              <div className="featured-grid-foot">
+                <span className="card-meta">
+                  {fmtDate(post.publishedAt || post.createdAt)} · {post.readingTime || 1} 分钟阅读 · {post.views || 0} 阅读
+                </span>
+                <span className="featured-grid-link">阅读全文 →</span>
+              </div>
+            </div>
+          </a>
+        );
+      })}
+    </div>
   );
 }
 
@@ -221,21 +302,13 @@ export default function HomeClient() {
   }, [config]);
 
 
-  // 头条：站点配置指定（featured）优先；未指定或不足时用最新文章兜底
-  const featured = featuredList[0] || posts[0];
-  const restFeatured = featuredList.slice(1);
-  const sidePosts = [
-    ...restFeatured,
-    ...posts.filter((p) => p.id !== featured?.id && !restFeatured.some((f) => f.id === p.id)),
-  ].slice(0, 2);
-  // 目录列表：精选副条 + 最新文章，去重后取前 5，排除头条
-  const latest = [...sidePosts, ...posts]
-    .filter((p, i, arr) => arr.findIndex((x) => x.id === p.id) === i)
-    .filter((p) => p.id !== featured?.id)
-    .slice(0, 5);
-  // 热门：按阅读量排序取 Top 6，排除头条与目录已展示的文章
-  const shownIds = new Set<string>();
-  if (featured) shownIds.add(featured.id);
+  // 精选：按后台勾选数量与顺序展示；未勾选时自动取最新 1 篇
+  const featured = featuredList.length > 0 ? featuredList : posts.slice(0, 1);
+  const featuredIds = new Set(featured.map((p) => p.id));
+  // 目录列表：排除全部精选文章，取最新 5 篇
+  const latest = posts.filter((p) => !featuredIds.has(p.id)).slice(0, 5);
+  // 热门：按阅读量排序取 Top 6，排除精选与目录已展示的文章
+  const shownIds = new Set<string>(featuredIds);
   latest.forEach((p) => shownIds.add(p.id));
   const hot = [...posts]
     .filter((p) => !shownIds.has(p.id))
@@ -285,7 +358,7 @@ export default function HomeClient() {
       )}
 
       {/* 精选头条：精选或列表任一就绪即可先行渲染，都未就绪时显示骨架 */}
-      {!(featReady || listReady) ? <LedeSkeleton /> : featured ? (
+      {!(featReady || listReady) ? <LedeSkeleton /> : featured.length > 0 ? (
         <Reveal className="mt-2">
           <div className="section-header">
             <h2 className="section-title">
@@ -294,7 +367,9 @@ export default function HomeClient() {
             </h2>
             <Link href="/posts/" className="section-link">全部文章 →</Link>
           </div>
-          <LedeItem post={featured} index={0} />
+          {config?.featuredLayout === 'carousel'
+            ? <FeaturedCarousel posts={featured} />
+            : <FeaturedGrid posts={featured} />}
         </Reveal>
       ) : null}
 
