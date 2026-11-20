@@ -40,25 +40,6 @@ function HeroSkeleton() {
   );
 }
 
-/** 头条骨架（精选/列表接口未返回时占位） */
-function LedeSkeleton() {
-  return (
-    <div className="lede mt-2">
-      <div className="space-y-3.5 py-2">
-        <div className="skeleton h-4 w-28 rounded-full" aria-hidden="true" />
-        <div className="skeleton h-8 w-4/5 rounded-lg" aria-hidden="true" />
-        <div className="skeleton h-4 w-full rounded" aria-hidden="true" />
-        <div className="skeleton h-4 w-2/3 rounded" aria-hidden="true" />
-        <div className="pt-3 flex items-center justify-between">
-          <div className="skeleton h-3.5 w-40 rounded" aria-hidden="true" />
-          <div className="skeleton h-4 w-20 rounded" aria-hidden="true" />
-        </div>
-      </div>
-      <div className="skeleton rounded-[14px] min-h-[230px]" aria-hidden="true" />
-    </div>
-  );
-}
-
 /** 目录骨架（列表接口未返回时占位） */
 function JournalSkeleton() {
   return (
@@ -76,6 +57,63 @@ function JournalSkeleton() {
   );
 }
 
+/** 精选骨架（旋转卡片）：与 .featured-carousel 同构，loading 时不跳形 */
+function FeaturedCarouselSkeleton() {
+  return (
+    <div className="featured-carousel" aria-hidden="true">
+      <div className="featured-carousel-track">
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            className="featured-carousel-card fc-skel-card"
+            style={{ '--d': i - 1 } as React.CSSProperties}
+          >
+            <div className="skeleton fc-skel-cover" />
+            <div className="fc-skel-body">
+              <div className="skeleton h-2 w-16" />
+              <div className="skeleton h-4 w-full mt-2.5" />
+              <div className="skeleton h-3 w-2/3 mt-2" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** 精选骨架（平铺卡片）：与 .featured-grid 同构，loading 时不跳形 */
+function FeaturedGridSkeleton() {
+  return (
+    <div className="featured-grid" aria-hidden="true">
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="featured-grid-card">
+          <div className="featured-grid-cover">
+            <div className="skeleton fc-skel-cover" />
+          </div>
+          <div className="featured-grid-body">
+            <div className="flex items-center gap-2">
+              <div className="skeleton h-3 w-12" />
+              <div className="skeleton h-3 w-16" />
+            </div>
+            <div className="skeleton h-4 w-full" />
+            <div className="skeleton h-3 w-2/3" />
+            <div className="flex items-center justify-between mt-1">
+              <div className="skeleton h-3 w-32" />
+              <div className="skeleton h-3 w-16" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function circularOffset(i: number, cur: number, n: number): number {
+  let d = ((i - cur) % n + n) % n;
+  if (d > n / 2) d -= n;
+  return d;
+}
+
 function FeaturedCarousel({ posts }: { posts: PostSummary[] }) {
   const quantity = posts.length;
   const colors = ['224, 138, 90', '154, 67, 24', '217, 119, 6', '180, 83, 9', '249, 115, 22', '234, 88, 12', '245, 158, 11', '161, 98, 7', '146, 64, 14', '217, 119, 6'];
@@ -83,6 +121,7 @@ function FeaturedCarousel({ posts }: { posts: PostSummary[] }) {
   const [paused, setPaused] = useState(false);
   const [reduced, setReduced] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
+  const prevCurRef = useRef(0);
 
   // 尊重系统「减弱动态」偏好：开启时不自动滚动
   useEffect(() => {
@@ -96,6 +135,10 @@ function FeaturedCarousel({ posts }: { posts: PostSummary[] }) {
   // 把当前索引同步到轨道的 --cur 变量，驱动 CSS 变换
   useEffect(() => {
     if (trackRef.current) trackRef.current.style.setProperty('--cur', String(cur));
+  }, [cur]);
+
+  useEffect(() => {
+    prevCurRef.current = cur;
   }, [cur]);
 
   // 自动滚动：每 5s 切换到下一篇；hover 或键盘聚焦时暂停
@@ -116,15 +159,25 @@ function FeaturedCarousel({ posts }: { posts: PostSummary[] }) {
       onBlur={() => setPaused(false)}
     >
       <div className="featured-carousel-track" ref={trackRef}>
-        {posts.map((post, index) => {
-          const cover = post.coverUrl || (post.coverKey ? mediaUrl(post.coverKey) : '') || defaultCoverFor(post.id);
-          const no = String(index + 1).padStart(2, '0');
-          return (
-            <article
-              key={post.id}
-              className="featured-carousel-card"
-              style={{ '--i': index, '--n': quantity, '--color-card': colors[index % colors.length] } as React.CSSProperties}
-            >
+          {posts.map((post, index) => {
+            const cover = post.coverUrl || (post.coverKey ? mediaUrl(post.coverKey) : '') || defaultCoverFor(post.id);
+            const no = String(index + 1).padStart(2, '0');
+            const d = circularOffset(index, cur, quantity);
+            const prevD = circularOffset(index, prevCurRef.current, quantity);
+            const wrapping = Math.abs(d - prevD) > 1;
+            return (
+              <article
+                key={post.id}
+                className="featured-carousel-card"
+                data-current={index === cur ? 'true' : undefined}
+                style={{
+                  '--i': index,
+                  '--n': quantity,
+                  '--d': d,
+                  '--color-card': colors[index % colors.length],
+                  ...(wrapping ? { transition: 'none' } : {}),
+                } as React.CSSProperties}
+              >
               <a href={`/posts/${post.slug}/`} className="featured-carousel-link" aria-label={`阅读精选文章：${post.title}`}>
                 <div className="featured-carousel-image">
                   <FadeImg src={cover} alt={post.title} />
@@ -358,7 +411,9 @@ export default function HomeClient() {
       )}
 
       {/* 精选头条：精选或列表任一就绪即可先行渲染，都未就绪时显示骨架 */}
-      {!(featReady || listReady) ? <LedeSkeleton /> : featured.length > 0 ? (
+      {!(featReady || listReady) ? (
+        config?.featuredLayout === 'carousel' ? <FeaturedCarouselSkeleton /> : <FeaturedGridSkeleton />
+      ) : featured.length > 0 ? (
         <Reveal className="mt-2">
           <div className="section-header">
             <h2 className="section-title">

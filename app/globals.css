@@ -575,9 +575,11 @@ html.dark .featured-carousel {
   height: var(--ch);
   --cw: 300px;
   --ch: 300px;
-  --gap: 26px;
+  --gap: 20px;
   --scale-side: 0.78;
-  --angle-side: 38deg;
+  --angle-side: 32deg;
+  --scale: calc(1 - max(var(--d), calc(-1 * var(--d))) * (1 - var(--scale-side)));
+  --hover-scale: 1;
   display: block;
   overflow: hidden;
   border: 1.5px solid rgba(var(--color-card), 0.85);
@@ -591,12 +593,15 @@ html.dark .featured-carousel {
   /* 居中后按索引差平移/旋转/缩放；abs 用 max 实现（CSS 无 abs） */
   transform:
     translate(-50%, -50%)
-    translateX(calc((var(--i) - var(--cur)) * (var(--cw) + var(--gap))))
-    rotateY(calc((var(--cur) - var(--i)) * var(--angle-side)))
-    scale(calc(1 - max((var(--cur) - var(--i)), (var(--i) - var(--cur))) * (1 - var(--scale-side))));
-  z-index: calc(100 - max((var(--cur) - var(--i)), (var(--i) - var(--cur))));
+    translateX(calc(var(--d) * (var(--cw) + var(--gap))))
+    rotateY(calc(-1 * var(--d) * var(--angle-side)))
+    scale(calc(var(--scale) * var(--hover-scale)));
+  z-index: calc(100 - max(var(--d), calc(-1 * var(--d))));
   transition: transform 0.5s var(--ease-out), box-shadow 0.5s var(--ease-out);
   will-change: transform;
+}
+.featured-carousel-card[data-current='true']:hover {
+  --hover-scale: 1.03;
 }
 .featured-carousel-card:hover {
   box-shadow: 0 28px 64px -20px rgba(28, 26, 23, 0.55), 0 0 30px rgba(var(--color-card), 0.28);
@@ -703,19 +708,50 @@ html.dark .featured-carousel {
   transform: scale(1.3);
 }
 
-@media (max-width: 640px) {
+@media (min-width: 641px) and (max-width: 1024px) {
   .featured-carousel {
-    height: 300px;
-    margin-top: 18px;
-    border-radius: 18px;
-    perspective: 1100px;
+    height: 340px;
+    margin-top: 20px;
+    perspective: 1200px;
   }
   .featured-carousel-card {
-    --cw: 220px;
-    --ch: 220px;
+    --cw: 260px;
+    --ch: 260px;
     --gap: 18px;
+    --scale-side: 0.76;
+    --angle-side: 34deg;
+  }
+  .featured-carousel-content {
+    padding: 14px 16px;
+  }
+  .featured-carousel-no {
+    font-size: 9px;
+  }
+  .featured-carousel-title {
+    font-size: 16px;
+  }
+  .featured-carousel-meta {
+    margin-top: 6px;
+    font-size: 10.5px;
+  }
+  .featured-carousel-link {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 640px) {
+  .featured-carousel {
+    height: 260px;
+    margin-top: 16px;
+    border-radius: 16px;
+    perspective: 1000px;
+  }
+  .featured-carousel-card {
+    --cw: 176px;
+    --ch: 176px;
+    --gap: 10px;
     --scale-side: 0.72;
-    --angle-side: 42deg;
+    --angle-side: 36deg;
     border-radius: 14px;
   }
   .featured-carousel-content {
@@ -725,7 +761,7 @@ html.dark .featured-carousel {
     font-size: 9px;
   }
   .featured-carousel-title {
-    font-size: 15px;
+    font-size: 14px;
   }
   .featured-carousel-meta {
     margin-top: 6px;
@@ -2350,4 +2386,27 @@ input,
 textarea,
 select {
   font-size: 16px !important;
+}
+
+/* ========== 精选区骨架：与旋转卡片/平铺卡片同构，loading 不跳形 ========== */
+.fc-skel-card {
+  background: var(--t-slate-100);
+  box-shadow: none;
+  border-color: var(--t-slate-200);
+}
+html.dark .fc-skel-card {
+  background: var(--t-slate-800);
+  border-color: var(--t-slate-700);
+}
+.fc-skel-cover {
+  position: absolute;
+  inset: 0;
+  border-radius: 0;
+}
+.fc-skel-body {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: 16px 18px;
 }

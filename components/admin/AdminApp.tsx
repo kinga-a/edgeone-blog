@@ -8,8 +8,7 @@ import { readHash, cx } from '@/lib/utils';
 import LoginView from './LoginView';
 import DashboardView from './DashboardView';
 import PostsManager from './PostsManager';
-import CategoriesManager from './CategoriesManager';
-import TagsManager from './TagsManager';
+import TaxonomiesManager from './TaxonomiesManager';
 import CommentsManager from './CommentsManager';
 import MediaManager from './MediaManager';
 import SettingsView from './SettingsView';
@@ -19,8 +18,7 @@ const MENU_ICONS: Record<string, string> = {
   dashboard: 'M3 13h4l2-7 4 14 2-8h6',
   posts: 'M6 3h9l4 4v14H6V3zM15 3v5h4M9 13h6M9 17h6',
   comments: 'M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5zM8 10h.01M12 10h.01M16 10h.01',
-  categories: 'M4 5a2 2 0 0 1 2-2h6v16H6a2 2 0 0 0-2 2V5zM14 3h4a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2h-4V3z',
-  tags: 'M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8zM7.5 7.5h.01',
+  taxonomies: 'M4 5a2 2 0 0 1 2-2h6v16H6a2 2 0 0 0-2 2V5zM14 3h4a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2h-4V3z',
   media: 'M3 4h18a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zM8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM3 17l5-5 3 3 4-4 6 6',
   settings: 'M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3zM12 12l8-4.5M12 12v9M12 12L4 7.5',
 };
@@ -29,8 +27,7 @@ const MENU = [
   { key: 'dashboard', label: '仪表盘' },
   { key: 'posts', label: '文章管理' },
   { key: 'comments', label: '评论审核' },
-  { key: 'categories', label: '分类管理' },
-  { key: 'tags', label: '标签管理' },
+  { key: 'taxonomies', label: '分类标签' },
   { key: 'media', label: '媒体库' },
   { key: 'settings', label: '站点设置' },
 ];
@@ -139,8 +136,7 @@ export default function AdminApp() {
             {mainKey === 'dashboard' && <DashboardView />}
             {mainKey === 'posts' && <PostsManager route={route} navigate={navigate} />}
             {mainKey === 'comments' && <CommentsManager />}
-            {mainKey === 'categories' && <CategoriesManager />}
-            {mainKey === 'tags' && <TagsManager />}
+            {mainKey === 'taxonomies' && <TaxonomiesManager />}
             {mainKey === 'media' && <MediaManager />}
             {mainKey === 'settings' && <SettingsView />}
           </div>

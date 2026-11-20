@@ -14,6 +14,16 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+/* ---------------- SQLite（内置 node:sqlite，需 --experimental-sqlite 标志） ---------------- */
+let DatabaseSync;
+try {
+  ({ DatabaseSync } = await import('node:sqlite'));
+} catch (e) {
+  console.error('[local] 启动失败：无法加载内置 SQLite 模块 node:sqlite');
+  console.error('[local] 请使用: node --experimental-sqlite scripts/local-serve.mjs');
+  process.exit(1);
+}
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = path.join(ROOT, 'out');
 const FN_DIR = path.join(ROOT, 'edge-functions');
@@ -29,46 +39,61 @@ if (!existsSync(path.join(OUT_DIR, 'index.html'))) {
   process.exit(1);
 }
 
-/* ---------------- KV mock（文件持久化） ---------------- */
+/* ---------------- KV 存储（SQLite 持久化） ---------------- */
 await fs.mkdir(DATA_DIR, { recursive: true });
 await fs.mkdir(BLOB_DIR, { recursive: true });
 
-let kvMap = new Map();
-try {
-  kvMap = new Map(Object.entries(JSON.parse(await fs.readFile(KV_FILE, 'utf8'))));
-} catch { /* 首次运行 */ }
+const kvDb = new DatabaseSync(path.join(DATA_DIR, 'kv.sqlite'));
+kvDb.exec(`
+  CREATE TABLE IF NOT EXISTS kv (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  )
+`);
+const kvStmtGet = kvDb.prepare('SELECT value FROM kv WHERE key = ?');
+const kvStmtPut = kvDb.prepare('INSERT INTO kv (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value');
+const kvStmtDelete = kvDb.prepare('DELETE FROM kv WHERE key = ?');
 
-let kvTimer = null;
-function scheduleKvSave() {
-  if (kvTimer) return;
-  kvTimer = setTimeout(async () => {
-    kvTimer = null;
+/* 首次迁移：旧 kv.json 数据导入 SQLite（仅当 SQLite 为空时） */
+try {
+  const legacy = JSON.parse(await fs.readFile(KV_FILE, 'utf8'));
+  const entries = Object.entries(legacy);
+  if (entries.length > 0 && kvDb.prepare('SELECT COUNT(*) AS n FROM kv').get().n === 0) {
+    const insert = kvDb.prepare('INSERT OR IGNORE INTO kv (key, value) VALUES (?, ?)');
+    kvDb.exec('BEGIN');
     try {
-      await fs.writeFile(KV_FILE, JSON.stringify(Object.fromEntries(kvMap), null, 0));
-    } catch (e) {
-      console.error('[kv] 持久化失败:', e.message);
+      for (const [k, v] of entries) insert.run(String(k), String(v));
+      kvDb.exec('COMMIT');
+    } catch (e2) {
+      kvDb.exec('ROLLBACK');
+      throw e2;
     }
-  }, 200);
-  kvTimer.unref?.();
-}
+    console.log(`[kv] 已从 kv.json 迁移 ${entries.length} 条数据到 SQLite`);
+  }
+} catch { /* 无旧数据，跳过 */ }
 
 globalThis.__BLOG_KV__ = {
-  async put(key, value) { kvMap.set(String(key), String(value)); scheduleKvSave(); },
-  async get(key, type) {
-    const v = kvMap.get(String(key));
-    if (v === undefined) return null;
-    if (type === 'json' || type?.type === 'json') {
-      try { return JSON.parse(v); } catch { return null; }
-    }
-    return v;
+  async get(key) {
+    const row = kvStmtGet.get(String(key));
+    return row ? row.value : null;
   },
-  async delete(key) { kvMap.delete(String(key)); scheduleKvSave(); },
+  async put(key, value) {
+    kvStmtPut.run(String(key), String(value));
+  },
+  async delete(key) {
+    kvStmtDelete.run(String(key));
+  },
   async list({ prefix = '', limit = 1000, cursor = '' } = {}) {
-    const keys = [...kvMap.keys()].filter((k) => k.startsWith(prefix)).sort();
-    const start = cursor ? keys.indexOf(cursor) + 1 : 0;
-    const slice = keys.slice(start, start + limit);
-    const complete = start + limit >= keys.length;
-    return { complete, cursor: complete ? null : slice[slice.length - 1] ?? null, keys: slice.map((key) => ({ key })) };
+    const pat = `${prefix}*`;
+    const rows = cursor
+      ? kvDb.prepare('SELECT key FROM kv WHERE key > ? AND key GLOB ? ORDER BY key LIMIT ?').all(String(cursor), pat, limit)
+      : kvDb.prepare('SELECT key FROM kv WHERE key GLOB ? ORDER BY key LIMIT ?').all(pat, limit);
+    const complete = rows.length < limit;
+    return {
+      complete,
+      cursor: complete ? null : rows[rows.length - 1]?.key ?? null,
+      keys: rows.map((r) => ({ key: r.key })),
+    };
   },
 };
 
@@ -311,6 +336,14 @@ async function serveStatic(pathname, req, res) {
   res.end(req.method === 'HEAD' ? undefined : body);
 }
 
+async function resolveStaticFile(pathname) {
+  let rel = pathname;
+  try { rel = decodeURIComponent(pathname); } catch { /* 保留原值 */ }
+  const candidate = path.resolve(OUT_DIR, '.' + (rel === '/' ? '/index.html' : rel));
+  if (candidate !== OUT_DIR && !candidate.startsWith(OUT_DIR + path.sep)) return null;
+  try { const st = await fs.stat(candidate); return st.isFile() ? candidate : null; } catch { return null; }
+}
+
 const server = createServer(async (req, res) => {
   const start = Date.now();
   res.on('finish', () => console.log(`${req.method} ${req.url} -> ${res.statusCode} ${Date.now() - start}ms`));
@@ -335,6 +368,9 @@ const server = createServer(async (req, res) => {
       res.end(JSON.stringify({ ok: true }));
       return;
     }
+
+    const staticFile = await resolveStaticFile(pathname);
+    if (staticFile) { await serveStatic(pathname, req, res); return; }
 
     for (const route of routes) {
       const m = route.regex.exec(pathname);

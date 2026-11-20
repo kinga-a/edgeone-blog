@@ -18,6 +18,7 @@ import './api/_lib/crypto-polyfill.js';
 import { verifyMcpBearer } from './api/_lib/mcp-auth.js';
 import { withErrorGuard } from './api/_lib/response.js';
 import * as data from './api/_lib/data.js';
+import { makeExportResponse } from './api/_lib/backup.js';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -90,6 +91,24 @@ async function resolveTagIds(env, rawTags) {
     ids.push(byName ? byName.id : (await data.ensureTagByName(env, v)).id);
   }
   return ids;
+}
+
+/** 按 id / 名称 / slug 解析标签，返回标签对象 */
+async function resolveTagRef(env, ref) {
+  const tags = await data.getTags(env);
+  const key = String(ref || '').trim();
+  if (!key) throw new Error('标签 id/名称不能为空');
+  const hit = tags.find((t) => t.id === key || t.name === key || t.slug === key);
+  if (!hit) throw new Error(`标签「${ref}」不存在。现有标签：${tags.map((t) => t.name).join('、') || '（暂无）'}`);
+  return hit;
+}
+
+/** 按评论 id 解析评论（含 postId），返回评论对象 */
+async function resolveCommentRef(env, commentId) {
+  const list = await data.getComments(env);
+  const hit = list.find((c) => c.id === commentId);
+  if (!hit) throw new Error(`评论不存在：${commentId}`);
+  return hit;
 }
 
 /** 从 patch 里挑出 updatePost/createPost 认识的字段 */
@@ -270,10 +289,114 @@ const TOOLS = {
     return OK_TEXT({
       ok: true,
       total: items.length,
-      items: items.slice(0, 20).map(({ p, score }) => postBrief(p, { score, categoryName: p.categoryId ? catMap.get(p.categoryId)?.name || '' : '', tagNames: (p.tags || []).map((t) => tagMap.get(t) || '').filter(Boolean) })),
-    });
-  },
-};
+        items: items.slice(0, 20).map(({ p, score }) => postBrief(p, { score, categoryName: p.categoryId ? catMap.get(p.categoryId)?.name || '' : '', tagNames: (p.tags || []).map((t) => tagMap.get(t) || '').filter(Boolean) })),
+      });
+    },
+    blog_create_tag: async (env, args) => {
+      if (!String(args.name || '').trim()) throw new Error('name 不能为空');
+      const tag = await data.createTag(env, { name: args.name });
+      return OK_TEXT({ ok: true, created: tag });
+    },
+    blog_update_tag: async (env, args) => {
+      const tag = await resolveTagRef(env, args.idOrSlug);
+      const patch = pickFields(args, ['name', 'slug', 'sort']);
+      if (!Object.keys(patch).length) throw new Error('没有任何要更新的字段（name/slug/sort）');
+      const updated = await data.updateTag(env, tag.id, patch);
+      return OK_TEXT({ ok: true, updated, changed: Object.keys(patch) });
+    },
+    blog_delete_tag: async (env, args) => {
+      const tag = await resolveTagRef(env, args.idOrSlug);
+      if (args.confirmName !== undefined && String(args.confirmName) !== tag.name) {
+        throw new Error(`confirmName 与标签名称不一致（实际名称：「${tag.name}」），已中止删除。请带上准确名称重试。`);
+      }
+      await data.deleteTag(env, tag.id);
+      return OK_TEXT({ ok: true, deleted: { id: tag.id, name: tag.name } });
+    },
+    blog_get_config: async (env) => {
+      const config = await data.getSiteConfig(env);
+      return OK_TEXT({ ok: true, config });
+    },
+    blog_update_config: async (env, args) => {
+      const patch = pickFields(args, ['title', 'subtitle', 'description', 'keywords', 'author', 'footerText', 'heroQuote', 'featuredLayout', 'featuredPostIds', 'commentEnabled', 'commentModeration']);
+      if (!Object.keys(patch).length) throw new Error('没有任何要更新的字段（title/subtitle/featuredLayout/featuredPostIds/...）');
+      if ('featuredLayout' in patch && !['carousel', 'grid'].includes(patch.featuredLayout)) throw new Error('featuredLayout 只能是 carousel 或 grid');
+      if ('featuredPostIds' in patch && !Array.isArray(patch.featuredPostIds)) throw new Error('featuredPostIds 必须是数组');
+      const updated = await data.saveSiteConfig(env, patch);
+      return OK_TEXT({ ok: true, updated, changed: Object.keys(patch) });
+    },
+    blog_get_stats: async (env) => {
+      const stats = await data.getVisitStats(env);
+      const list = await data.getPostList(env);
+      const ids = list.filter((p) => p.status === 'published' && !p.deletedAt).map((p) => p.id);
+      const batch = await data.getPostStatsBatch(env, ids.slice(0, 50));
+      const top = ids.map((id) => ({ id, ...(batch.get(id) || {}) })).sort((a, b) => b.views - a.views).slice(0, 10);
+      return OK_TEXT({ ok: true, visit: stats, topPostsByViews: top });
+    },
+    blog_restore_post: async (env, args) => {
+      const post = await resolvePostRef(env, args.idOrSlug);
+      const ok = await data.restorePost(env, post.id);
+      return OK_TEXT({ ok: true, restored: ok, id: post.id, slug: post.slug, title: post.title });
+    },
+    blog_purge_post: async (env, args) => {
+      const post = await resolvePostRef(env, args.idOrSlug);
+      if (args.confirmTitle !== undefined && String(args.confirmTitle) !== post.title) {
+        throw new Error(`confirmTitle 与文章标题不一致（实际标题：「${post.title}」），已中止彻底删除。`);
+      }
+      const ok = await data.purgePost(env, post.id);
+      return OK_TEXT({ ok: true, purged: ok, id: post.id, slug: post.slug, title: post.title, note: '文章已永久删除，不可恢复。' });
+    },
+    blog_list_comments: async (env, args) => {
+      let list = await data.getComments(env);
+      if (args.postId) list = list.filter((c) => c.postId === args.postId);
+      if (args.status) list = list.filter((c) => c.status === args.status);
+      const total = list.length;
+      const page = Math.max(1, Number(args.page) || 1);
+      const pageSize = Math.min(50, Math.max(1, Number(args.pageSize) || 20));
+      const items = list.slice((page - 1) * pageSize, page * pageSize);
+      return OK_TEXT({ ok: true, total, page, pageSize, items });
+    },
+    blog_moderate_comment: async (env, args) => {
+      const c = await resolveCommentRef(env, args.commentId);
+      const status = String(args.status || '').toLowerCase();
+      if (!['pending', 'approved', 'rejected'].includes(status)) throw new Error('status 必须是 pending/approved/rejected');
+      const updated = await data.updateCommentStatus(env, c.postId, c.id, status);
+      return OK_TEXT({ ok: true, updated });
+    },
+    blog_delete_comment: async (env, args) => {
+      const c = await resolveCommentRef(env, args.commentId);
+      await data.deleteComment(env, c.postId, c.id);
+      return OK_TEXT({ ok: true, deleted: { id: c.id, postId: c.postId, author: c.author } });
+    },
+    blog_list_media: async (env, args) => {
+      const list = await data.listMedia(env);
+      const total = list.length;
+      const page = Math.max(1, Number(args.page) || 1);
+      const pageSize = Math.min(50, Math.max(1, Number(args.pageSize) || 20));
+      const items = list.slice((page - 1) * pageSize, page * pageSize);
+      return OK_TEXT({ ok: true, total, page, pageSize, items });
+    },
+    blog_delete_media: async (env, args) => {
+      if (!String(args.uid || '').trim()) throw new Error('uid 不能为空');
+      await data.deleteMediaMeta(env, args.uid);
+      return OK_TEXT({ ok: true, deleted: { uid: args.uid }, note: '仅删除媒体元数据；底层 Blob 对象需通过 /api/media/:uid DELETE 或后台媒体库删除。' });
+    },
+    blog_get_related_posts: async (env, args) => {
+      const post = await resolvePostRef(env, args.idOrSlug);
+      const limit = Math.min(20, Math.max(1, Number(args.limit) || 5));
+      const related = await data.relatedPosts(env, post, limit);
+      return OK_TEXT({ ok: true, total: related.length, items: related.map((p) => postBrief(p)) });
+    },
+    blog_get_adjacent_posts: async (env, args) => {
+      const post = await resolvePostRef(env, args.idOrSlug);
+      const { prev, next } = await data.adjacentPosts(env, post);
+      return OK_TEXT({ ok: true, prev: prev ? postBrief(prev) : null, next: next ? postBrief(next) : null });
+    },
+    blog_export_backup: async (env) => {
+      const resp = await makeExportResponse(env);
+      const dump = await resp.json();
+      return OK_TEXT({ ok: true, exportedAt: new Date().toISOString(), backup: dump });
+    },
+  };
 
 const TOOL_DEFS = [
   {
@@ -412,6 +535,172 @@ const TOOL_DEFS = [
       properties: { q: { type: 'string', description: '搜索关键词（必填）' } },
       required: ['q'],
     },
+  },
+  {
+    name: 'blog_create_tag',
+    description: '新建标签（name 必填；slug 留空自动生成）。',
+    inputSchema: {
+      type: 'object',
+      properties: { name: { type: 'string', description: '标签名称（必填，不可与现有标签重名）' } },
+      required: ['name'],
+    },
+  },
+  {
+    name: 'blog_update_tag',
+    description: '更新标签（补丁语义，只改传入字段）。idOrSlug 传标签 id、名称或 slug。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        idOrSlug: { type: 'string', description: '标签 id、名称或 slug（必填）' },
+        name: { type: 'string', description: '新名称' },
+        slug: { type: 'string', description: '新 slug' },
+        sort: { type: 'number', description: '排序权重' },
+      },
+      required: ['idOrSlug'],
+    },
+  },
+  {
+    name: 'blog_delete_tag',
+    description: '删除标签。会从所有文章中移除该标签；可传 confirmName 做二次确认（必须与标签名称一致）。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        idOrSlug: { type: 'string', description: '标签 id、名称或 slug（必填）' },
+        confirmName: { type: 'string', description: '传入标签准确名称；不一致时拒绝删除' },
+      },
+      required: ['idOrSlug'],
+    },
+  },
+  {
+    name: 'blog_get_config',
+    description: '读取站点配置（标题、副标题、heroQuote、featuredLayout、featuredPostIds、评论开关等）。',
+    inputSchema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'blog_update_config',
+    description: '更新站点配置（补丁语义，只改传入字段）。可改 title/subtitle/heroQuote/featuredLayout/featuredPostIds/commentEnabled/commentModeration 等顶层字段；featuredLayout 取 carousel 或 grid。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string' },
+        subtitle: { type: 'string' },
+        description: { type: 'string' },
+        keywords: { type: 'string' },
+        author: { type: 'string' },
+        footerText: { type: 'string' },
+        heroQuote: { type: 'string' },
+        featuredLayout: { type: 'string', enum: ['carousel', 'grid'], description: '精选区布局：旋转卡片 carousel 或平铺卡片 grid' },
+        featuredPostIds: { type: 'array', items: { type: 'string' }, description: '精选文章 id 列表（按此顺序展示）' },
+        commentEnabled: { type: 'boolean' },
+        commentModeration: { type: 'boolean', description: 'true=评论需审核才显示' },
+      },
+    },
+  },
+  {
+    name: 'blog_get_stats',
+    description: '读取访问统计（总访问/今日访问/近 90 天）+ 按阅读量 Top10 文章。',
+    inputSchema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'blog_restore_post',
+    description: '从回收站恢复文章（软删除恢复）。',
+    inputSchema: {
+      type: 'object',
+      properties: { idOrSlug: { type: 'string', description: '文章 id 或 slug（必填）' } },
+      required: ['idOrSlug'],
+    },
+  },
+  {
+    name: 'blog_purge_post',
+    description: '彻底删除文章（回收站永久删除，不可恢复；同时删统计与评论）。可传 confirmTitle 做二次确认。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        idOrSlug: { type: 'string', description: '文章 id 或 slug（必填）' },
+        confirmTitle: { type: 'string', description: '传入文章准确标题；不一致时拒绝删除' },
+      },
+      required: ['idOrSlug'],
+    },
+  },
+  {
+    name: 'blog_list_comments',
+    description: '列出全部评论（按时间倒序）。可按 postId / status 筛选，支持分页。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        postId: { type: 'string', description: '按文章筛选' },
+        status: { type: 'string', enum: ['pending', 'approved', 'rejected'], description: '按状态筛选' },
+        page: { type: 'number' },
+        pageSize: { type: 'number', description: '默认 20，最大 50' },
+      },
+    },
+  },
+  {
+    name: 'blog_moderate_comment',
+    description: '审核评论（改状态）。status 取 pending/approved/rejected。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        commentId: { type: 'string', description: '评论 id（必填）' },
+        status: { type: 'string', enum: ['pending', 'approved', 'rejected'], description: '目标状态（必填）' },
+      },
+      required: ['commentId', 'status'],
+    },
+  },
+  {
+    name: 'blog_delete_comment',
+    description: '删除评论。',
+    inputSchema: {
+      type: 'object',
+      properties: { commentId: { type: 'string', description: '评论 id（必填）' } },
+      required: ['commentId'],
+    },
+  },
+  {
+    name: 'blog_list_media',
+    description: '列出媒体库文件元数据（按上传时间倒序），支持分页。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        page: { type: 'number' },
+        pageSize: { type: 'number', description: '默认 20，最大 50' },
+      },
+    },
+  },
+  {
+    name: 'blog_delete_media',
+    description: '删除媒体元数据（按 uid）。注意：仅删 KV 元数据，底层 Blob 对象需另行删除。',
+    inputSchema: {
+      type: 'object',
+      properties: { uid: { type: 'string', description: '媒体 uid（必填）' } },
+      required: ['uid'],
+    },
+  },
+  {
+    name: 'blog_get_related_posts',
+    description: '获取相关文章（同分类或共享标签，按相关度排序）。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        idOrSlug: { type: 'string', description: '文章 id 或 slug（必填）' },
+        limit: { type: 'number', description: '最多返回条数，默认 5，最大 20' },
+      },
+      required: ['idOrSlug'],
+    },
+  },
+  {
+    name: 'blog_get_adjacent_posts',
+    description: '获取上下篇文章（prev/next）。',
+    inputSchema: {
+      type: 'object',
+      properties: { idOrSlug: { type: 'string', description: '文章 id 或 slug（必填）' } },
+      required: ['idOrSlug'],
+    },
+  },
+  {
+    name: 'blog_export_backup',
+    description: '全量备份导出（KV + 媒体元数据，JSON）。返回完整备份数据，可保存为文件用于恢复。',
+    inputSchema: { type: 'object', properties: {} },
   },
 ];
 

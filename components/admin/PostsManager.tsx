@@ -27,23 +27,26 @@ const STATUS_TABS: Array<{ value: string; label: string }> = [
   { value: 'trash', label: '回收站' },
 ];
 
+let postsListCache: { items: PostSummary[]; total: number; totalPages: number; page: number; status: string } | null = null;
+
 function PostsList({ navigate }: { navigate: (k: string) => void }) {
-  const [items, setItems] = useState<PostSummary[]>([]);
-  const [status, setStatus] = useState('');
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const cached = postsListCache;
+  const [items, setItems] = useState<PostSummary[]>(cached?.items ?? []);
+  const [status, setStatus] = useState(cached?.status ?? '');
+  const [page, setPage] = useState(cached?.page ?? 1);
+  const [totalPages, setTotalPages] = useState(cached?.totalPages ?? 1);
+  const [total, setTotal] = useState(cached?.total ?? 0);
+  const [loading, setLoading] = useState(!cached);
   const toast = useToast();
 
   const load = useCallback((p: number, s: string) => {
-    setLoading(true);
     api.listPosts({ page: p, pageSize: 15, status: s || undefined, scope: 'admin' })
       .then((d) => {
         if (d?.ok) {
           setItems(d.items);
           setTotalPages(d.totalPages);
           setTotal(d.total);
+          postsListCache = { items: d.items, total: d.total, totalPages: d.totalPages, page: p, status: s };
         }
       })
       .catch((e) => toast(e.message, 'error'))
@@ -344,7 +347,7 @@ function PostEditor({ mode, postId, navigate }: { mode: 'new' | 'edit'; postId?:
         setSavedAt(new Date());
         setDirty(false);
         toast(`文章已创建，别名：/${d.post.slug}/`);
-        navigate(`posts/edit/${d.post.id}`);
+        navigate('posts');
       } else {
         await api.updatePost(postId!, body);
         baseRef.current = { title, slug: finalSlug, summary, content, status, visibility, categoryId, tags: body.tags, coverKey, coverUrl: coverUrl.trim() };
