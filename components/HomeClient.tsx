@@ -412,7 +412,7 @@ export default function HomeClient() {
 
       {/* 精选头条：精选或列表任一就绪即可先行渲染，都未就绪时显示骨架 */}
       {!(featReady || listReady) ? (
-        config?.featuredLayout === 'carousel' ? <FeaturedCarouselSkeleton /> : <FeaturedGridSkeleton />
+        config?.featuredLayout === 'grid' ? <FeaturedGridSkeleton /> : <FeaturedCarouselSkeleton />
       ) : featured.length > 0 ? (
         <Reveal className="mt-2">
           <div className="section-header">
@@ -422,9 +422,9 @@ export default function HomeClient() {
             </h2>
             <Link href="/posts/" className="section-link">全部文章 →</Link>
           </div>
-          {config?.featuredLayout === 'carousel'
-            ? <FeaturedCarousel posts={featured} />
-            : <FeaturedGrid posts={featured} />}
+          {config?.featuredLayout === 'grid'
+            ? <FeaturedGrid posts={featured} />
+            : <FeaturedCarousel posts={featured} />}
         </Reveal>
       ) : null}
 
