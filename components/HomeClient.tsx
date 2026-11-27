@@ -119,18 +119,17 @@ function FeaturedCarousel({ posts }: { posts: PostSummary[] }) {
   const colors = ['224, 138, 90', '154, 67, 24', '217, 119, 6', '180, 83, 9', '249, 115, 22', '234, 88, 12', '245, 158, 11', '161, 98, 7', '146, 64, 14', '217, 119, 6'];
   const [cur, setCur] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [reduced, setReduced] = useState(false);
+  const [autoTick, setAutoTick] = useState(0);
+  const rootRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const prevCurRef = useRef(0);
 
-  // 尊重系统「减弱动态」偏好：开启时不自动滚动
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReduced(mq.matches);
-    const onChange = () => setReduced(mq.matches);
-    mq.addEventListener?.('change', onChange);
-    return () => mq.removeEventListener?.('change', onChange);
-  }, []);
+  // 相对切换（±1），循环滚动；手动切换后重置自动轮播计时
+  const go = (delta: number) => {
+    if (quantity <= 1) return;
+    setCur((c) => ((c + delta) % quantity + quantity) % quantity);
+    setAutoTick((t) => t + 1);
+  };
 
   // 把当前索引同步到轨道的 --cur 变量，驱动 CSS 变换
   useEffect(() => {
@@ -141,22 +140,100 @@ function FeaturedCarousel({ posts }: { posts: PostSummary[] }) {
     prevCurRef.current = cur;
   }, [cur]);
 
-  // 自动滚动：每 5s 切换到下一篇；hover 或键盘聚焦时暂停
+  // 鼠标滚轮：在轮播区域内滚动，前后切换左右卡片（拦截页面滚动，节流防连跳）
   useEffect(() => {
-    if (quantity <= 1 || reduced || paused) return;
+    const el = rootRef.current;
+    if (!el || quantity <= 1) return;
+    let last = 0;
+    const onWheel = (e: WheelEvent) => {
+      const raw = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+      if (Math.abs(raw) < 4) return;
+      if (e.cancelable) e.preventDefault();
+      const now = performance.now();
+      if (now - last < 320) return;
+      last = now;
+      setCur((c) => ((c + (raw > 0 ? 1 : -1)) % quantity + quantity) % quantity);
+      setAutoTick((t) => t + 1);
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [quantity]);
+
+  // 触摸滑动：手机端左右滑动切换卡片（区分横向/纵向，避免干扰页面上下滚动）
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el || quantity <= 1) return;
+    let startX = 0;
+    let startY = 0;
+    let tracking = false;
+    let horizontal = false;
+    let decided = false;
+    const onStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) { tracking = false; return; }
+      tracking = true;
+      decided = false;
+      horizontal = false;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    };
+    const onMove = (e: TouchEvent) => {
+      if (!tracking) return;
+      const dx = e.touches[0].clientX - startX;
+      const dy = e.touches[0].clientY - startY;
+      if (!decided && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+        decided = true;
+        horizontal = Math.abs(dx) > Math.abs(dy);
+      }
+      if (horizontal && e.cancelable) e.preventDefault();
+    };
+    const onEnd = (e: TouchEvent) => {
+      if (!tracking) return;
+      tracking = false;
+      const t = e.changedTouches[0];
+      const wasHorizontal = horizontal;
+      horizontal = false;
+      if (!t || !wasHorizontal) return;
+      const dx = t.clientX - startX;
+      const dy = t.clientY - startY;
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+        setCur((c) => ((c + (dx < 0 ? 1 : -1)) % quantity + quantity) % quantity);
+        setAutoTick((t2) => t2 + 1);
+      }
+    };
+    el.addEventListener('touchstart', onStart, { passive: true });
+    el.addEventListener('touchmove', onMove, { passive: false });
+    el.addEventListener('touchend', onEnd);
+    el.addEventListener('touchcancel', onEnd);
+    return () => {
+      el.removeEventListener('touchstart', onStart);
+      el.removeEventListener('touchmove', onMove);
+      el.removeEventListener('touchend', onEnd);
+      el.removeEventListener('touchcancel', onEnd);
+    };
+  }, [quantity]);
+
+  // 自动滚动：每 5s 切换到下一篇；hover/聚焦时暂停，手动切换后重新计时
+  useEffect(() => {
+    if (quantity <= 1 || paused) return;
     const id = setInterval(() => setCur((c) => (c + 1) % quantity), 5000);
     return () => clearInterval(id);
-  }, [quantity, paused, reduced]);
+  }, [quantity, paused, autoTick]);
 
   return (
     <div
       className="featured-carousel"
+      ref={rootRef}
       role="region"
       aria-label="精选文章轮播"
+      tabIndex={0}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
+      onKeyDown={(e) => {
+        if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1); }
+        else if (e.key === 'ArrowRight') { e.preventDefault(); go(1); }
+      }}
     >
       <div className="featured-carousel-track" ref={trackRef}>
           {posts.map((post, index) => {

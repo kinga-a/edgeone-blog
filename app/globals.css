@@ -548,6 +548,13 @@ html.dark .hero-vol::before {
     var(--t-card);
   background-size: auto, 28px 28px, auto;
   box-shadow: var(--shadow-sm);
+  /* 触控：允许页面纵向滚动，横向手势交给 JS 处理切换卡片；滚轮到边界不冒泡滚动页面 */
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+}
+.featured-carousel:focus-visible {
+  outline: 2px solid var(--t-brand, #9a4318);
+  outline-offset: 2px;
 }
 html.dark .featured-carousel {
   border-color: var(--t-slate-700);
@@ -589,7 +596,7 @@ html.dark .featured-carousel {
   transform-style: preserve-3d;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  touch-action: manipulation;
+  touch-action: pan-y;
   /* 居中后按索引差平移/旋转/缩放；abs 用 max 实现（CSS 无 abs） */
   transform:
     translate(-50%, -50%)
@@ -773,8 +780,9 @@ html.dark .featured-carousel {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* 系统开启「减少动态效果」时仍保留平滑切换，仅缩短时长，避免切卡瞬跳 */
   .featured-carousel-card {
-    transition: none;
+    transition-duration: 0.2s;
   }
 }
 
