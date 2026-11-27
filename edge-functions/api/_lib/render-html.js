@@ -236,17 +236,18 @@ ${body}
   var sTimer=null,sBusy=false;
   function openSearch(){if(sov){sov.classList.add('open');sov.setAttribute('aria-hidden','false');}if(spop){spop.classList.add('open');}document.body.style.overflow='hidden';if(sinp){sinp.focus();} }
   function closeSearch(){if(sov){sov.classList.remove('open');sov.setAttribute('aria-hidden','true');}if(spop){spop.classList.remove('open');}document.body.style.overflow='';}
+  function h(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return c==='&'?'&amp;':c==='<'?'&lt;':c==='>'?'&gt;':c==='"'?'&quot;':'&#39;';});}
   function esc(){var q=sinp.value.replace(/\s+$/,'').trim();if(!q){sres.innerHTML='';return;}
     sBusy=true;sres.innerHTML='<div class="search-loading"><span></span><span></span><span></span></div>';
     fetch('/api/search?q='+encodeURIComponent(q)).then(function(r){return r.json();}).then(function(d){
       sBusy=false;
       var items=d&&d.items||[];
-      var html='<div class="search-count">找到 <strong>'+items.length+'</strong> 篇与「'+q.replace(/[<>&"']/g,'')+'」相关的文章</div>';
+      var html='<div class="search-count">找到 <strong>'+items.length+'</strong> 篇与「'+h(q)+'」相关的文章</div>';
       if(items.length){html+='<div class="search-list">';
         for(var i=0;i<items.length;i++){var p=items[i];
-          var date=(p.publishedAt||p.createdAt||'').slice(0,10);
-          var cat=p.categoryName?'<span class="search-tag">'+p.categoryName+'</span>':'';
-          html+='<a class="search-card" href="/posts/'+encodeURIComponent(p.slug)+'/" data-search-go><div class="search-card-head"><span class="search-card-title">'+p.title+'</span><span class="search-card-date">'+date+'</span></div>'+(p.summary?'<p class="search-card-desc">'+p.summary+'</p>':'')+'<div class="search-card-meta">'+cat+'<span>'+(p.readingTime||1)+' 分钟阅读</span></div></a>';
+          var date=h((p.publishedAt||p.createdAt||'').slice(0,10));
+          var cat=p.categoryName?'<span class="search-tag">'+h(p.categoryName)+'</span>':'';
+          html+='<a class="search-card" href="/posts/'+encodeURIComponent(p.slug)+'/" data-search-go><div class="search-card-head"><span class="search-card-title">'+h(p.title)+'</span><span class="search-card-date">'+date+'</span></div>'+(p.summary?'<p class="search-card-desc">'+h(p.summary)+'</p>':'')+'<div class="search-card-meta">'+cat+'<span>'+(Number(p.readingTime)||1)+' 分钟阅读</span></div></a>';
         }
         html+='</div>';
       }else{

@@ -2,6 +2,18 @@
 import { getKv } from './kv.js';
 import { getSiteConfig } from './data.js';
 
+/** 敏感键不进入备份：会话令牌、管理员凭据哈希、MCP 密钥哈希、限速计数。
+ *  这些键恢复时也无需还原（合并式恢复不会覆盖现有凭据），导出后泄露即等于账号/会话泄露。 */
+function isSensitiveBackupKey(key) {
+  const k = String(key || '');
+  return (
+    k.startsWith('auth_session_') ||
+    k === 'auth_admin' ||
+    k === 'auth_mcp_keys' ||
+    k.startsWith('rate_')
+  );
+}
+
 /** 全量导出 KV 数据（保留原始 JSON 字符串，便于恢复） */
 export async function dumpAll(env) {
   const kv = getKv(env);
@@ -12,6 +24,7 @@ export async function dumpAll(env) {
     // 注意：EdgeOne Pages KV 的 list limit 上限为 256（与 Cloudflare 的 1000 不同）
     const res = await kv.list({ limit: 256, ...(cursor ? { cursor } : {}) });
     for (const k of res.keys) {
+      if (isSensitiveBackupKey(k.key)) continue;
       const raw = await kv.get(k.key).catch(() => null);
       if (raw !== null && raw !== undefined) data[k.key] = raw;
     }

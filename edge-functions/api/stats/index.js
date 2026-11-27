@@ -44,7 +44,7 @@ export async function onRequestGet({ request, env }) {
       totalTags: tags.length,
       topPosts: postStats.slice(0, 10),
     },
-  });
+  }, { headers: { 'Cache-Control': 'no-store', 'Vary': 'Cookie' } });
 }
 
 export const onRequest = onRequestGet;

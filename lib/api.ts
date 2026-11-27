@@ -4,7 +4,7 @@
  */
 import type {
   AdminStats, Category, Comment, CommentStatus, McpKeyInfo, MediaMeta, Paged, Post, PostStatus,
-  PostSummary, SiteConfig, Tag,
+  PostSummary, SiteConfig, Tag, PlatformMeta,
 } from './types';
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -171,6 +171,7 @@ export const api = {
     request<{ ok: true }>(`/api/media/${key}?uid=${encodeURIComponent(uid)}`, { method: 'DELETE' }),
 
   // ---- 配置 / 统计 / 搜索 ----
+  getMeta: () => request<{ ok: true; meta: PlatformMeta }>('/api/meta'),
   getConfig: () => request<{ ok: true; config: SiteConfig }>('/api/config'),
   /** 前台专用：带缓存的站点配置（后台设置页请勿用，须读完整实时配置） */
   getConfigCached: () => swr<{ ok: true; config: SiteConfig }>('/api/config', () => request<{ ok: true; config: SiteConfig }>('/api/config')),

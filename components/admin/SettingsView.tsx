@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Btn, Card, Field, Input, Loading, SaveState, Textarea, useToast } from './ui';
 import { api } from '@/lib/api';
 import type { McpKeyInfo, PostSummary, SiteConfig } from '@/lib/types';
+import { copyToClipboard } from '@/lib/clipboard';
 
 export default function SettingsView() {
   const [config, setConfig] = useState<SiteConfig | null>(null);
@@ -158,8 +159,10 @@ export default function SettingsView() {
     setTotpBusy(false);
   };
 
-  const copyText = (text: string, label: string) => {
-    navigator.clipboard?.writeText(text).then(() => toast(`${label}已复制`)).catch(() => toast('复制失败', 'error'));
+  const copyText = async (text: string, label: string) => {
+    const ok = await copyToClipboard(text);
+    if (ok) toast(`${label}已复制`);
+    else window.prompt(`当前环境不支持自动复制（需 HTTPS 或 localhost），请手动复制${label}：`, text);
   };
 
   /* ---------------- MCP 接入 ---------------- */

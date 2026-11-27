@@ -3,10 +3,18 @@
 /** 仪表盘：欢迎区 + 核心指标 + 访问趋势 + 热门文章 TOP5 + 快捷入口/待办（参考浅蓝清新后台风格） */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Card, Loading, Empty, Btn, Badge } from './ui';
-import type { AdminStats, TrendPoint, VisitStats } from '@/lib/types';
+import type { AdminStats, PlatformMeta, TrendPoint, VisitStats } from '@/lib/types';
 import { api } from '@/lib/api';
 
 const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+
+/** 平台信息卡片格式化工具 */
+function fmtUptime(sec?: number | null): string {
+  if (!sec || sec < 0) return '—';
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  return h > 0 ? `${h}h${m}m` : `${m}m`;
+}
 
 /** 把 2026-10-15 转成可计算的 Date（按本地时区切日，避免 UTC 位移导致日期漂移） */
 function parseDay(date: string) {
@@ -354,6 +362,14 @@ export default function DashboardView() {
     };
   }, [load]);
 
+  // 平台信息：由后端探测真实运行时/存储后端（方案3，动态渲染，不写死）
+  const [meta, setMeta] = useState<PlatformMeta | null>(null);
+  useEffect(() => {
+    let alive = true;
+    api.getMeta().then((d) => { if (alive && d?.ok) setMeta(d.meta); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
+
   if (!stats) return <Loading />;
 
   const trend = stats.trend;
@@ -522,10 +538,27 @@ export default function DashboardView() {
           <Card>
             <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">平台信息</h2>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-slate-400">框架</span><span className="text-slate-700 dark:text-slate-200">Next.js</span></div>
-              <div className="flex justify-between"><span className="text-slate-400">样式</span><span className="text-slate-700 dark:text-slate-200">Tailwind CSS</span></div>
-              <div className="flex justify-between"><span className="text-slate-400">托管</span><span className="text-slate-700 dark:text-slate-200">EdgeOne Pages</span></div>
-              <div className="flex justify-between"><span className="text-slate-400">存储</span><span className="text-slate-700 dark:text-slate-200">EdgeOne KV / Blob</span></div>
+              {(meta
+                ? [
+                    { k: '版本', v: `${meta.appVersion || '—'} · Next.js ${meta.nextVersion || '—'}` },
+                    { k: '托管', v: meta.hosting },
+                    { k: '存储', v: `${meta.kv} · ${meta.blob}` },
+                    { k: '安全', v: `TOTP ${meta.totp ? '已开' : '未开'} · MCP ${meta.mcpKeys ?? 0}` },
+                    { k: '运行时', v: `Node ${meta.node || '—'}${meta.uptimeSec ? ` · ${fmtUptime(meta.uptimeSec)}` : ''}` },
+                  ]
+                : [
+                    { k: '版本', v: '检测中…' },
+                    { k: '托管', v: '检测中…' },
+                    { k: '存储', v: '检测中…' },
+                    { k: '安全', v: '检测中…' },
+                    { k: '运行时', v: '检测中…' },
+                  ]
+              ).map((r) => (
+                <div key={r.k} className="flex justify-between gap-3">
+                  <span className="text-slate-400 shrink-0">{r.k}</span>
+                  <span className="text-slate-700 dark:text-slate-200 text-right break-all">{r.v}</span>
+                </div>
+              ))}
             </div>
           </Card>
         </div>

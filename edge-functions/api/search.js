@@ -37,7 +37,24 @@ export async function onRequestGet({ request, env }) {
     })
     .filter((x) => x.score > 0)
     .sort((a, b) => b.score - a.score)
-    .map((x) => ({ ...x.post, categoryName: x.post.categoryId ? catMap.get(x.post.categoryId)?.name || '' : '' }));
+    .map((x) => {
+      const p = x.post;
+      // 仅下发公开展示字段，避免对象展开泄露内部属性
+      return {
+        id: p.id,
+        slug: p.slug,
+        title: p.title,
+        summary: p.summary || '',
+        categoryId: p.categoryId || '',
+        categoryName: p.categoryId ? (catMap.get(p.categoryId)?.name || '') : '',
+        tags: Array.isArray(p.tags) ? p.tags : [],
+        coverUrl: p.coverUrl || '',
+        coverKey: p.coverKey || '',
+        readingTime: p.readingTime || 1,
+        publishedAt: p.publishedAt || '',
+        createdAt: p.createdAt || '',
+      };
+    });
 
   return json({ ok: true, items, total: items.length, q: params.q }, { headers: publicHeaders() });
 }

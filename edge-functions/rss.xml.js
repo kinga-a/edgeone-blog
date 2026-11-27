@@ -14,10 +14,10 @@ export async function onRequestGet({ request, env }) {
     const link = `${origin}/posts/${encodeURIComponent(p.slug)}/`;
     const date = new Date(p.publishedAt || p.createdAt).toUTCString();
     return `  <item>
-    <title><![CDATA[${p.title}]]></title>
+    <title>${escape(p.title)}</title>
     <link>${link}</link>
     <guid isPermaLink="true">${link}</guid>
-    <description><![CDATA[${summary}]]></description>
+    <description>${summary}</description>
     <pubDate>${date}</pubDate>
   </item>`;
   }).join('\n');

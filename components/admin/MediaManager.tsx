@@ -6,6 +6,7 @@ import { Btn, Card, Empty, Loading, RowBtn, Table, Td, Th, useToast, Badge } fro
 import { api } from '@/lib/api';
 import type { MediaMeta } from '@/lib/types';
 import { fmtDate, mediaUrl } from '@/lib/utils';
+import { copyToClipboard } from '@/lib/clipboard';
 
 const TYPES: Array<{ value: '' | 'cover' | 'image' | 'attachment'; label: string }> = [
   { value: '', label: '全部' },
@@ -73,8 +74,10 @@ export default function MediaManager() {
     }
   };
 
-  const copyKey = (key: string) => {
-    navigator.clipboard?.writeText(key).then(() => toast('key 已复制')).catch(() => toast('复制失败', 'error'));
+  const copyKey = async (key: string) => {
+    const ok = await copyToClipboard(key);
+    if (ok) toast('key 已复制');
+    else window.prompt('当前环境不支持自动复制（需 HTTPS 或 localhost），请手动复制：', key);
   };
 
   return (

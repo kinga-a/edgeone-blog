@@ -27,14 +27,21 @@ export async function onRequestPost({ request, env, params }) {
   if (!hit.ok) return fail(429, '评论太频繁了，请稍后再试');
   const body = await readJson(request);
   if (!body) return fail(400, '请求体无效');
+  const strip = (s) => String(s || '').replace(/<[^>]*>/g, '').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '').trim();
+  const author = strip(body.author);
+  const content = strip(body.content);
+  if (!author || author.length > 60) return fail(400, '昵称长度需为 1-60 个字符');
+  if (body.email && String(body.email).length > 120) return fail(400, '邮箱过长');
+  if (!content) return fail(400, '评论内容不能为空');
+  if (content.length > 2000) return fail(400, '评论内容过长（上限 2000 字）');
   try {
     const comment = await createComment(env, {
       postId: post.id,
       postSlug: post.slug,
-      author: body.author,
-      email: body.email,
-      website: body.website,
-      content: body.content,
+      author,
+      email: strip(body.email),
+      website: strip(body.website).slice(0, 200),
+      content,
     });
     return json({ ok: true, comment }, { status: 201, headers: publicHeaders() });
   } catch (e) {

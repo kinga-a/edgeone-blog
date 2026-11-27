@@ -161,6 +161,36 @@ export interface AdminStats {
   topPosts: Array<{ id: string; slug: string; title: string; status: PostStatus; views: number; likes: number; publishedAt: string }>;
 }
 
+/** 运行时与存储后端探测结果（/api/meta） */
+export interface PlatformMeta {
+  framework: string;
+  styling: string;
+  runtime: 'local' | 'edgeone';
+  hosting: string;
+  kv: string;
+  blob: string;
+  node?: string | null;
+  appVersion?: string;
+  nextVersion?: string;
+  buildTime?: string;
+  assetVersion?: string;
+  uptimeSec?: number | null;
+  counts?: {
+    posts?: number;
+    publishedPosts?: number;
+    categories?: number;
+    tags?: number;
+    comments?: number;
+    pendingComments?: number;
+    media?: number;
+  };
+  mediaBytes?: number;
+  snapshot?: { count: number; builtAt: number | null } | null;
+  backupWebdav?: boolean;
+  totp?: boolean;
+  mcpKeys?: number;
+}
+
 export interface Paged<T> {
   ok: boolean;
   items: T[];

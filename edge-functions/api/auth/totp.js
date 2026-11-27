@@ -1,6 +1,6 @@
 import { json, fail, readJson } from '../_lib/response.js';
-import { requireAdmin, generateTotpSecret, totpUri, verifyTotp } from '../_lib/auth.js';
-import { getKv, Keys, kvGetJson, kvPutJson } from '../_lib/kv.js';
+import { requireAdmin, generateTotpSecret, totpUri, verifyTotp, clientIp } from '../_lib/auth.js';
+import { getKv, Keys, kvGetJson, kvPutJson, rateLimitHit } from '../_lib/kv.js';
 
 /**
  * POST /api/auth/totp — TOTP 二次验证管理（管理员）
@@ -16,6 +16,8 @@ export async function onRequestPost({ request, env }) {
   if (!body || !body.action) return fail(400, '缺少操作类型');
 
   const kv = getKv(env);
+  const hit = await rateLimitHit(kv, Keys.rateLimit('totp', admin.username || clientIp(request)), 10, 15 * 60 * 1000);
+  if (!hit.ok) return fail(429, 'TOTP 尝试过于频繁，请稍后再试');
   const current = (await kvGetJson(kv, Keys.authAdmin)) || {};
   const action = body.action;
   const now = new Date().toISOString();

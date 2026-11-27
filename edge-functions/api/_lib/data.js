@@ -211,7 +211,8 @@ function toSummary(post, config) {
 export async function createPost(env, input) {
   const kv = getKv(env);
   const config = await getSiteConfig(env);
-  const id = input.id || `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  // 始终由服务端生成 id，禁止客户端指定（避免以已有 id 覆盖其它文章）
+  const id = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
   // slug 留白（含纯空白）时根据标题自动生成
   const baseSlug = slugify(String(input.slug || '').trim() || input.title);
   const now = nowIso();

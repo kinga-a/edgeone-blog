@@ -7,6 +7,9 @@
 /.next/
 /out/
 
+# 本地运行时数据：SQLite KV、会话、管理员凭据哈希、MCP 密钥哈希等，严禁提交
+/.local-data/
+
 # misc
 .DS_Store
 *.pem
@@ -31,9 +34,9 @@ tsconfig.tsbuildinfo
 .env
 .edgeone/*
 .tef_dist/*
-  
+
 # agent tool spill files
 /.tmp-tool-results/
 
-# 构建时自动生成（scripts/gen-asset-version.mjs）
-edge-functions/api/_lib/asset-version.generated.js
+# 说明：edge-functions/api/_lib/asset-version.generated.js 由 scripts/gen-asset-version.mjs 构建时生成，
+# 需随仓库提交，确保 EdgeOne 构建（即便未执行 gen）也能解析该模块；每次构建会覆盖更新版本号。
