@@ -18,7 +18,13 @@ function detectRuntime(env) {
   const localKv = !!globalThis.__BLOG_KV__;
   const localBlob = !!globalThis.__BLOG_BLOB__;
   const isLocal = localKv || localBlob;
-  const edgeKv = !localKv && !!(env && (env.BLOG_KV || env.blog_kv));
+
+  // 与业务层 getKv 完全一致的解析：EdgeOne 可能把 KV 绑定注入到 globalThis（而非 env），
+  // 只查 env 会误判为「未检测到」。因此直接复用 getKv 探测。
+  let edgeKv = false;
+  if (!localKv) {
+    try { edgeKv = !!getKv(env); } catch { edgeKv = false; }
+  }
 
   let nodeVersion = null;
   try {
@@ -30,8 +36,12 @@ function detectRuntime(env) {
     styling: 'Tailwind CSS',
     runtime: isLocal ? 'local' : 'edgeone',
     hosting: isLocal ? '本地自托管 (local-serve)' : 'EdgeOne Pages',
+    // KV：本地 = SQLite；线上 getKv 可用 = EdgeOne KV
     kv: localKv ? 'SQLite' : edgeKv ? 'EdgeOne KV' : '未检测到',
+    // Blob：本地 = 本地文件系统；线上 = EdgeOne Blob（SDK 零配置）
     blob: localBlob ? '本地文件系统' : 'EdgeOne Blob',
+    // 运行时引擎：Edge Functions 为 V8 + Web Standards，并非 Node.js
+    engine: isLocal ? 'Node.js' : 'EdgeOne Edge Runtime (V8)',
     node: nodeVersion,
   };
 }

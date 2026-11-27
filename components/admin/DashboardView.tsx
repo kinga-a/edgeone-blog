@@ -544,7 +544,7 @@ export default function DashboardView() {
                     { k: '托管', v: meta.hosting },
                     { k: '存储', v: `${meta.kv} · ${meta.blob}` },
                     { k: '安全', v: `TOTP ${meta.totp ? '已开' : '未开'} · MCP ${meta.mcpKeys ?? 0}` },
-                    { k: '运行时', v: `Node ${meta.node || '—'}${meta.uptimeSec ? ` · ${fmtUptime(meta.uptimeSec)}` : ''}` },
+                    { k: '运行时', v: meta.runtime === 'local' ? `Node ${meta.node || '—'}${meta.uptimeSec ? ` · ${fmtUptime(meta.uptimeSec)}` : ''}` : (meta.engine || 'EdgeOne Edge Runtime (V8)') },
                   ]
                 : [
                     { k: '版本', v: '检测中…' },

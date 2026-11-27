@@ -170,6 +170,7 @@ export interface PlatformMeta {
   kv: string;
   blob: string;
   node?: string | null;
+  engine?: string;
   appVersion?: string;
   nextVersion?: string;
   buildTime?: string;
